@@ -109,15 +109,20 @@ const WAYPOINTS = [
 
 function generateStars(count: number): { x: number; y: number; r: number; a: number }[] {
   const stars: { x: number; y: number; r: number; a: number }[] = [];
-  // Use a seeded-like approach by cycling through fixed values
+  // Simple seeded PRNG (mulberry32) for deterministic but random-looking stars
+  let seed = 42;
+  function rand(): number {
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
   for (let i = 0; i < count; i++) {
-    const frac1 = (i * 0.6180339887) % 1;
-    const frac2 = (i * 0.3819660112) % 1;
     stars.push({
-      x: frac1,
-      y: frac2,
-      r: 0.4 + (i % 3) * 0.3,
-      a: 0.3 + (i % 5) * 0.14,
+      x: rand(),
+      y: rand(),
+      r: 0.3 + rand() * 0.7,
+      a: 0.15 + rand() * 0.45,
     });
   }
   return stars;
