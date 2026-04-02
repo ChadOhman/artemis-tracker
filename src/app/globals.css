@@ -340,3 +340,63 @@ main {
 .glow-cyan {
   text-shadow: 0 0 8px var(--accent-cyan-glow), 0 0 16px var(--accent-cyan-glow);
 }
+
+/* ── SIM Mode Scrubber ── */
+input[type="range"].sim-scrubber {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border-panel);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"].sim-scrubber::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+}
+
+input[type="range"].sim-scrubber::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+}
+
+/* ── SIM Jump Select ── */
+.sim-jump-select {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-panel);
+  border-radius: 3px;
+  padding: 2px 20px 2px 6px;
+  font-size: 9px;
+  font-weight: 700;
+  font-family: inherit;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%234a5f78' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+
+.sim-jump-select:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.sim-jump-select option {
+  background: var(--bg-panel);
+  color: var(--text-secondary);
+}
