@@ -338,20 +338,44 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       }
     }
 
-    /* ── milestones (diamonds on ruler) ──────────────────────── */
+    /* ── milestones (diamonds + labels on ruler) ────────────── */
+    ctx.font = `8px ${FONT}`;
+    ctx.textAlign = "left";
     for (const ms of raw.milestones) {
       if (ms.metMs < viewStart || ms.metMs > viewEnd) continue;
       const x = msToX(ms.metMs);
       if (x < LABEL_GUTTER || x > w) continue;
 
-      ctx.fillStyle = "#ffd54f";
+      const isPast = met >= ms.metMs;
+
+      // Diamond
+      ctx.fillStyle = isPast ? "#ffd54f" : "rgba(255,213,79,0.4)";
       ctx.beginPath();
       ctx.moveTo(x, RULER_H - 2);
-      ctx.lineTo(x + 4, RULER_H + 4);
-      ctx.lineTo(x, RULER_H + 10);
-      ctx.lineTo(x - 4, RULER_H + 4);
+      ctx.lineTo(x + 3, RULER_H + 3);
+      ctx.lineTo(x, RULER_H + 8);
+      ctx.lineTo(x - 3, RULER_H + 3);
       ctx.closePath();
       ctx.fill();
+
+      // Vertical tick line down from diamond
+      ctx.strokeStyle = isPast ? "rgba(255,213,79,0.25)" : "rgba(255,213,79,0.1)";
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      ctx.moveTo(x, RULER_H + 8);
+      ctx.lineTo(x, RULER_H + 16);
+      ctx.stroke();
+
+      // Rotated label above the diamond
+      ctx.save();
+      ctx.translate(x + 2, RULER_H - 5);
+      ctx.rotate(-Math.PI / 4);
+      ctx.fillStyle = isPast ? "rgba(255,213,79,0.7)" : "rgba(255,213,79,0.35)";
+      // Shorten long names
+      let label = ms.name;
+      if (label.length > 18) label = label.slice(0, 16) + "…";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
     }
 
     /* ── playhead ────────────────────────────────────────────── */
