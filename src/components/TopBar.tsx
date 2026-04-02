@@ -23,11 +23,16 @@ function formatCountdown(diffMs: number): string {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
+
 interface TopBarProps {
   metMs: number;
   telemetry: Telemetry | null;
   dsn: DsnStatus | null;
   timeline: TimelineState;
+  connected: boolean;
+  reconnecting: boolean;
+  lastUpdate: number | null;
 }
 
 const pillStyle: React.CSSProperties = {
@@ -81,9 +86,12 @@ const infoButtonStyle: React.CSSProperties = {
   transition: "color 0.15s, border-color 0.15s",
 };
 
-export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
+export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate }: TopBarProps) {
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
+
+  const isStale =
+    lastUpdate !== null && Date.now() - lastUpdate > STALE_THRESHOLD_MS;
 
   // Find the first active dish (downlink or uplink)
   const activeDish = dsn?.dishes.find((d) => d.downlinkActive || d.uplinkActive) ?? null;
@@ -142,6 +150,35 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
           />
           LIVE
         </span>
+        {/* Connection status indicators */}
+        {reconnecting && (
+          <span
+            style={{
+              fontSize: 8,
+              fontWeight: 700,
+              color: "var(--accent-orange)",
+              letterSpacing: "0.08em",
+              borderLeft: "1px solid var(--border-subtle)",
+              paddingLeft: 6,
+            }}
+          >
+            RECONNECTING…
+          </span>
+        )}
+        {!reconnecting && isStale && (
+          <span
+            style={{
+              fontSize: 8,
+              fontWeight: 700,
+              color: "#d4b800",
+              letterSpacing: "0.08em",
+              borderLeft: "1px solid var(--border-subtle)",
+              paddingLeft: 6,
+            }}
+          >
+            TELEMETRY DELAYED
+          </span>
+        )}
       </div>
 
       {/* MET Clock */}
