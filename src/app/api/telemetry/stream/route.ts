@@ -57,6 +57,28 @@ export async function GET(): Promise<Response> {
         };
         const message = SseManager.encodeEvent("telemetry", payload);
         controller.enqueue(encoder.encode(message));
+      } else {
+        // Data not yet available — retry every 2 s for up to 30 s so the first
+        // client doesn't sit on "—" until the next scheduled poll fires.
+        const checkInterval = setInterval(() => {
+          const data = cache.getLatest();
+          if (data) {
+            clearInterval(checkInterval);
+            const payload: SsePayload = {
+              telemetry: data.telemetry,
+              stateVector: data.stateVector,
+              moonPosition: data.moonPosition,
+              dsn: latestDsn,
+            };
+            try {
+              controller.enqueue(encoder.encode(SseManager.encodeEvent("telemetry", payload)));
+            } catch {
+              // Client disconnected before data arrived — ignore.
+            }
+          }
+        }, 2000);
+        // Stop retrying after 30 seconds regardless.
+        setTimeout(() => clearInterval(checkInterval), 30000);
       }
     },
   });
