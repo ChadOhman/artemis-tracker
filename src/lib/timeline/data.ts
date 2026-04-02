@@ -171,54 +171,100 @@ const PHASES: PhaseBlock[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Attitudes
+// Attitudes — comprehensive attitude timeline from NASA flight plan PDF
 // ---------------------------------------------------------------------------
 const ATTITUDES: AttitudeBlock[] = [
-  {
-    mode: "Ascent",
-    startMetMs: met(0, 0, 0, 0),
-    endMetMs: met(0, 0, 50, 0),
-  },
-  {
-    mode: "Bias -XSI",
-    startMetMs: met(0, 0, 50, 0),
-    endMetMs: met(0, 5, 27, 0),
-  },
-  {
-    mode: "TLI",
-    startMetMs: met(0, 5, 27, 0),
-    endMetMs: met(1, 1, 8, 42),
-  },
-  {
-    mode: "OTC",
-    startMetMs: met(1, 1, 8, 42),
-    endMetMs: met(2, 1, 8, 42),
-  },
-  {
-    mode: "Observation",
-    startMetMs: met(2, 1, 8, 42),
-    endMetMs: met(4, 4, 29, 52),
-  },
-  {
-    mode: "Survey",
-    startMetMs: met(4, 4, 29, 52),
-    endMetMs: met(5, 18, 53, 0),
-  },
-  {
-    mode: "RTC",
-    startMetMs: met(5, 18, 53, 0),
-    endMetMs: met(8, 20, 29, 10),
-  },
-  {
-    mode: "Bias -XSI Mitigate X",
-    startMetMs: met(8, 20, 29, 10),
-    endMetMs: met(9, 1, 9, 0),
-  },
-  {
-    mode: "EDL",
-    startMetMs: met(9, 1, 9, 0),
-    endMetMs: met(9, 1, 42, 48),
-  },
+  // ── FD01 ────────────────────────────────────────────────────────────────
+  { mode: "Ascent",          startMetMs: met(0, 0, 0, 0),   endMetMs: met(0, 0, 8, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(0, 0, 8, 0),   endMetMs: met(0, 0, 50, 0) },
+  { mode: "Burn Attitude",   startMetMs: met(0, 0, 50, 0),  endMetMs: met(0, 0, 55, 0) },   // PRM
+  { mode: "Bias -XSI",      startMetMs: met(0, 0, 55, 0),  endMetMs: met(0, 1, 45, 0) },
+  { mode: "Burn Attitude",   startMetMs: met(0, 1, 45, 0),  endMetMs: met(0, 1, 55, 0) },   // ARB
+  { mode: "Bias -XSI",      startMetMs: met(0, 1, 55, 0),  endMetMs: met(0, 3, 20, 0) },
+  { mode: "Sep Attitude",    startMetMs: met(0, 3, 20, 0),  endMetMs: met(0, 3, 30, 0) },   // ICPS separation
+  { mode: "Bias -XSI",      startMetMs: met(0, 3, 30, 0),  endMetMs: met(0, 5, 0, 0) },
+  { mode: "POD Attitude",    startMetMs: met(0, 5, 0, 0),   endMetMs: met(0, 5, 30, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(0, 5, 30, 0),  endMetMs: met(0, 10, 0, 0) },
+  { mode: "OpComm",          startMetMs: met(0, 10, 0, 0),  endMetMs: met(0, 12, 0, 0) },   // OpComm Initial Activation
+  { mode: "Bias -XSI",      startMetMs: met(0, 12, 0, 0),  endMetMs: met(0, 13, 20, 0) },
+  { mode: "PRB Attitude",    startMetMs: met(0, 13, 20, 0), endMetMs: met(0, 13, 40, 0) },  // Perigee Raise Burn
+  { mode: "Bias -XSI",      startMetMs: met(0, 13, 40, 0), endMetMs: met(0, 14, 0, 0) },
+  { mode: "O Nav",           startMetMs: met(0, 14, 0, 0),  endMetMs: met(0, 14, 30, 0) },  // OpNav checkout
+  { mode: "Bias -XSI",      startMetMs: met(0, 14, 30, 0), endMetMs: met(1, 1, 0, 0) },
+
+  // ── FD02 ────────────────────────────────────────────────────────────────
+  { mode: "TLI Burn",        startMetMs: met(1, 1, 0, 0),   endMetMs: met(1, 1, 20, 0) },   // Trans-Lunar Injection (~20 min)
+  { mode: "Bias -XSI",      startMetMs: met(1, 1, 20, 0),  endMetMs: met(1, 14, 0, 0) },
+  { mode: "Survey",          startMetMs: met(1, 14, 0, 0),  endMetMs: met(1, 14, 30, 0) },  // CM/SM Survey
+  { mode: "Bias -XSI",      startMetMs: met(1, 14, 30, 0), endMetMs: met(2, 0, 30, 0) },
+
+  // ── FD03 ────────────────────────────────────────────────────────────────
+  { mode: "O Nav",           startMetMs: met(2, 0, 30, 0),  endMetMs: met(2, 1, 0, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(2, 1, 0, 0),   endMetMs: met(2, 1, 5, 0) },
+  { mode: "OTC Burn",        startMetMs: met(2, 1, 5, 0),   endMetMs: met(2, 1, 15, 0) },   // OTC-1
+  { mode: "Bias -XSI",      startMetMs: met(2, 1, 15, 0),  endMetMs: met(2, 6, 0, 0) },
+  { mode: "SAT Mode",        startMetMs: met(2, 6, 0, 0),   endMetMs: met(2, 7, 30, 0) },   // DFTO-EM2-23
+  { mode: "Bias -XSI",      startMetMs: met(2, 7, 30, 0),  endMetMs: met(2, 8, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(2, 8, 0, 0),   endMetMs: met(2, 9, 0, 0) },    // DSN Emergency Comm
+  { mode: "Bias -XSI",      startMetMs: met(2, 9, 0, 0),   endMetMs: met(3, 0, 30, 0) },
+
+  // ── FD04 ────────────────────────────────────────────────────────────────
+  { mode: "O Nav",           startMetMs: met(3, 0, 30, 0),  endMetMs: met(3, 1, 0, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(3, 1, 0, 0),   endMetMs: met(3, 1, 5, 0) },
+  { mode: "OTC Burn",        startMetMs: met(3, 1, 5, 0),   endMetMs: met(3, 1, 15, 0) },   // OTC-2
+  { mode: "Bias -XSI",      startMetMs: met(3, 1, 15, 0),  endMetMs: met(3, 6, 0, 0) },
+  { mode: "Img",             startMetMs: met(3, 6, 0, 0),   endMetMs: met(3, 7, 0, 0) },    // Lunar Imaging
+  { mode: "Bias -XSI",      startMetMs: met(3, 7, 0, 0),   endMetMs: met(3, 8, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(3, 8, 0, 0),   endMetMs: met(3, 9, 0, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(3, 9, 0, 0),   endMetMs: met(4, 0, 0, 0) },
+
+  // ── FD05 ────────────────────────────────────────────────────────────────
+  { mode: "O Nav",           startMetMs: met(4, 0, 0, 0),   endMetMs: met(4, 0, 30, 0) },
+  { mode: "Vent",            startMetMs: met(4, 0, 30, 0),  endMetMs: met(4, 2, 0, 0) },    // Cabin vent to 10.2 psi
+  { mode: "Bias -XSI",      startMetMs: met(4, 2, 0, 0),   endMetMs: met(4, 4, 25, 0) },
+  { mode: "OTC Burn",        startMetMs: met(4, 4, 25, 0),  endMetMs: met(4, 4, 35, 0) },   // OTC-3
+  { mode: "Bias -XSI",      startMetMs: met(4, 4, 35, 0),  endMetMs: met(4, 8, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(4, 8, 0, 0),   endMetMs: met(4, 8, 45, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(4, 8, 45, 0),  endMetMs: met(4, 22, 0, 0) },
+
+  // ── FD06 ────────────────────────────────────────────────────────────────
+  { mode: "Observation",     startMetMs: met(4, 22, 0, 0),  endMetMs: met(5, 4, 0, 0) },    // Lunar observation / close approach
+  { mode: "Bias -XSI",      startMetMs: met(5, 4, 0, 0),   endMetMs: met(5, 12, 0, 0) },
+  { mode: "Survey",          startMetMs: met(5, 12, 0, 0),  endMetMs: met(5, 13, 0, 0) },   // CM/SM Survey
+  { mode: "Bias -XSI",      startMetMs: met(5, 13, 0, 0),  endMetMs: met(5, 22, 0, 0) },
+
+  // ── FD07 ────────────────────────────────────────────────────────────────
+  { mode: "O Nav",           startMetMs: met(5, 22, 0, 0),  endMetMs: met(5, 22, 30, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(5, 22, 30, 0), endMetMs: met(6, 1, 25, 0) },
+  { mode: "RTC Burn",        startMetMs: met(6, 1, 25, 0),  endMetMs: met(6, 1, 35, 0) },   // RTC-1
+  { mode: "Bias -XSI",      startMetMs: met(6, 1, 35, 0),  endMetMs: met(6, 4, 0, 0) },
+  { mode: "FTO",             startMetMs: met(6, 4, 0, 0),   endMetMs: met(6, 5, 0, 0) },    // Dock Cam WW View
+  { mode: "Bias -XSI",      startMetMs: met(6, 5, 0, 0),   endMetMs: met(6, 6, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(6, 6, 0, 0),   endMetMs: met(6, 7, 0, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(6, 7, 0, 0),   endMetMs: met(7, 0, 0, 0) },
+
+  // ── FD08 ────────────────────────────────────────────────────────────────
+  { mode: "DFTO",            startMetMs: met(7, 0, 0, 0),   endMetMs: met(7, 1, 0, 0) },    // Rad Shelter Demo
+  { mode: "Bias -XSI",      startMetMs: met(7, 1, 0, 0),   endMetMs: met(7, 2, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(7, 2, 0, 0),   endMetMs: met(7, 3, 0, 0) },    // Manual Piloting
+  { mode: "Bias -XSI",      startMetMs: met(7, 3, 0, 0),   endMetMs: met(7, 4, 0, 0) },
+  { mode: "DFTO",            startMetMs: met(7, 4, 0, 0),   endMetMs: met(7, 5, 0, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(7, 5, 0, 0),   endMetMs: met(7, 8, 0, 0) },
+  { mode: "Bias -XSI Mitigate X", startMetMs: met(7, 8, 0, 0), endMetMs: met(7, 16, 30, 0) },
+
+  // ── FD09 ────────────────────────────────────────────────────────────────
+  { mode: "DFTO",            startMetMs: met(7, 16, 30, 0), endMetMs: met(7, 17, 0, 0) },
+  { mode: "Bias -XSI Mitigate X", startMetMs: met(7, 17, 0, 0), endMetMs: met(8, 0, 0, 0) },
+  { mode: "O Nav",           startMetMs: met(8, 0, 0, 0),   endMetMs: met(8, 0, 30, 0) },
+  { mode: "Bias -XSI",      startMetMs: met(8, 0, 30, 0),  endMetMs: met(8, 4, 25, 0) },
+  { mode: "RTC Burn",        startMetMs: met(8, 4, 25, 0),  endMetMs: met(8, 4, 35, 0) },   // RTC-2
+  { mode: "Bias -XSI Mitigate X", startMetMs: met(8, 4, 35, 0), endMetMs: met(8, 20, 25, 0) },
+
+  // ── FD10 ────────────────────────────────────────────────────────────────
+  { mode: "RTC Burn",        startMetMs: met(8, 20, 25, 0), endMetMs: met(8, 20, 35, 0) },  // RTC-3
+  { mode: "Bias -XSI Mitigate X", startMetMs: met(8, 20, 35, 0), endMetMs: met(9, 1, 5, 0) },
+  { mode: "Sep Attitude",    startMetMs: met(9, 1, 5, 0),   endMetMs: met(9, 1, 12, 0) },   // CM/SM Separation
+  { mode: "EDL",             startMetMs: met(9, 1, 12, 0),  endMetMs: met(9, 1, 42, 48) },
 ];
 
 // ---------------------------------------------------------------------------
