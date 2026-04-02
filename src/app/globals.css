@@ -1,26 +1,342 @@
-@import "tailwindcss";
+/* Artemis II Mission Control — Global Theme */
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background palette */
+  --bg-primary: #0a0e14;
+  --bg-secondary: #0d1117;
+  --bg-panel: #111820;
+  --bg-panel-header: #0f1621;
+  --bg-surface: #161e2a;
+  --bg-hover: #1a2333;
+
+  /* Accent colors */
+  --accent-cyan: #00e5ff;
+  --accent-cyan-dim: #00b8cc;
+  --accent-cyan-glow: rgba(0, 229, 255, 0.15);
+  --accent-green: #00ff88;
+  --accent-green-dim: #00cc6a;
+  --accent-orange: #ff8c00;
+  --accent-red: #ff3d3d;
+  --accent-yellow: #ffd600;
+  --accent-purple: #b388ff;
+
+  /* Text */
+  --text-primary: #e8f0fe;
+  --text-secondary: #8ba0b8;
+  --text-dim: #4a5f78;
+  --text-accent: var(--accent-cyan);
+
+  /* Borders */
+  --border-panel: rgba(0, 229, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-active: rgba(0, 229, 255, 0.4);
+
+  /* Activity type colors */
+  --color-sleep: #5c7cfa;
+  --color-pao: #ff6b9d;
+  --color-science: #51cf66;
+  --color-maneuver: #ff8c00;
+  --color-config: #748ffc;
+  --color-exercise: #20c997;
+  --color-meal: #fcc419;
+  --color-off-duty: #868e96;
+  --color-other: #4a5f78;
+
+  /* Status colors */
+  --status-nominal: var(--accent-green);
+  --status-caution: var(--accent-yellow);
+  --status-warning: var(--accent-orange);
+  --status-critical: var(--accent-red);
+  --status-offline: var(--text-dim);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* ── Reset & Base ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+html,
+body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace,
+    monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#__next,
+main {
+  height: 100%;
+}
+
+/* ── Dashboard Grid ── */
+.dashboard-grid {
+  display: grid;
+  width: 100vw;
+  height: 100vh;
+  grid-template-columns: 35fr 40fr 25fr;
+  grid-template-rows: 48px 1fr 36px;
+  grid-template-areas:
+    "topbar topbar topbar"
+    "left   center right"
+    "bottombar bottombar bottombar";
+  gap: 0;
+  overflow: hidden;
+}
+
+.dashboard-topbar {
+  grid-area: topbar;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-panel);
+  z-index: 10;
+}
+
+.dashboard-left {
+  grid-area: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 2px 4px 4px;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.dashboard-center {
+  grid-area: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 2px;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.dashboard-right {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 4px 4px 2px;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.dashboard-bottombar {
+  grid-area: bottombar;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-panel);
+}
+
+/* ── Panels ── */
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border-panel);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  background: var(--bg-panel-header);
+  border-bottom: 1px solid var(--border-panel);
+  min-height: 30px;
+  flex-shrink: 0;
+}
+
+.panel-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-accent);
+}
+
+.panel-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.panel-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 10px;
+}
+
+.panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.panel-body::-webkit-scrollbar-thumb {
+  background: var(--border-panel);
+  border-radius: 2px;
+}
+
+.panel-body::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-cyan-dim);
+}
+
+/* ── Telemetry Rows ── */
+.telem-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.telem-row:last-child {
+  border-bottom: none;
+}
+
+.telem-label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.telem-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.telem-unit {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: 3px;
+}
+
+/* ── Live Dot ── */
+.live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-green);
+  box-shadow: 0 0 6px var(--accent-green);
+  animation: pulse-live 2s ease-in-out infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.live-dot.inactive {
+  background: var(--text-dim);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes pulse-live {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 6px var(--accent-green);
+  }
+  50% {
+    opacity: 0.4;
+    box-shadow: 0 0 2px var(--accent-green);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Milestone Dots ── */
+.milestone-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.milestone-dot.completed {
+  background: var(--accent-green);
+  box-shadow: 0 0 4px var(--accent-green-dim);
+}
+
+.milestone-dot.active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 6px var(--accent-cyan);
+  animation: pulse-milestone 1.5s ease-in-out infinite;
+}
+
+.milestone-dot.upcoming {
+  background: transparent;
+  border: 2px solid var(--text-dim);
+}
+
+@keyframes pulse-milestone {
+  0%, 100% {
+    box-shadow: 0 0 6px var(--accent-cyan);
+  }
+  50% {
+    box-shadow: 0 0 12px var(--accent-cyan), 0 0 20px var(--accent-cyan-glow);
+  }
+}
+
+/* ── Activity Type Badges ── */
+.activity-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.activity-badge.sleep   { background: rgba(92, 124, 250, 0.2); color: var(--color-sleep); }
+.activity-badge.pao     { background: rgba(255, 107, 157, 0.2); color: var(--color-pao); }
+.activity-badge.science { background: rgba(81, 207, 102, 0.2); color: var(--color-science); }
+.activity-badge.maneuver { background: rgba(255, 140, 0, 0.2); color: var(--color-maneuver); }
+.activity-badge.config  { background: rgba(116, 143, 252, 0.2); color: var(--color-config); }
+.activity-badge.exercise { background: rgba(32, 201, 151, 0.2); color: var(--color-exercise); }
+.activity-badge.meal    { background: rgba(252, 196, 25, 0.2); color: var(--color-meal); }
+.activity-badge.off-duty { background: rgba(134, 142, 150, 0.15); color: var(--color-off-duty); }
+.activity-badge.other   { background: rgba(74, 95, 120, 0.2); color: var(--color-other); }
+
+/* ── Scrollbar Global ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-panel) transparent;
+}
+
+/* ── Utility ── */
+.text-accent  { color: var(--accent-cyan); }
+.text-green   { color: var(--accent-green); }
+.text-orange  { color: var(--accent-orange); }
+.text-red     { color: var(--accent-red); }
+.text-yellow  { color: var(--accent-yellow); }
+.text-dim     { color: var(--text-dim); }
+.text-secondary { color: var(--text-secondary); }
+
+.tabular-nums { font-variant-numeric: tabular-nums; }
+
+.glow-cyan {
+  text-shadow: 0 0 8px var(--accent-cyan-glow), 0 0 16px var(--accent-cyan-glow);
 }
