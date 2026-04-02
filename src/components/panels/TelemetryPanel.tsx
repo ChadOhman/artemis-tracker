@@ -88,11 +88,6 @@ export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
       <TelemSection label="Dynamics" />
       <TelemRow
         label="Velocity"
-        value={fmt(t?.speedKmS, 3)}
-        unit="km/s"
-      />
-      <TelemRow
-        label="Speed"
         value={t ? Math.round(t.speedKmH).toLocaleString() : "—"}
         unit="km/h"
       />
