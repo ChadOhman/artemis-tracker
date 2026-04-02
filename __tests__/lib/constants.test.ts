@@ -17,7 +17,7 @@ describe("constants", () => {
 
   test("spacecraft IDs are correct", () => {
     expect(JPL_SPACECRAFT_ID).toBe("-1024");
-    expect(DSN_SPACECRAFT_ID).toBe("ART2");
+    expect(DSN_SPACECRAFT_ID).toBe("EM2");
   });
 
   test("poll intervals are correct", () => {

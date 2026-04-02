@@ -24,4 +24,4 @@ Real-time mission control dashboard for NASA's Artemis II crewed lunar flyby.
 ## Key Constants
 - Launch: 2026-04-01T22:35:00Z (18:35 ET)
 - JPL Spacecraft ID: -1024
-- DSN Spacecraft ID: ART2
+- DSN Spacecraft ID: EM2 (listed as EM2 in DSN feed, not ART2)
