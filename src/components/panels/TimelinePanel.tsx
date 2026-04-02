@@ -205,7 +205,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.save();
     ctx.strokeStyle = FD_COLOR;
     ctx.lineWidth = 1;
-    ctx.fillStyle = "#5a7a9a";
+    ctx.fillStyle = "#7a9ab8";
     ctx.font = `bold 9px ${FONT}`;
     for (let d = firstDay; d <= lastDay; d++) {
       const dayMs = d * MS_DAY;
@@ -397,7 +397,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.fillStyle = "#0a0f18";
     ctx.fillRect(0, RULER_H, LABEL_GUTTER, h - RULER_H);
 
-    ctx.fillStyle = "#5a7a9a";
+    ctx.fillStyle = "#7a9ab8";
     ctx.font = `bold 8px ${FONT}`;
     ctx.textAlign = "center";
     ctx.fillText("CREW", LABEL_GUTTER / 2, crewY + crewH / 2 + 3);

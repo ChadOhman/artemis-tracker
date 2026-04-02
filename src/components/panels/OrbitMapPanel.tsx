@@ -216,7 +216,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     // --- FREE-RETURN TRAJECTORY subtitle ---
     ctx.save();
     ctx.font = "bold 8px monospace";
-    ctx.fillStyle = "rgba(0,220,255,0.35)";
+    ctx.fillStyle = "rgba(0,220,255,0.55)";
     ctx.textAlign = "center";
     ctx.fillText("FREE-RETURN TRAJECTORY", w / 2, h - 8);
     ctx.restore();
@@ -285,14 +285,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         ctx.save();
         ctx.beginPath();
         ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = passed ? "rgba(0,220,255,0.9)" : "rgba(0,220,255,0.35)";
+        ctx.fillStyle = passed ? "rgba(0,220,255,0.9)" : "rgba(0,220,255,0.55)";
         ctx.fill();
         ctx.restore();
       }
 
       ctx.save();
       ctx.font = "9px monospace";
-      ctx.fillStyle = passed ? "rgba(255,213,79,0.9)" : "rgba(255,213,79,0.4)";
+      ctx.fillStyle = passed ? "rgba(255,213,79,0.9)" : "rgba(255,213,79,0.65)";
       ctx.textAlign = wp.align || "center";
       const labelX = wp.align === "right" ? p.x + 8 : p.x;
       ctx.fillText(wp.label, labelX, p.y + (wp.offsetY || -8));
