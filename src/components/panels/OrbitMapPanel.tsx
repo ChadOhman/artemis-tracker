@@ -496,7 +496,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     <PanelFrame title="Figure-8 Lunar Flyby Trajectory" accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>2D TOP-DOWN VIEW</span>}>
       <div
         ref={containerRef}
-        style={{ width: "100%", height: 320, position: "relative", overflow: "hidden", borderRadius: 4 }}
+        style={{ width: "100%", height: "min(320px, 50vw)", position: "relative", overflow: "hidden", borderRadius: 4 }}
       >
         <span className="sr-only">{orbitDescription}</span>
         <canvas

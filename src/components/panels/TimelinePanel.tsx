@@ -576,7 +576,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     >
       <div
         ref={containerRef}
-        style={{ width: "100%", height: 180, position: "relative", cursor: dragRef.current.active ? "grabbing" : "grab" }}
+        style={{ width: "100%", height: "min(180px, 35vw)", position: "relative", cursor: dragRef.current.active ? "grabbing" : "grab" }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}

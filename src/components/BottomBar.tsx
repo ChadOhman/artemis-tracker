@@ -46,6 +46,7 @@ export function BottomBar({ milestones }: BottomBarProps) {
       style={{
         display: "flex",
         alignItems: "center",
+        flexWrap: "wrap",
         height: "100%",
         padding: "0 10px",
         background: "var(--bg-secondary)",

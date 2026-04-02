@@ -104,6 +104,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
 
   return (
     <div
+      className="topbar-inner"
       style={{
         display: "flex",
         alignItems: "center",
@@ -115,7 +116,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       }}
     >
       {/* Title + LIVE */}
-      <div style={{ ...pillStyle, gap: 8, paddingLeft: 12, paddingRight: 12 }}>
+      <div className="topbar-pill" style={{ ...pillStyle, gap: 8, paddingLeft: 12, paddingRight: 12 }}>
         <span
           style={{
             fontSize: 13,
@@ -182,12 +183,12 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </div>
 
       {/* MET Clock */}
-      <div style={pillStyle}>
+      <div className="topbar-pill" style={pillStyle}>
         <MetClock metMs={metMs} size="small" showTPlus={false} />
       </div>
 
       {/* Phase badge */}
-      <div style={pillStyle}>
+      <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>Phase</span>
         <span
           style={{
@@ -203,7 +204,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </div>
 
       {/* Flight Day */}
-      <div style={pillStyle}>
+      <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>Day</span>
         <span style={{ ...valueStyle, color: "var(--accent-yellow)" }}>
           {flightDay}
@@ -211,7 +212,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </div>
 
       {/* Comms */}
-      <div style={pillStyle}>
+      <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>DSN</span>
         <span
           className={`live-dot ${commsActive ? "" : "inactive"}`}
@@ -223,7 +224,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </div>
 
       {/* Telemetry: VEL, ALT, EARTH */}
-      <div aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
+      <div className="topbar-pill" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>VEL</span>
           <span style={valueStyle}>
@@ -257,7 +258,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         if (!nextSleep) return null;
         const sleepIn = nextSleep.startMetMs - metMs;
         return (
-          <div style={{ ...pillStyle, gap: 6 }}>
+          <div className="topbar-pill topbar-hide-mobile" style={{ ...pillStyle, gap: 6 }}>
             <span style={labelStyle}>SLEEP</span>
             <span style={{ fontSize: 10, color: "var(--accent-purple)", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
               {formatCountdown(sleepIn)}
@@ -268,6 +269,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
 
       {/* Info buttons */}
       <button
+        className="topbar-pill topbar-hide-mobile"
         style={infoButtonStyle}
         onClick={() => setCrewOpen(true)}
         aria-label="View crew information"
@@ -283,6 +285,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         CREW
       </button>
       <button
+        className="topbar-pill topbar-hide-mobile"
         style={infoButtonStyle}
         onClick={() => setVehicleOpen(true)}
         aria-label="View vehicle information"
@@ -300,7 +303,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
 
       {/* Next event countdown */}
       {nextMilestone && countdownMs !== null && (
-        <div style={{ ...pillStyle, gap: 8, marginLeft: "auto", borderColor: "rgba(255,140,0,0.3)" }}>
+        <div className="topbar-pill" style={{ ...pillStyle, gap: 8, marginLeft: "auto", borderColor: "rgba(255,140,0,0.3)" }}>
           <span style={labelStyle}>Next</span>
           <span
             style={{
