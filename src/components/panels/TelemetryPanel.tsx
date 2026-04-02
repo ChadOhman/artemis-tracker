@@ -13,10 +13,12 @@ function fmt(n: number | undefined, decimals = 1): string {
   return n.toFixed(decimals);
 }
 
-function fmtKm(n: number | undefined): string {
+function fmtKm(n: number | undefined, decimals = 1): string {
   if (n === undefined || n === null) return "—";
-  if (Math.abs(n) >= 10000) return (n / 1000).toFixed(1) + "k";
-  return n.toFixed(0);
+  return n.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 }
 
 function TelemSection({ label }: { label: string }) {
