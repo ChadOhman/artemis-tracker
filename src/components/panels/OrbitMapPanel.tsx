@@ -17,43 +17,82 @@ interface TrajectoryPoint {
 
 function generateReferenceTrajectory(): TrajectoryPoint[] {
   const points: TrajectoryPoint[] = [];
-  const moonDist = 384400;
+  // All coordinates in normalized space: Earth at (0,0), Moon at (1,0)
+  // Y positive = up on canvas (we flip later)
+
   const tliMetMs = (25 * 3600 + 8 * 60 + 42) * 1000;
   const lunarSoiMetMs = (4 * 24 * 3600 + 6 * 3600 + 38 * 60) * 1000;
   const flybyMetMs = (5 * 24 * 3600 + 30 * 60) * 1000;
   const exitMetMs = (5 * 24 * 3600 + 18 * 3600 + 53 * 60) * 1000;
   const entryMetMs = (9 * 24 * 3600 + 1 * 3600 + 29 * 60) * 1000;
 
-  // Phase 1: Earth orbit spiral
-  for (let i = 0; i <= 20; i++) {
-    const t = i / 20;
-    const angle = t * Math.PI * 2;
-    const r = 6571 + t * 50000;
-    points.push({ x: Math.cos(angle) * r, y: Math.sin(angle) * r, metMs: t * tliMetMs });
+  // Phase 1: Spiraling Earth orbits (LEO → HEO) — 2.5 revolutions
+  const spiralRevs = 2.5;
+  const spiralSteps = 60;
+  for (let i = 0; i <= spiralSteps; i++) {
+    const t = i / spiralSteps;
+    const angle = -Math.PI * 0.5 + t * spiralRevs * Math.PI * 2;
+    const r = 0.018 + t * 0.06; // small radius growing outward
+    points.push({
+      x: Math.cos(angle) * r,
+      y: Math.sin(angle) * r,
+      metMs: t * tliMetMs,
+    });
   }
 
-  // Phase 2: Trans-lunar coast (curve upward)
-  for (let i = 1; i <= 30; i++) {
-    const t = i / 30;
-    const x = 50000 + t * (moonDist - 50000);
-    const y = Math.sin(t * Math.PI * 0.3) * 30000;
-    points.push({ x, y, metMs: tliMetMs + t * (lunarSoiMetMs - tliMetMs) });
+  // Phase 2: Trans-lunar injection — sweeping arc upward-right to Moon
+  // Uses a quadratic Bezier: P0 near Earth, P1 control above midpoint, P2 near Moon
+  const p0 = { x: 0.06, y: 0.04 }; // departure tangent direction
+  const cp = { x: 0.45, y: 0.42 }; // control point — arc peaks well above midline
+  const p2 = { x: 0.97, y: 0.05 }; // approach Moon from below-right
+  const outboundSteps = 50;
+  for (let i = 1; i <= outboundSteps; i++) {
+    const t = i / outboundSteps;
+    const u = 1 - t;
+    const bx = u * u * p0.x + 2 * u * t * cp.x + t * t * p2.x;
+    const by = u * u * p0.y + 2 * u * t * cp.y + t * t * p2.y;
+    points.push({
+      x: bx,
+      y: by,
+      metMs: tliMetMs + t * (lunarSoiMetMs - tliMetMs),
+    });
   }
 
-  // Phase 3: Lunar flyby (arc behind Moon)
-  for (let i = 1; i <= 20; i++) {
-    const t = i / 20;
-    const angle = -Math.PI * 0.3 + t * Math.PI * 0.8;
-    const r = 6513 + Math.sin(t * Math.PI) * 5000;
-    points.push({ x: moonDist + Math.cos(angle) * r, y: Math.sin(angle) * r, metMs: lunarSoiMetMs + t * (flybyMetMs - lunarSoiMetMs) });
+  // Phase 3: Lunar flyby — tight loop behind the Moon's far side
+  // Arc swings behind (positive x past Moon), loops over top, comes back below
+  const flybyR = 0.045;
+  const flybySteps = 40;
+  const flybyStartAngle = -Math.PI * 0.15; // entering from below-left
+  const flybyEndAngle = Math.PI * 1.15; // exiting below-right after going behind
+  for (let i = 1; i <= flybySteps; i++) {
+    const t = i / flybySteps;
+    const angle = flybyStartAngle + t * (flybyEndAngle - flybyStartAngle);
+    // Slight ellipse — wider behind Moon
+    const rx = flybyR * (1 + 0.3 * Math.sin(angle));
+    const ry = flybyR;
+    points.push({
+      x: 1.0 + Math.cos(angle) * rx,
+      y: Math.sin(angle) * ry,
+      metMs: lunarSoiMetMs + t * (exitMetMs - lunarSoiMetMs),
+    });
   }
 
-  // Phase 4: Return coast (curve below outbound)
-  for (let i = 1; i <= 30; i++) {
-    const t = i / 30;
-    const x = moonDist * (1 - t);
-    const y = -Math.sin(t * Math.PI * 0.4) * 40000;
-    points.push({ x, y, metMs: exitMetMs + t * (entryMetMs - exitMetMs) });
+  // Phase 4: Return coast — sweeping arc below the outbound path back to Earth
+  // Bezier: from Moon exit point, arcs downward, curves back to Earth
+  const r0 = points[points.length - 1]; // last flyby point
+  const rcp = { x: 0.45, y: -0.30 }; // control point — arc dips well below
+  const r2 = { x: 0.0, y: -0.02 }; // arrive near Earth from below
+  const returnSteps = 50;
+  for (let i = 1; i <= returnSteps; i++) {
+    const t = i / returnSteps;
+    const u = 1 - t;
+    const bx = u * u * r0.x + 2 * u * t * rcp.x + t * t * r2.x;
+    const by = u * u * r0.y + 2 * u * t * rcp.y + t * t * r2.y;
+    points.push({
+      x: bx,
+      y: by,
+      metMs: exitMetMs + t * (entryMetMs - exitMetMs),
+    });
   }
 
   return points;
@@ -125,24 +164,35 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.fill();
     }
 
-    // Coordinate system: Earth at 20% from left, vertically centered
-    const earthPx = { x: w * 0.2, y: h * 0.5 };
-    const moonPx = { x: w * 0.8, y: h * 0.5 };
-    const moonDist = 384400; // km
-    const scale = (moonPx.x - earthPx.x) / moonDist; // px per km
+    // AROW-style coordinate system:
+    // Earth lower-left, Moon upper-right
+    const earthPx = { x: w * 0.15, y: h * 0.62 };
+    const moonPx = { x: w * 0.85, y: h * 0.25 };
+    // Separation vector for normalized coords → pixel mapping
+    const sepX = moonPx.x - earthPx.x; // pixel distance Earth→Moon x
+    const sepY = moonPx.y - earthPx.y; // pixel distance Earth→Moon y (negative = up)
 
-    // Helper: km coords (Earth-centered, Y up) -> canvas pixels
-    function toCanvas(xKm: number, yKm: number): { x: number; y: number } {
+    // Helper: normalized coords (Earth=0,0  Moon=1,0  Y+ = up) → canvas pixels
+    // We map the unit vector (0→1) along Earth→Moon direction,
+    // and perpendicular component uses the same scale
+    function toCanvas(nx: number, ny: number): { x: number; y: number } {
+      // Unit vector along Earth→Moon
+      const len = Math.sqrt(sepX * sepX + sepY * sepY);
+      const ux = sepX / len;
+      const uy = sepY / len;
+      // Perpendicular (rotated 90° CCW for Y-up mapped to canvas)
+      const px = -uy;
+      const py = ux;
       return {
-        x: earthPx.x + xKm * scale,
-        y: earthPx.y - yKm * scale, // flip Y
+        x: earthPx.x + nx * sepX + ny * len * px,
+        y: earthPx.y + nx * sepY + ny * len * py,
       };
     }
 
     // --- Dashed line Earth-Moon ---
     ctx.save();
     ctx.setLineDash([6, 6]);
-    ctx.strokeStyle = "rgba(100,160,255,0.25)";
+    ctx.strokeStyle = "rgba(100,160,255,0.15)";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(earthPx.x, earthPx.y);
@@ -153,9 +203,19 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     // Distance label
     ctx.save();
     ctx.font = "9px monospace";
-    ctx.fillStyle = "rgba(100,160,255,0.5)";
+    ctx.fillStyle = "rgba(100,160,255,0.4)";
     ctx.textAlign = "center";
-    ctx.fillText("380,540 km", (earthPx.x + moonPx.x) / 2, earthPx.y - 8);
+    const midX = (earthPx.x + moonPx.x) / 2;
+    const midY = (earthPx.y + moonPx.y) / 2;
+    ctx.fillText("380,540 km", midX, midY + 14);
+    ctx.restore();
+
+    // --- FREE-RETURN TRAJECTORY subtitle ---
+    ctx.save();
+    ctx.font = "bold 8px monospace";
+    ctx.fillStyle = "rgba(0,220,255,0.35)";
+    ctx.textAlign = "center";
+    ctx.fillText("FREE-RETURN TRAJECTORY", w / 2, h - 8);
     ctx.restore();
 
     // --- Reference trajectory ---
@@ -171,8 +231,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     if (orionRefIdx < REFERENCE_TRAJECTORY.length - 1) {
       ctx.save();
       ctx.setLineDash([3, 5]);
-      ctx.strokeStyle = "rgba(0,220,255,0.18)";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,220,255,0.22)";
+      ctx.lineWidth = 2;
       ctx.beginPath();
       const startFuture = REFERENCE_TRAJECTORY[orionRefIdx];
       const sf = toCanvas(startFuture.x, startFuture.y);
@@ -189,8 +249,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     if (orionRefIdx > 0) {
       ctx.save();
       ctx.setLineDash([]);
-      ctx.strokeStyle = "rgba(0,220,255,0.7)";
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = "rgba(0,220,255,0.75)";
+      ctx.lineWidth = 2;
       ctx.beginPath();
       const first = toCanvas(REFERENCE_TRAJECTORY[0].x, REFERENCE_TRAJECTORY[0].y);
       ctx.moveTo(first.x, first.y);
@@ -231,7 +291,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     }
 
     // --- Earth ---
-    const earthR = Math.max(10, Math.min(w, h) * 0.055);
+    const earthR = Math.max(12, Math.min(w, h) * 0.06);
     const earthGrad = ctx.createRadialGradient(
       earthPx.x - earthR * 0.3, earthPx.y - earthR * 0.3, 0,
       earthPx.x, earthPx.y, earthR
@@ -295,18 +355,25 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     let orionPx: { x: number; y: number };
 
     if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
-      // Use live state vector
-      orionPx = toCanvas(stateVector.position.x, stateVector.position.y);
+      // Use live state vector — convert km to normalized coords
+      const moonDistKm = 384400;
+      orionPx = toCanvas(stateVector.position.x / moonDistKm, stateVector.position.y / moonDistKm);
     } else {
-      // Estimate from reference trajectory
-      let refPt = REFERENCE_TRAJECTORY[orionRefIdx];
-      // Interpolate between points if possible
-      if (orionRefIdx < REFERENCE_TRAJECTORY.length - 1) {
-        const a = REFERENCE_TRAJECTORY[orionRefIdx];
-        const b = REFERENCE_TRAJECTORY[orionRefIdx + 1];
+      // Estimate from reference trajectory with smooth interpolation
+      // Find the two nearest reference points bracketing current metMs
+      let idxA = 0;
+      for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
+        if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
+          idxA = i;
+        }
+      }
+      let refPt = REFERENCE_TRAJECTORY[idxA];
+      if (idxA < REFERENCE_TRAJECTORY.length - 1) {
+        const a = REFERENCE_TRAJECTORY[idxA];
+        const b = REFERENCE_TRAJECTORY[idxA + 1];
         const span = b.metMs - a.metMs;
         if (span > 0) {
-          const t = (metMs - a.metMs) / span;
+          const t = Math.max(0, Math.min(1, (metMs - a.metMs) / span));
           refPt = {
             x: a.x + t * (b.x - a.x),
             y: a.y + t * (b.y - a.y),
@@ -383,7 +450,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     <PanelFrame title="Orbital Map" icon="🛸" accentColor="var(--accent-cyan)">
       <div
         ref={containerRef}
-        style={{ width: "100%", height: 240, position: "relative", overflow: "hidden", borderRadius: 4 }}
+        style={{ width: "100%", height: 320, position: "relative", overflow: "hidden", borderRadius: 4 }}
       >
         <canvas
           ref={canvasRef}
