@@ -91,6 +91,10 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
   const rafRef = useRef<number>(0);
 
   const [autoTrack, setAutoTrack] = useState(true);
+  const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string; description: string; met: string; isPast: boolean } | null>(null);
+
+  // Store milestone pixel positions for hit testing (updated during draw)
+  const milestoneHitsRef = useRef<{ x: number; metMs: number; name: string; description: string }[]>([]);
 
   // View state stored in refs for RAF loop performance
   const viewStartRef = useRef(metMs - DEFAULT_RANGE * 0.3);
@@ -338,9 +342,8 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       }
     }
 
-    /* ── milestones (diamonds + labels on ruler) ────────────── */
-    ctx.font = `8px ${FONT}`;
-    ctx.textAlign = "left";
+    /* ── milestones (diamonds on ruler) ─────────────────────── */
+    const hits: typeof milestoneHitsRef.current = [];
     for (const ms of raw.milestones) {
       if (ms.metMs < viewStart || ms.metMs > viewEnd) continue;
       const x = msToX(ms.metMs);
@@ -352,31 +355,23 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       ctx.fillStyle = isPast ? "#ffd54f" : "rgba(255,213,79,0.4)";
       ctx.beginPath();
       ctx.moveTo(x, RULER_H - 2);
-      ctx.lineTo(x + 3, RULER_H + 3);
-      ctx.lineTo(x, RULER_H + 8);
-      ctx.lineTo(x - 3, RULER_H + 3);
+      ctx.lineTo(x + 4, RULER_H + 4);
+      ctx.lineTo(x, RULER_H + 10);
+      ctx.lineTo(x - 4, RULER_H + 4);
       ctx.closePath();
       ctx.fill();
 
-      // Vertical tick line down from diamond
-      ctx.strokeStyle = isPast ? "rgba(255,213,79,0.25)" : "rgba(255,213,79,0.1)";
+      // Vertical tick line
+      ctx.strokeStyle = isPast ? "rgba(255,213,79,0.2)" : "rgba(255,213,79,0.08)";
       ctx.lineWidth = 0.5;
       ctx.beginPath();
-      ctx.moveTo(x, RULER_H + 8);
-      ctx.lineTo(x, RULER_H + 16);
+      ctx.moveTo(x, RULER_H + 10);
+      ctx.lineTo(x, RULER_H + 18);
       ctx.stroke();
 
-      // Rotated label above the diamond
-      ctx.save();
-      ctx.translate(x + 2, RULER_H - 5);
-      ctx.rotate(-Math.PI / 4);
-      ctx.fillStyle = isPast ? "rgba(255,213,79,0.7)" : "rgba(255,213,79,0.35)";
-      // Shorten long names
-      let label = ms.name;
-      if (label.length > 18) label = label.slice(0, 16) + "…";
-      ctx.fillText(label, 0, 0);
-      ctx.restore();
+      hits.push({ x, metMs: ms.metMs, name: ms.name, description: ms.description });
     }
+    milestoneHitsRef.current = hits;
 
     /* ── playhead ────────────────────────────────────────────── */
     const px = msToX(met);
@@ -453,16 +448,50 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragRef.current.active) return;
+    if (dragRef.current.active) {
+      const container = containerRef.current;
+      if (!container) return;
+      const dx = e.clientX - dragRef.current.startX;
+      const drawW = container.getBoundingClientRect().width - LABEL_GUTTER;
+      const msDelta = -(dx / drawW) * viewRangeRef.current;
+      viewStartRef.current = dragRef.current.startViewStart + msDelta;
+      setAutoTrack(false);
+      setTooltip(null);
+      return;
+    }
+
+    // Hit test milestones for tooltip
     const container = containerRef.current;
     if (!container) return;
+    const rect = container.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
-    const dx = e.clientX - dragRef.current.startX;
-    const drawW = container.getBoundingClientRect().width - LABEL_GUTTER;
-    const msDelta = -(dx / drawW) * viewRangeRef.current;
+    // Only check near the ruler area (top ~35px)
+    if (mouseY > 35) {
+      setTooltip(null);
+      return;
+    }
 
-    viewStartRef.current = dragRef.current.startViewStart + msDelta;
-    setAutoTrack(false);
+    const hitRadius = 12;
+    let found = false;
+    for (const hit of milestoneHitsRef.current) {
+      if (Math.abs(mouseX - hit.x) < hitRadius) {
+        const met = metMsRef.current;
+        const isPast = met >= hit.metMs;
+        setTooltip({
+          x: hit.x,
+          y: 30,
+          name: hit.name,
+          description: hit.description,
+          met: formatMET(hit.metMs),
+          isPast,
+        });
+        found = true;
+        break;
+      }
+    }
+    if (!found) setTooltip(null);
   }, []);
 
   const handleMouseUp = useCallback(() => {
@@ -471,6 +500,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
 
   const handleMouseLeave = useCallback(() => {
     dragRef.current.active = false;
+    setTooltip(null);
   }, []);
 
   const handleWheel = useCallback((e: React.WheelEvent) => {
@@ -559,6 +589,35 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
           aria-hidden="true"
           style={{ display: "block", width: "100%", height: "100%" }}
         />
+        {tooltip && (
+          <div
+            role="tooltip"
+            style={{
+              position: "absolute",
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: "translateX(-50%)",
+              background: "var(--bg-secondary)",
+              border: "1px solid var(--accent-yellow)",
+              borderRadius: "4px",
+              padding: "8px 12px",
+              zIndex: 10,
+              pointerEvents: "none",
+              maxWidth: "260px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            }}
+          >
+            <div style={{ fontSize: "11px", fontWeight: 700, color: "var(--accent-yellow)", marginBottom: "2px" }}>
+              {tooltip.name}
+            </div>
+            <div style={{ fontSize: "9px", color: "var(--text-secondary)", marginBottom: "4px" }}>
+              {tooltip.met} — {tooltip.isPast ? "Completed" : "Upcoming"}
+            </div>
+            <div style={{ fontSize: "10px", color: "var(--text-primary)", lineHeight: "1.4" }}>
+              {tooltip.description}
+            </div>
+          </div>
+        )}
       </div>
     </PanelFrame>
   );
