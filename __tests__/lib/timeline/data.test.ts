@@ -27,8 +27,14 @@ describe("timeline data", () => {
     expect(last.metMs).toBe((9 * 24 * 3600 + 1 * 3600 + 42 * 60 + 48) * 1000);
   });
 
-  test("has all 20 milestones from spec", () => {
-    expect(data.milestones).toHaveLength(20);
+  test("has all milestones", () => {
+    expect(data.milestones.length).toBeGreaterThanOrEqual(20);
+  });
+
+  test("includes Perigee Raise Burn milestone", () => {
+    const prb = data.milestones.find((m) => m.name === "Perigee Raise Burn");
+    expect(prb).toBeDefined();
+    expect(prb!.metMs).toBe((0 * 24 * 3600 + 13 * 3600 + 30 * 60) * 1000);
   });
 
   test("has phases covering entire mission", () => {

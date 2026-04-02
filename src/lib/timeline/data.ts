@@ -23,23 +23,23 @@ const RAW_MILESTONES: Milestone[] = [
     metMs: met(0, 0, 0, 0),
   },
   {
-    name: "ICPS PRM",
-    description: "Interim Cryogenic Propulsion Stage perigee-raise maneuver",
+    name: "Perigee Raise Maneuver",
+    description: "ICPS perigee raise burn raises low point of orbit",
     metMs: met(0, 0, 50, 0),
   },
   {
-    name: "ARB TIG",
-    description: "Apogee-raise burn time of ignition",
+    name: "Apogee Raise Burn",
+    description: "ICPS apogee raise burn puts Orion into high elliptical orbit",
     metMs: met(0, 1, 47, 0),
   },
   {
     name: "Orion/ICPS Separation",
-    description: "Orion spacecraft separates from the Interim Cryogenic Propulsion Stage",
+    description: "Orion spacecraft separates from the ICPS upper stage",
     metMs: met(0, 3, 23, 0),
   },
   {
     name: "Orion USS",
-    description: "Orion upper stage separation",
+    description: "Orion upper stage separation complete",
     metMs: met(0, 4, 51, 0),
   },
   {
@@ -48,8 +48,18 @@ const RAW_MILESTONES: Milestone[] = [
     metMs: met(0, 5, 27, 0),
   },
   {
+    name: "OpComm Activation",
+    description: "Operational communications system activated",
+    metMs: met(0, 10, 6, 0),
+  },
+  {
+    name: "Perigee Raise Burn",
+    description: "Orion performs perigee raise burn to adjust orbit before TLI",
+    metMs: met(0, 13, 30, 0),
+  },
+  {
     name: "Trans-Lunar Injection",
-    description: "OMS-E burn propels Orion toward the Moon",
+    description: "TLI burn sends Orion toward the Moon at ~39,000 km/h",
     metMs: met(1, 1, 8, 42),
   },
   {

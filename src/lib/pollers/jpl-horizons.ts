@@ -11,7 +11,7 @@ export function buildHorizonsUrl(target: string, time: Date): string {
     format: "json",
     COMMAND: `'${target}'`,
     EPHEM_TYPE: "'VECTORS'",
-    CENTER: "'500@10'",
+    CENTER: "'500@399'",
     START_TIME: `'${start}'`,
     STOP_TIME: `'${stop}'`,
     STEP_SIZE: "'1'",
