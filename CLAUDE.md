@@ -3,7 +3,7 @@
 Real-time mission control dashboard for NASA's Artemis II crewed lunar flyby.
 
 ## Tech Stack
-- Next.js 15 (App Router), TypeScript, Tailwind CSS
+- Next.js 16 (App Router), TypeScript, Tailwind CSS
 - HTML Canvas (2D orbit map)
 - JPL Horizons API (spacecraft -1024) for orbital telemetry
 - DSN Now XML feed (spacecraft ART2) for comm status
