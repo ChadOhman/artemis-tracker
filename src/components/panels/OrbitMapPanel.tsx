@@ -101,10 +101,9 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
 const REFERENCE_TRAJECTORY = generateReferenceTrajectory();
 
 const WAYPOINTS = [
-  { label: "TLI", metMs: (25 * 3600 + 8 * 60 + 42) * 1000 },
-  { label: "Lunar SOI", metMs: (4 * 24 * 3600 + 6 * 3600 + 38 * 60) * 1000 },
-  { label: "Closest ~6,513 km", metMs: (5 * 24 * 3600 + 30 * 60) * 1000 },
-  { label: "SOI Exit", metMs: (5 * 24 * 3600 + 18 * 3600 + 53 * 60) * 1000 },
+  { label: "TLI", metMs: (25 * 3600 + 8 * 60 + 42) * 1000, align: "center" as const, offsetY: -10 },
+  { label: "Closest Approach", metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -14 },
+  { label: "~6,513 km", metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -4 },
 ];
 
 function generateStars(count: number): { x: number; y: number; r: number; a: number }[] {
@@ -164,28 +163,17 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.fill();
     }
 
-    // AROW-style coordinate system:
-    // Earth lower-left, Moon upper-right
-    const earthPx = { x: w * 0.15, y: h * 0.62 };
-    const moonPx = { x: w * 0.85, y: h * 0.25 };
-    // Separation vector for normalized coords → pixel mapping
-    const sepX = moonPx.x - earthPx.x; // pixel distance Earth→Moon x
-    const sepY = moonPx.y - earthPx.y; // pixel distance Earth→Moon y (negative = up)
+    // Horizontal layout: Earth on left, Moon on right, both centered vertically
+    const earthPx = { x: w * 0.18, y: h * 0.52 };
+    const moonPx = { x: w * 0.82, y: h * 0.52 };
+    const scaleX = moonPx.x - earthPx.x; // pixels per normalized unit along X
+    const scaleY = scaleX; // same scale for Y to preserve aspect ratio
 
     // Helper: normalized coords (Earth=0,0  Moon=1,0  Y+ = up) → canvas pixels
-    // We map the unit vector (0→1) along Earth→Moon direction,
-    // and perpendicular component uses the same scale
     function toCanvas(nx: number, ny: number): { x: number; y: number } {
-      // Unit vector along Earth→Moon
-      const len = Math.sqrt(sepX * sepX + sepY * sepY);
-      const ux = sepX / len;
-      const uy = sepY / len;
-      // Perpendicular (rotated 90° CCW for Y-up mapped to canvas)
-      const px = -uy;
-      const py = ux;
       return {
-        x: earthPx.x + nx * sepX + ny * len * px,
-        y: earthPx.y + nx * sepY + ny * len * py,
+        x: earthPx.x + nx * scaleX,
+        y: earthPx.y - ny * scaleY, // flip Y: positive = up on screen
       };
     }
 
@@ -200,14 +188,13 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     ctx.stroke();
     ctx.restore();
 
-    // Distance label
+    // Distance label (centered between Earth and Moon, slightly below the line)
     ctx.save();
     ctx.font = "9px monospace";
     ctx.fillStyle = "rgba(100,160,255,0.4)";
     ctx.textAlign = "center";
     const midX = (earthPx.x + moonPx.x) / 2;
-    const midY = (earthPx.y + moonPx.y) / 2;
-    ctx.fillText("380,540 km", midX, midY + 14);
+    ctx.fillText("379,050 km", midX, earthPx.y + 14);
     ctx.restore();
 
     // --- FREE-RETURN TRAJECTORY subtitle ---
@@ -263,8 +250,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     }
 
     // --- Waypoint labels ---
+    const drawnDots = new Set<number>();
     for (const wp of WAYPOINTS) {
-      // Find the trajectory point nearest this waypoint's metMs
       let nearest = REFERENCE_TRAJECTORY[0];
       let minDiff = Infinity;
       for (const pt of REFERENCE_TRAJECTORY) {
@@ -277,16 +264,23 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       const passed = metMs >= wp.metMs;
       const p = toCanvas(nearest.x, nearest.y);
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-      ctx.fillStyle = passed ? "rgba(0,220,255,0.9)" : "rgba(0,220,255,0.35)";
-      ctx.fill();
+      // Only draw dot once per metMs
+      if (!drawnDots.has(wp.metMs)) {
+        drawnDots.add(wp.metMs);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = passed ? "rgba(0,220,255,0.9)" : "rgba(0,220,255,0.35)";
+        ctx.fill();
+        ctx.restore();
+      }
 
-      ctx.font = "8px monospace";
-      ctx.fillStyle = passed ? "rgba(0,220,255,0.85)" : "rgba(0,220,255,0.3)";
-      ctx.textAlign = "center";
-      ctx.fillText(wp.label, p.x, p.y - 6);
+      ctx.save();
+      ctx.font = "9px monospace";
+      ctx.fillStyle = passed ? "rgba(255,213,79,0.9)" : "rgba(255,213,79,0.4)";
+      ctx.textAlign = wp.align || "center";
+      const labelX = wp.align === "right" ? p.x + 8 : p.x;
+      ctx.fillText(wp.label, labelX, p.y + (wp.offsetY || -8));
       ctx.restore();
     }
 
@@ -447,7 +441,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
   }, [draw]);
 
   return (
-    <PanelFrame title="Orbital Map" icon="🛸" accentColor="var(--accent-cyan)">
+    <PanelFrame title="Figure-8 Lunar Flyby Trajectory" accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>2D TOP-DOWN VIEW</span>}>
       <div
         ref={containerRef}
         style={{ width: "100%", height: 320, position: "relative", overflow: "hidden", borderRadius: 4 }}
