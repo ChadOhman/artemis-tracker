@@ -8,8 +8,7 @@ import { CrewModal } from "./modals/CrewModal";
 import { SpacecraftModal } from "./modals/SpacecraftModal";
 
 function formatNumber(n: number): string {
-  if (n >= 1000) return (n / 1000).toFixed(1) + "k";
-  return n.toFixed(1);
+  return Math.round(n).toLocaleString();
 }
 
 function formatCountdown(diffMs: number): string {
@@ -191,9 +190,9 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>VEL</span>
           <span style={valueStyle}>
-            {telemetry ? telemetry.speedKmS.toFixed(2) : "—"}
+            {telemetry ? formatNumber(telemetry.speedKmH) : "—"}
           </span>
-          <span style={unitStyle}>km/s</span>
+          <span style={unitStyle}>km/h</span>
         </div>
         <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -205,13 +204,30 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
         </div>
         <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={labelStyle}>Earth</span>
+          <span style={labelStyle}>EARTH</span>
           <span style={valueStyle}>
             {telemetry ? formatNumber(telemetry.earthDistKm) : "—"}
           </span>
           <span style={unitStyle}>km</span>
         </div>
       </div>
+
+      {/* Crew sleep countdown */}
+      {(() => {
+        const nextSleep = timeline.raw?.activities.find(
+          (a) => a.type === "sleep" && a.startMetMs > metMs
+        );
+        if (!nextSleep) return null;
+        const sleepIn = nextSleep.startMetMs - metMs;
+        return (
+          <div style={{ ...pillStyle, gap: 6 }}>
+            <span style={labelStyle}>SLEEP</span>
+            <span style={{ fontSize: 10, color: "var(--accent-purple)", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+              {formatCountdown(sleepIn)}
+            </span>
+          </div>
+        );
+      })()}
 
       {/* Info buttons */}
       <button
