@@ -1,4 +1,126 @@
 "use client";
-export function MilestonesPanel(props: any) {
-  return <div className="panel" />;
+import { PanelFrame } from "@/components/shared/PanelFrame";
+import { formatMet } from "@/lib/met";
+import type { TimelineState } from "@/hooks/useTimeline";
+import type { Milestone } from "@/lib/types";
+
+interface MilestonesPanelProps {
+  timeline: TimelineState;
+  metMs: number;
+}
+
+function MilestoneRow({
+  milestone,
+  status,
+  isNext,
+}: {
+  milestone: Milestone;
+  status: "completed" | "next" | "upcoming";
+  isNext: boolean;
+}) {
+  const dotClass = `milestone-dot ${status}`;
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+        padding: "5px 0",
+        borderBottom: "1px solid var(--border-subtle)",
+        opacity: status === "upcoming" ? 0.7 : 1,
+      }}
+    >
+      <span
+        className={dotClass}
+        style={{ marginTop: 3, flexShrink: 0 }}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontSize: 11,
+            fontWeight: status === "upcoming" ? 400 : 600,
+            color:
+              status === "completed"
+                ? "var(--text-secondary)"
+                : status === "next"
+                ? "var(--accent-cyan)"
+                : "var(--text-primary)",
+            marginBottom: 1,
+          }}
+        >
+          {milestone.name}
+        </div>
+        {milestone.description && status !== "upcoming" && (
+          <div
+            style={{
+              fontSize: 9,
+              color: "var(--text-dim)",
+              marginBottom: 1,
+              lineHeight: 1.4,
+            }}
+          >
+            {milestone.description}
+          </div>
+        )}
+        <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.06em" }}>
+          MET {formatMet(milestone.metMs)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
+  const milestones = timeline.raw?.milestones ?? [];
+  const nextMilestone = timeline.nextMilestone;
+
+  const completed = milestones.filter((m) => m.metMs <= metMs);
+  const upcoming = milestones.filter((m) => m.metMs > metMs);
+
+  return (
+    <PanelFrame
+      title="Milestones"
+      icon="🎯"
+      accentColor="var(--accent-purple)"
+      headerRight={
+        <span style={{ fontSize: 9, color: "var(--text-dim)" }}>
+          {completed.length}/{milestones.length}
+        </span>
+      }
+    >
+      {milestones.length === 0 ? (
+        <div
+          style={{
+            color: "var(--text-dim)",
+            fontSize: 11,
+            textAlign: "center",
+            padding: "12px 0",
+            letterSpacing: "0.06em",
+          }}
+        >
+          Loading milestones...
+        </div>
+      ) : (
+        milestones.map((milestone) => {
+          const isCompleted = milestone.metMs <= metMs;
+          const isNext = milestone === nextMilestone;
+          const status: "completed" | "next" | "upcoming" = isCompleted
+            ? "completed"
+            : isNext
+            ? "next"
+            : "upcoming";
+
+          return (
+            <MilestoneRow
+              key={`${milestone.name}-${milestone.metMs}`}
+              milestone={milestone}
+              status={status}
+              isNext={isNext}
+            />
+          );
+        })
+      )}
+    </PanelFrame>
+  );
 }
