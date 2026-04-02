@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Rocket body -->
+  <path d="M16 3 C16 3 10 10 10 20 L22 20 C22 10 16 3 16 3Z" fill="#00e5ff"/>
+  <!-- Rocket fins -->
+  <path d="M10 20 L7 26 L12 23Z" fill="#00e5ff"/>
+  <path d="M22 20 L25 26 L20 23Z" fill="#00e5ff"/>
+  <!-- Exhaust -->
+  <ellipse cx="16" cy="24" rx="3" ry="2" fill="#00e5ff" opacity="0.5"/>
+  <!-- Window -->
+  <circle cx="16" cy="14" r="2.5" fill="#0a0e14" stroke="#00e5ff" stroke-width="1"/>
+</svg>

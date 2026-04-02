@@ -441,6 +441,43 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
   }
 }
 
+/* ── Responsive Layout ── */
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "topbar topbar"
+      "timeline timeline"
+      "left center"
+      "right right"
+      "bottombar bottombar";
+  }
+  .dashboard-right { overflow-y: auto; }
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto;
+    grid-template-areas:
+      "topbar"
+      "timeline"
+      "left"
+      "center"
+      "right"
+      "bottombar";
+    height: auto;
+    min-height: 100vh;
+  }
+  html, body { overflow: auto; }
+  .dashboard-left, .dashboard-center, .dashboard-right {
+    overflow-y: visible;
+  }
+  .dashboard-topbar, .dashboard-bottombar {
+    flex-wrap: wrap;
+  }
+}
+
 /* Screen reader only */
 .sr-only {
   position: absolute;

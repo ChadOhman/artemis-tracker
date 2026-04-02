@@ -1,9 +1,25 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Artemis II Tracker — Live Mission Control",
-  description: "Real-time mission tracking for NASA's Artemis II crewed lunar flyby mission.",
+  description: "Real-time mission control dashboard tracking NASA's Artemis II crewed lunar flyby. Live telemetry, DSN comms, orbit visualization, and crew activities.",
+  icons: {
+    icon: "/icon.svg",
+  },
+  openGraph: {
+    title: "Artemis II Tracker — Live Mission Control",
+    description: "Real-time mission control dashboard tracking NASA's Artemis II crewed lunar flyby. Live telemetry, DSN comms, orbit visualization, and crew activities.",
+    type: "website",
+    siteName: "Canadian Space",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0a0e14",
 };
 
 export default function RootLayout({
