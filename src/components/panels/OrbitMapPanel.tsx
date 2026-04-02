@@ -405,16 +405,6 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.fillText(groundLabel, orionPx.x + 7, orionPx.y + 4);
       ctx.restore();
 
-      // Also draw a faint line from Orion to Earth to show the connection
-      ctx.save();
-      ctx.strokeStyle = "rgba(0, 255, 136, 0.12)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([2, 4]);
-      ctx.beginPath();
-      ctx.moveTo(orionPx.x, orionPx.y);
-      ctx.lineTo(earthPx.x, earthPx.y);
-      ctx.stroke();
-      ctx.restore();
     }
   }, [stateVector, moonPosition, metMs]);
 
