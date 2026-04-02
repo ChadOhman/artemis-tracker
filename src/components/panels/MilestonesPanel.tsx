@@ -86,12 +86,18 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
   const completed = milestones.filter((m) => m.metMs <= metMs);
 
   // Auto-scroll to the "next" milestone when it changes
+  // Uses scrollTop on the container instead of scrollIntoView to avoid scrolling the whole page on mobile
   useEffect(() => {
     if (!nextMilestone || !nextRef.current || !scrollRef.current) return;
     const key = `${nextMilestone.name}-${nextMilestone.metMs}`;
     if (lastScrolledTo.current === key) return;
     lastScrolledTo.current = key;
-    nextRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    const container = scrollRef.current;
+    const element = nextRef.current;
+    const containerTop = container.getBoundingClientRect().top;
+    const elementTop = element.getBoundingClientRect().top;
+    const offset = elementTop - containerTop - container.clientHeight / 2 + element.clientHeight / 2;
+    container.scrollTo({ top: container.scrollTop + offset, behavior: "smooth" });
   }, [nextMilestone]);
 
   return (
