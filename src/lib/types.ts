@@ -1,0 +1,112 @@
+// src/lib/types.ts
+
+export interface StateVector {
+  timestamp: string;
+  metMs: number;
+  position: { x: number; y: number; z: number };
+  velocity: { x: number; y: number; z: number };
+}
+
+export interface Telemetry {
+  metMs: number;
+  speedKmS: number;
+  speedKmH: number;
+  altitudeKm: number;
+  earthDistKm: number;
+  moonDistKm: number;
+  periapsisKm: number;
+  apoapsisKm: number;
+  gForce: number;
+}
+
+export interface DsnDish {
+  dish: string;
+  station: string;
+  stationName: string;
+  azimuth: number;
+  elevation: number;
+  downlinkActive: boolean;
+  downlinkRate: number;
+  downlinkBand: string;
+  uplinkActive: boolean;
+  uplinkRate: number;
+  uplinkBand: string;
+  rangeKm: number;
+  rtltSeconds: number;
+}
+
+export interface DsnStatus {
+  timestamp: string;
+  dishes: DsnDish[];
+  signalActive: boolean;
+}
+
+export interface NsnStatus {
+  type: "DTE" | "SR";
+  inWindow: boolean;
+  estimated: true;
+}
+
+export type CommStatus =
+  | { source: "DSN"; data: DsnStatus }
+  | { source: "NSN"; data: NsnStatus };
+
+export interface SsePayload {
+  telemetry: Telemetry;
+  stateVector: StateVector;
+  moonPosition: { x: number; y: number; z: number };
+  dsn: DsnStatus;
+}
+
+export type MissionPhase =
+  | "Prelaunch"
+  | "LEO"
+  | "High Earth Orbit"
+  | "Trans-Lunar"
+  | "Trans-Earth"
+  | "EDL"
+  | "Recovery";
+
+export type ActivityType =
+  | "sleep"
+  | "pao"
+  | "science"
+  | "maneuver"
+  | "config"
+  | "exercise"
+  | "meal"
+  | "off-duty"
+  | "other";
+
+export interface TimelineActivity {
+  name: string;
+  type: ActivityType;
+  startMetMs: number;
+  endMetMs: number;
+  notes?: string;
+}
+
+export interface AttitudeBlock {
+  mode: string;
+  startMetMs: number;
+  endMetMs: number;
+}
+
+export interface PhaseBlock {
+  phase: MissionPhase;
+  startMetMs: number;
+  endMetMs: number;
+}
+
+export interface Milestone {
+  name: string;
+  description: string;
+  metMs: number;
+}
+
+export interface TimelineData {
+  activities: TimelineActivity[];
+  attitudes: AttitudeBlock[];
+  phases: PhaseBlock[];
+  milestones: Milestone[];
+}

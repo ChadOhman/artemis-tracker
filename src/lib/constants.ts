@@ -1,0 +1,12 @@
+// src/lib/constants.ts
+export const LAUNCH_TIME_UTC = "2026-04-01T22:25:00Z";
+export const LAUNCH_TIME_MS = new Date(LAUNCH_TIME_UTC).getTime();
+export const JPL_SPACECRAFT_ID = "-1024";
+export const DSN_SPACECRAFT_ID = "ART2";
+export const JPL_HORIZONS_API = "https://ssd.jpl.nasa.gov/api/horizons.api";
+export const DSN_NOW_URL = "https://eyes.nasa.gov/dsn/data/dsn.xml";
+export const JPL_POLL_INTERVAL_MS = 5 * 60 * 1000;
+export const DSN_POLL_INTERVAL_MS = 10 * 1000;
+export const SSE_KEEPALIVE_INTERVAL_MS = 30 * 1000;
+export const EARTH_RADIUS_KM = 6371;
+export const MISSION_DURATION_MS = (9 * 24 * 60 * 60 + 1 * 60 * 60 + 42 * 60 + 48) * 1000;
