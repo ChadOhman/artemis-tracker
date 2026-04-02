@@ -1,8 +1,11 @@
 "use client";
+import { useState } from "react";
 import { MetClock } from "./shared/MetClock";
 import { formatMet } from "@/lib/met";
 import type { Telemetry, DsnStatus } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
+import { CrewModal } from "./modals/CrewModal";
+import { SpacecraftModal } from "./modals/SpacecraftModal";
 
 function formatNumber(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1) + "k";
@@ -61,7 +64,28 @@ const unitStyle: React.CSSProperties = {
   marginLeft: 1,
 };
 
+const infoButtonStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  background: "var(--bg-panel)",
+  border: "1px solid var(--border-panel)",
+  borderRadius: 4,
+  padding: "3px 10px",
+  height: 32,
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  color: "var(--text-secondary)",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  flexShrink: 0,
+  transition: "color 0.15s, border-color 0.15s",
+};
+
 export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
+  const [crewOpen, setCrewOpen] = useState(false);
+  const [vehicleOpen, setVehicleOpen] = useState(false);
+
   // Find the first active dish (downlink or uplink)
   const activeDish = dsn?.dishes.find((d) => d.downlinkActive || d.uplinkActive) ?? null;
   const commsActive = dsn?.signalActive ?? false;
@@ -189,6 +213,36 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
         </div>
       </div>
 
+      {/* Info buttons */}
+      <button
+        style={infoButtonStyle}
+        onClick={() => setCrewOpen(true)}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-cyan)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.35)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-panel)";
+        }}
+      >
+        CREW
+      </button>
+      <button
+        style={infoButtonStyle}
+        onClick={() => setVehicleOpen(true)}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-cyan)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.35)";
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
+          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-panel)";
+        }}
+      >
+        VEHICLE
+      </button>
+
       {/* Next event countdown */}
       {nextMilestone && countdownMs !== null && (
         <div style={{ ...pillStyle, gap: 8, marginLeft: "auto", borderColor: "rgba(255,140,0,0.3)" }}>
@@ -217,6 +271,8 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
           </span>
         </div>
       )}
+      <CrewModal isOpen={crewOpen} onClose={() => setCrewOpen(false)} />
+      <SpacecraftModal isOpen={vehicleOpen} onClose={() => setVehicleOpen(false)} />
     </div>
   );
 }
