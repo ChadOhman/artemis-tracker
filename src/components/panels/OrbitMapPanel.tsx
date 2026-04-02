@@ -147,25 +147,6 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
-  // Accumulated path history (km coordinates)
-  const pathRef = useRef<PathPoint[]>([]);
-  // Track last pushed position to avoid duplicates
-  const lastPushedRef = useRef<{ x: number; y: number } | null>(null);
-
-  // Push current position into path history when stateVector changes
-  if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
-    const px = stateVector.position.x;
-    const py = stateVector.position.y;
-    const last = lastPushedRef.current;
-    // Only push if position actually changed (avoid duplicates on re-renders)
-    if (!last || last.x !== px || last.y !== py) {
-      pathRef.current.push({ x: px, y: py });
-      if (pathRef.current.length > MAX_PATH_POINTS) {
-        pathRef.current = pathRef.current.slice(pathRef.current.length - MAX_PATH_POINTS);
-      }
-      lastPushedRef.current = { x: px, y: py };
-    }
-  }
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -379,101 +360,41 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillText("Moon", moonPx.x, moonPx.y + moonR + 13);
     ctx.restore();
 
-    // --- Orion position ---
-    let orionPx: { x: number; y: number };
-    let hasLivePosition = false;
-
-    if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
-      // Use live state vector - position is in km, geocentric
-      orionPx = kmToCanvas(stateVector.position.x, stateVector.position.y);
-      hasLivePosition = true;
-    } else {
-      // Estimate from reference trajectory with smooth interpolation
-      let idxA = 0;
-      for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
-        if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
-          idxA = i;
-        }
+    // --- Orion position (always on the reference trajectory, interpolated by MET) ---
+    let idxA = 0;
+    for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
+      if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
+        idxA = i;
       }
-      let refPt = REFERENCE_TRAJECTORY[idxA];
-      if (idxA < REFERENCE_TRAJECTORY.length - 1) {
-        const a = REFERENCE_TRAJECTORY[idxA];
-        const b = REFERENCE_TRAJECTORY[idxA + 1];
-        const span = b.metMs - a.metMs;
-        if (span > 0) {
-          const t = Math.max(0, Math.min(1, (metMs - a.metMs) / span));
-          refPt = {
-            x: a.x + t * (b.x - a.x),
-            y: a.y + t * (b.y - a.y),
-            metMs,
-          };
-        }
-      }
-      orionPx = toCanvas(refPt.x, refPt.y);
     }
-
-    // --- Draw actual traveled path (solid bright green/cyan line) ---
-    const path = pathRef.current;
-    if (path.length > 1) {
-      ctx.save();
-      ctx.setLineDash([]);
-      ctx.lineWidth = 2;
-
-      // Gradient: starts more cyan, ends bright green
-      ctx.strokeStyle = "#00ff88";
-      ctx.lineJoin = "round";
-      ctx.lineCap = "round";
-
-      // Draw with a subtle glow
-      ctx.shadowColor = "rgba(0,255,136,0.3)";
-      ctx.shadowBlur = 4;
-
-      ctx.beginPath();
-      const p0c = kmToCanvas(path[0].x, path[0].y);
-      ctx.moveTo(p0c.x, p0c.y);
-      for (let i = 1; i < path.length; i++) {
-        const pc = kmToCanvas(path[i].x, path[i].y);
-        ctx.lineTo(pc.x, pc.y);
+    let refPt = REFERENCE_TRAJECTORY[idxA];
+    if (idxA < REFERENCE_TRAJECTORY.length - 1) {
+      const a = REFERENCE_TRAJECTORY[idxA];
+      const b = REFERENCE_TRAJECTORY[idxA + 1];
+      const span = b.metMs - a.metMs;
+      if (span > 0) {
+        const t = Math.max(0, Math.min(1, (metMs - a.metMs) / span));
+        refPt = {
+          x: a.x + t * (b.x - a.x),
+          y: a.y + t * (b.y - a.y),
+          metMs,
+        };
       }
-      ctx.stroke();
-      ctx.restore();
     }
+    const orionPx = toCanvas(refPt.x, refPt.y);
 
-    // --- Distance line from Earth to Orion ---
-    ctx.save();
-    ctx.setLineDash([2, 4]);
-    ctx.strokeStyle = "rgba(0,255,136,0.25)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(earthPx.x, earthPx.y);
-    ctx.lineTo(orionPx.x, orionPx.y);
-    ctx.stroke();
-    ctx.restore();
-
-    // Earth distance label along the line
-    const earthDistKm = telemetry?.earthDistKm
-      ?? (stateVector ? Math.sqrt(
-          stateVector.position.x ** 2 +
-          stateVector.position.y ** 2 +
-          stateVector.position.z ** 2
-        ) : null);
-
+    // --- Earth distance label near Orion ---
+    const earthDistKm = telemetry?.earthDistKm ?? null;
     if (earthDistKm != null) {
-      const labelFrac = 0.35; // position label 35% along Earth->Orion line
-      const lx = earthPx.x + (orionPx.x - earthPx.x) * labelFrac;
-      const ly = earthPx.y + (orionPx.y - earthPx.y) * labelFrac;
       const distText = `${fmtKm(earthDistKm)} km`;
-
       ctx.save();
       ctx.font = "bold 9px monospace";
-      ctx.fillStyle = "rgba(0,255,136,0.75)";
       ctx.textAlign = "center";
-      // Draw with a dark background for readability
       const textW = ctx.measureText(distText).width;
       ctx.fillStyle = "rgba(6,11,20,0.7)";
-      ctx.fillRect(lx - textW / 2 - 3, ly - 10, textW + 6, 14);
+      ctx.fillRect(orionPx.x - textW / 2 - 3, orionPx.y + 18, textW + 6, 14);
       ctx.fillStyle = "rgba(0,255,136,0.85)";
-      ctx.fillText(distText, lx, ly);
+      ctx.fillText(distText, orionPx.x, orionPx.y + 28);
       ctx.restore();
     }
 
@@ -516,8 +437,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillText("Orion", orionPx.x + 7, orionPx.y - 8);
     ctx.restore();
 
-    // Ground track - show what region Orion is above
-    if (hasLivePosition && stateVector) {
+    // Ground track — show what region Orion is above
+    if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
       const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
       ctx.save();
       ctx.font = "8px monospace";
