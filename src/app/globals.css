@@ -114,7 +114,8 @@ main {
   flex-direction: column;
   gap: 4px;
   padding: 4px 2px 4px 4px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg-primary);
 }
 
@@ -124,7 +125,8 @@ main {
   flex-direction: column;
   gap: 4px;
   padding: 4px 2px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg-primary);
 }
 
@@ -134,7 +136,8 @@ main {
   flex-direction: column;
   gap: 4px;
   padding: 4px 4px 4px 2px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--bg-primary);
 }
 
