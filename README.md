@@ -79,6 +79,57 @@ echo "Deployed! Access at http://\$(pct exec $CTID -- hostname -I | tr -d \" \")
 '
 ```
 
+### Deploy to an Existing LXC
+
+Already have an LXC running? Deploy from the Proxmox host:
+
+```bash
+CTID=200 bash -c '
+pct exec $CTID -- bash -c "
+  apt-get update && apt-get install -y curl git ca-certificates && \
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+  apt-get install -y nodejs && \
+  git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker && \
+  cd /opt/artemis-tracker && \
+  npm ci && npm run build && \
+  mkdir -p data && echo '[]' > data/telemetry-history.json && \
+  cat > /etc/systemd/system/artemis-tracker.service <<SVCEOF
+[Unit]
+Description=Artemis II Mission Tracker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/artemis-tracker
+ExecStart=/usr/bin/node node_modules/.bin/next start -p 3000
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
+SVCEOF
+  systemctl daemon-reload && \
+  systemctl enable --now artemis-tracker
+"
+echo "Deployed! Access at http://$(pct exec $CTID -- hostname -I | tr -d " "):3000"
+'
+```
+
+Or SSH directly into the LXC and run:
+
+```bash
+apt-get update && apt-get install -y curl git ca-certificates
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt-get install -y nodejs
+git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker
+cd /opt/artemis-tracker
+npm ci && npm run build
+mkdir -p data && echo "[]" > data/telemetry-history.json
+node node_modules/.bin/next start -p 3000
+```
+
 ### Update an Existing Deployment
 
 ```bash
