@@ -84,10 +84,11 @@ main {
   width: 100vw;
   height: 100vh;
   grid-template-columns: 35fr 40fr 25fr;
-  grid-template-rows: 48px 1fr 36px;
+  grid-template-rows: 48px auto 1fr 36px;
   grid-template-areas:
-    "topbar topbar topbar"
-    "left   center right"
+    "topbar   topbar   topbar"
+    "timeline timeline timeline"
+    "left     center   right"
     "bottombar bottombar bottombar";
   gap: 0;
   overflow: hidden;
@@ -98,6 +99,13 @@ main {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-panel);
   z-index: 10;
+}
+
+.dashboard-timeline {
+  grid-area: timeline;
+  padding: 4px 4px 0;
+  background: var(--bg-primary);
+  overflow: hidden;
 }
 
 .dashboard-left {

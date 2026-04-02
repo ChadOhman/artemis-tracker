@@ -30,8 +30,10 @@ function DashboardInner() {
         <TelemetryPanel telemetry={telemetry} timeline={timeline} />
         <DsnPanel dsn={dsn} />
       </div>
-      <div className="dashboard-center">
+      <div className="dashboard-timeline">
         <TimelinePanel metMs={metMs} timeline={timeline} />
+      </div>
+      <div className="dashboard-center">
         <ActivityDetailPanel timeline={timeline} metMs={metMs} />
         <NextMilestonePanel timeline={timeline} metMs={metMs} />
         <LiveStreamPanel />
