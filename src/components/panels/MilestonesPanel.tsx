@@ -1,4 +1,5 @@
 "use client";
+import { useRef, useEffect } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { formatMet } from "@/lib/met";
 import type { TimelineState } from "@/hooks/useTimeline";
@@ -78,9 +79,20 @@ function MilestoneRow({
 export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
   const milestones = timeline.raw?.milestones ?? [];
   const nextMilestone = timeline.nextMilestone;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const nextRef = useRef<HTMLDivElement>(null);
+  const lastScrolledTo = useRef<string>("");
 
   const completed = milestones.filter((m) => m.metMs <= metMs);
-  const upcoming = milestones.filter((m) => m.metMs > metMs);
+
+  // Auto-scroll to the "next" milestone when it changes
+  useEffect(() => {
+    if (!nextMilestone || !nextRef.current || !scrollRef.current) return;
+    const key = `${nextMilestone.name}-${nextMilestone.metMs}`;
+    if (lastScrolledTo.current === key) return;
+    lastScrolledTo.current = key;
+    nextRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [nextMilestone]);
 
   return (
     <PanelFrame
@@ -93,38 +105,50 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
         </span>
       }
     >
-      {milestones.length === 0 ? (
-        <div
-          style={{
-            color: "var(--text-dim)",
-            fontSize: 11,
-            textAlign: "center",
-            padding: "12px 0",
-            letterSpacing: "0.06em",
-          }}
-        >
-          Loading milestones...
-        </div>
-      ) : (
-        milestones.map((milestone) => {
-          const isCompleted = milestone.metMs <= metMs;
-          const isNext = milestone === nextMilestone;
-          const status: "completed" | "next" | "upcoming" = isCompleted
-            ? "completed"
-            : isNext
-            ? "next"
-            : "upcoming";
+      <div
+        ref={scrollRef}
+        style={{
+          maxHeight: "350px",
+          overflowY: "auto",
+        }}
+      >
+        {milestones.length === 0 ? (
+          <div
+            style={{
+              color: "var(--text-dim)",
+              fontSize: 11,
+              textAlign: "center",
+              padding: "12px 0",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Loading milestones...
+          </div>
+        ) : (
+          milestones.map((milestone) => {
+            const isCompleted = milestone.metMs <= metMs;
+            const isNext = milestone === nextMilestone;
+            const status: "completed" | "next" | "upcoming" = isCompleted
+              ? "completed"
+              : isNext
+              ? "next"
+              : "upcoming";
 
-          return (
-            <MilestoneRow
-              key={`${milestone.name}-${milestone.metMs}`}
-              milestone={milestone}
-              status={status}
-              isNext={isNext}
-            />
-          );
-        })
-      )}
+            return (
+              <div
+                key={`${milestone.name}-${milestone.metMs}`}
+                ref={isNext ? nextRef : undefined}
+              >
+                <MilestoneRow
+                  milestone={milestone}
+                  status={status}
+                  isNext={isNext}
+                />
+              </div>
+            );
+          })
+        )}
+      </div>
     </PanelFrame>
   );
 }
