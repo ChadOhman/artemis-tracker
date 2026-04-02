@@ -12,12 +12,12 @@ import { CurrentActivitiesPanel } from "./panels/CurrentActivitiesPanel";
 import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
-import { useMet } from "@/hooks/useMet";
 import { useTimeline } from "@/hooks/useTimeline";
+import { MetProvider, useMetContext } from "@/context/MetContext";
 
-export function Dashboard() {
+function DashboardInner() {
+  const { metMs } = useMetContext();
   const { telemetry, stateVector, moonPosition, dsn } = useTelemetryStream();
-  const metMs = useMet();
   const timeline = useTimeline(metMs);
 
   return (
@@ -42,8 +42,16 @@ export function Dashboard() {
         <MilestonesPanel timeline={timeline} metMs={metMs} />
       </div>
       <div className="dashboard-bottombar">
-        <BottomBar metMs={metMs} />
+        <BottomBar milestones={timeline.raw?.milestones ?? []} />
       </div>
     </div>
+  );
+}
+
+export function Dashboard() {
+  return (
+    <MetProvider>
+      <DashboardInner />
+    </MetProvider>
   );
 }
