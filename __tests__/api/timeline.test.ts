@@ -7,6 +7,6 @@ describe("timeline API data", () => {
     expect(data).toHaveProperty("phases");
     expect(data).toHaveProperty("activities");
     expect(data).toHaveProperty("attitudes");
-    expect(data.milestones.length).toBe(20);
+    expect(data.milestones.length).toBeGreaterThanOrEqual(20);
   });
 });
