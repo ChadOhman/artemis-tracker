@@ -83,8 +83,9 @@ export function useSimTelemetry(
       lastFetchCenterRef.current = simMetMs;
 
       try {
+        const basePath = (typeof window !== "undefined" && (window as any).__NEXT_DATA__?.basePath) || "";
         const res = await fetch(
-          `/api/telemetry/history?from=${Math.round(from)}&to=${Math.round(to)}`
+          `${basePath}/api/telemetry/history?from=${Math.round(from)}&to=${Math.round(to)}`
         );
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data: { vectors: StateVector[] } = await res.json();

@@ -45,7 +45,8 @@ export function useTelemetryStream(): TelemetryStreamState {
     function connect() {
       if (unmounted) return;
 
-      const es = new EventSource("/api/telemetry/stream");
+      const basePath = (typeof window !== "undefined" && (window as any).__NEXT_DATA__?.basePath) || "";
+      const es = new EventSource(`${basePath}/api/telemetry/stream`);
       esRef.current = es;
 
       es.addEventListener("open", () => {

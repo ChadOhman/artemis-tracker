@@ -46,7 +46,8 @@ export function useTimeline(metMs: number): TimelineState {
 
     async function fetchTimeline() {
       try {
-        const res = await fetch("/api/timeline");
+        const basePath = (typeof window !== "undefined" && (window as any).__NEXT_DATA__?.basePath) || "";
+        const res = await fetch(`${basePath}/api/timeline`);
         if (!res.ok) throw new Error(`Timeline fetch failed: ${res.status}`);
         const data: TimelineData = await res.json();
         if (!cancelled) {
