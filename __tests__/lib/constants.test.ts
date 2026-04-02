@@ -10,9 +10,9 @@ import {
 } from "@/lib/constants";
 
 describe("constants", () => {
-  test("launch time is April 1 2026 22:25 UTC", () => {
-    expect(LAUNCH_TIME_UTC).toBe("2026-04-01T22:25:00Z");
-    expect(new Date(LAUNCH_TIME_UTC).getTime()).toBe(1775082300000);
+  test("launch time is April 1 2026 22:35 UTC (18:35 ET)", () => {
+    expect(LAUNCH_TIME_UTC).toBe("2026-04-01T22:35:00Z");
+    expect(new Date(LAUNCH_TIME_UTC).getTime()).toBe(1775082900000);
   });
 
   test("spacecraft IDs are correct", () => {

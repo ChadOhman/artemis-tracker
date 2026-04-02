@@ -22,6 +22,6 @@ Real-time mission control dashboard for NASA's Artemis II crewed lunar flyby.
 - Self-hosted behind Cloudflare Tunnels (SSE keepalive every 30s)
 
 ## Key Constants
-- Launch: 2026-04-01T22:25:00Z (18:25 ET)
+- Launch: 2026-04-01T22:35:00Z (18:35 ET)
 - JPL Spacecraft ID: -1024
 - DSN Spacecraft ID: ART2

@@ -1,5 +1,6 @@
 // src/lib/constants.ts
-export const LAUNCH_TIME_UTC = "2026-04-01T22:25:00Z";
+/** Artemis II launch: April 1, 2026 at 18:35 ET = 22:35 UTC */
+export const LAUNCH_TIME_UTC = "2026-04-01T22:35:00Z";
 export const LAUNCH_TIME_MS = new Date(LAUNCH_TIME_UTC).getTime();
 export const JPL_SPACECRAFT_ID = "-1024";
 export const DSN_SPACECRAFT_ID = "ART2";
