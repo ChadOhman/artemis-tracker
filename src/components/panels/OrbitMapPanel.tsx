@@ -2,6 +2,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { StateVector } from "@/lib/types";
+import { getGroundTrackLabel, positionToLatLon } from "@/lib/ground-track";
 
 interface OrbitMapPanelProps {
   stateVector: StateVector | null;
@@ -177,24 +178,13 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       };
     }
 
-    // --- Dashed line Earth-Moon ---
-    ctx.save();
-    ctx.setLineDash([6, 6]);
-    ctx.strokeStyle = "rgba(100,160,255,0.15)";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(earthPx.x, earthPx.y);
-    ctx.lineTo(moonPx.x, moonPx.y);
-    ctx.stroke();
-    ctx.restore();
-
-    // Distance label (centered between Earth and Moon, slightly below the line)
+    // Distance label (centered between Earth and Moon, no connecting line)
     ctx.save();
     ctx.font = "9px monospace";
-    ctx.fillStyle = "rgba(100,160,255,0.4)";
+    ctx.fillStyle = "rgba(100,160,255,0.25)";
     ctx.textAlign = "center";
     const midX = (earthPx.x + moonPx.x) / 2;
-    ctx.fillText("379,050 km", midX, earthPx.y + 14);
+    ctx.fillText("379,050 km", midX, earthPx.y + 4);
     ctx.restore();
 
     // --- FREE-RETURN TRAJECTORY subtitle ---
@@ -402,8 +392,30 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     ctx.font = "bold 9px monospace";
     ctx.fillStyle = "#00ff88";
     ctx.textAlign = "left";
-    ctx.fillText("Orion", orionPx.x + 7, orionPx.y - 5);
+    ctx.fillText("Orion", orionPx.x + 7, orionPx.y - 8);
     ctx.restore();
+
+    // Ground track — show what region Orion is above
+    if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
+      const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
+      ctx.save();
+      ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(0, 255, 136, 0.5)";
+      ctx.textAlign = "left";
+      ctx.fillText(groundLabel, orionPx.x + 7, orionPx.y + 4);
+      ctx.restore();
+
+      // Also draw a faint line from Orion to Earth to show the connection
+      ctx.save();
+      ctx.strokeStyle = "rgba(0, 255, 136, 0.12)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 4]);
+      ctx.beginPath();
+      ctx.moveTo(orionPx.x, orionPx.y);
+      ctx.lineTo(earthPx.x, earthPx.y);
+      ctx.stroke();
+      ctx.restore();
+    }
   }, [stateVector, moonPosition, metMs]);
 
   // Animation loop
