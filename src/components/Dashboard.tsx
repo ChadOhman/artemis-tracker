@@ -58,7 +58,7 @@ function DashboardInner() {
         />
       </div>
       <div className="dashboard-left">
-        <OrbitMapPanel stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} />
+        <OrbitMapPanel stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
         <TelemetryPanel telemetry={telemetry} timeline={timeline} />
         <DsnPanel dsn={dsn} />
       </div>

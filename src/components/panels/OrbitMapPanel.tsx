@@ -1,19 +1,26 @@
 "use client";
 import { useRef, useEffect, useCallback } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
-import type { StateVector } from "@/lib/types";
-import { getGroundTrackLabel, positionToLatLon } from "@/lib/ground-track";
+import type { StateVector, Telemetry } from "@/lib/types";
+import { getGroundTrackLabel } from "@/lib/ground-track";
 
 interface OrbitMapPanelProps {
   stateVector: StateVector | null;
   moonPosition: { x: number; y: number; z: number } | null;
   metMs: number;
+  telemetry: Telemetry | null;
 }
 
 interface TrajectoryPoint {
   x: number;
   y: number;
   metMs: number;
+}
+
+/** Stored path point in km (J2000 geocentric X, Y). */
+interface PathPoint {
+  x: number;
+  y: number;
 }
 
 function generateReferenceTrajectory(): TrajectoryPoint[] {
@@ -23,17 +30,16 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
 
   const tliMetMs = (25 * 3600 + 8 * 60 + 42) * 1000;
   const lunarSoiMetMs = (4 * 24 * 3600 + 6 * 3600 + 38 * 60) * 1000;
-  const flybyMetMs = (5 * 24 * 3600 + 30 * 60) * 1000;
   const exitMetMs = (5 * 24 * 3600 + 18 * 3600 + 53 * 60) * 1000;
   const entryMetMs = (9 * 24 * 3600 + 1 * 3600 + 29 * 60) * 1000;
 
-  // Phase 1: Spiraling Earth orbits (LEO → HEO) — 2.5 revolutions
+  // Phase 1: Spiraling Earth orbits (LEO -> HEO) - 2.5 revolutions
   const spiralRevs = 2.5;
   const spiralSteps = 60;
   for (let i = 0; i <= spiralSteps; i++) {
     const t = i / spiralSteps;
     const angle = -Math.PI * 0.5 + t * spiralRevs * Math.PI * 2;
-    const r = 0.018 + t * 0.06; // small radius growing outward
+    const r = 0.018 + t * 0.06;
     points.push({
       x: Math.cos(angle) * r,
       y: Math.sin(angle) * r,
@@ -41,11 +47,10 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
     });
   }
 
-  // Phase 2: Trans-lunar injection — sweeping arc upward-right to Moon
-  // Uses a quadratic Bezier: P0 near Earth, P1 control above midpoint, P2 near Moon
-  const p0 = { x: 0.06, y: 0.04 }; // departure tangent direction
-  const cp = { x: 0.45, y: 0.42 }; // control point — arc peaks well above midline
-  const p2 = { x: 0.97, y: 0.05 }; // approach Moon from below-right
+  // Phase 2: Trans-lunar injection - sweeping arc upward-right to Moon
+  const p0 = { x: 0.06, y: 0.04 };
+  const cp = { x: 0.45, y: 0.42 };
+  const p2 = { x: 0.97, y: 0.05 };
   const outboundSteps = 50;
   for (let i = 1; i <= outboundSteps; i++) {
     const t = i / outboundSteps;
@@ -59,16 +64,14 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
     });
   }
 
-  // Phase 3: Lunar flyby — tight loop behind the Moon's far side
-  // Arc swings behind (positive x past Moon), loops over top, comes back below
+  // Phase 3: Lunar flyby - tight loop behind the Moon's far side
   const flybyR = 0.045;
   const flybySteps = 40;
-  const flybyStartAngle = -Math.PI * 0.15; // entering from below-left
-  const flybyEndAngle = Math.PI * 1.15; // exiting below-right after going behind
+  const flybyStartAngle = -Math.PI * 0.15;
+  const flybyEndAngle = Math.PI * 1.15;
   for (let i = 1; i <= flybySteps; i++) {
     const t = i / flybySteps;
     const angle = flybyStartAngle + t * (flybyEndAngle - flybyStartAngle);
-    // Slight ellipse — wider behind Moon
     const rx = flybyR * (1 + 0.3 * Math.sin(angle));
     const ry = flybyR;
     points.push({
@@ -78,11 +81,10 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
     });
   }
 
-  // Phase 4: Return coast — sweeping arc below the outbound path back to Earth
-  // Bezier: from Moon exit point, arcs downward, curves back to Earth
-  const r0 = points[points.length - 1]; // last flyby point
-  const rcp = { x: 0.45, y: -0.30 }; // control point — arc dips well below
-  const r2 = { x: 0.0, y: -0.02 }; // arrive near Earth from below
+  // Phase 4: Return coast - sweeping arc below the outbound path back to Earth
+  const r0 = points[points.length - 1];
+  const rcp = { x: 0.45, y: -0.30 };
+  const r2 = { x: 0.0, y: -0.02 };
   const returnSteps = 50;
   for (let i = 1; i <= returnSteps; i++) {
     const t = i / returnSteps;
@@ -109,7 +111,6 @@ const WAYPOINTS = [
 
 function generateStars(count: number): { x: number; y: number; r: number; a: number }[] {
   const stars: { x: number; y: number; r: number; a: number }[] = [];
-  // Simple seeded PRNG (mulberry32) for deterministic but random-looking stars
   let seed = 42;
   function rand(): number {
     seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
@@ -130,10 +131,41 @@ function generateStars(count: number): { x: number; y: number; r: number; a: num
 
 const STARS = generateStars(200);
 
-export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPanelProps) {
+/** Earth-Moon distance in km */
+const MOON_DIST_KM = 384400;
+
+/** Maximum number of path-history points to keep. */
+const MAX_PATH_POINTS = 500;
+
+/** Format a number with commas: 12345 -> "12,345" */
+function fmtKm(km: number): string {
+  return Math.round(km).toLocaleString("en-US");
+}
+
+export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: OrbitMapPanelProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+
+  // Accumulated path history (km coordinates)
+  const pathRef = useRef<PathPoint[]>([]);
+  // Track last pushed position to avoid duplicates
+  const lastPushedRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Push current position into path history when stateVector changes
+  if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
+    const px = stateVector.position.x;
+    const py = stateVector.position.y;
+    const last = lastPushedRef.current;
+    // Only push if position actually changed (avoid duplicates on re-renders)
+    if (!last || last.x !== px || last.y !== py) {
+      pathRef.current.push({ x: px, y: py });
+      if (pathRef.current.length > MAX_PATH_POINTS) {
+        pathRef.current = pathRef.current.slice(pathRef.current.length - MAX_PATH_POINTS);
+      }
+      lastPushedRef.current = { x: px, y: py };
+    }
+  }
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
@@ -169,27 +201,35 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.fill();
     }
 
-    // Horizontal layout: Earth on left, Moon on right, both centered vertically
-    const earthPx = { x: w * 0.18, y: h * 0.52 };
-    const moonPx = { x: w * 0.82, y: h * 0.52 };
-    const scaleX = moonPx.x - earthPx.x; // pixels per normalized unit along X
-    const scaleY = scaleX; // same scale for Y to preserve aspect ratio
+    // ---- Fixed-scale layout ----
+    // Canvas represents ~450,000 km across horizontally.
+    // Earth at left-center, Moon at right-center (384,400 km away).
+    const earthPx = { x: w * 0.12, y: h * 0.52 };
+    const moonPx = { x: w * 0.88, y: h * 0.52 };
+    const trackWidth = moonPx.x - earthPx.x; // pixels between Earth and Moon
+    const kmPerPixel = MOON_DIST_KM / trackWidth;
+    const pixelsPerKm = trackWidth / MOON_DIST_KM;
 
-    // Helper: normalized coords (Earth=0,0  Moon=1,0  Y+ = up) → canvas pixels
-    function toCanvas(nx: number, ny: number): { x: number; y: number } {
+    // Helper: km coords (Earth = 0,0) -> canvas pixels.  Y+ = up (flip for canvas)
+    function kmToCanvas(xKm: number, yKm: number): { x: number; y: number } {
       return {
-        x: earthPx.x + nx * scaleX,
-        y: earthPx.y - ny * scaleY, // flip Y: positive = up on screen
+        x: earthPx.x + xKm * pixelsPerKm,
+        y: earthPx.y - yKm * pixelsPerKm, // flip Y
       };
     }
 
-    // Distance label (centered between Earth and Moon, no connecting line)
+    // Helper: normalized coords (Earth=0,0  Moon=1,0  Y+=up) -> canvas pixels
+    function toCanvas(nx: number, ny: number): { x: number; y: number } {
+      return kmToCanvas(nx * MOON_DIST_KM, ny * MOON_DIST_KM);
+    }
+
+    // --- Distance label between Earth and Moon ---
     ctx.save();
     ctx.font = "9px monospace";
     ctx.fillStyle = "rgba(100,160,255,0.25)";
     ctx.textAlign = "center";
     const midX = (earthPx.x + moonPx.x) / 2;
-    ctx.fillText("379,050 km", midX, earthPx.y + 4);
+    ctx.fillText("384,400 km", midX, earthPx.y + 4);
     ctx.restore();
 
     // --- FREE-RETURN TRAJECTORY subtitle ---
@@ -201,7 +241,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     ctx.restore();
 
     // --- Reference trajectory ---
-    // Find where Orion is on the trajectory
+    // Find where Orion is on the reference trajectory
     let orionRefIdx = 0;
     for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
       if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
@@ -227,12 +267,12 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.restore();
     }
 
-    // Draw past path (solid, cyan)
+    // Draw past reference path (solid, cyan)
     if (orionRefIdx > 0) {
       ctx.save();
       ctx.setLineDash([]);
-      ctx.strokeStyle = "rgba(0,220,255,0.75)";
-      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(0,220,255,0.4)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       const first = toCanvas(REFERENCE_TRAJECTORY[0].x, REFERENCE_TRAJECTORY[0].y);
       ctx.moveTo(first.x, first.y);
@@ -259,7 +299,6 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       const passed = metMs >= wp.metMs;
       const p = toCanvas(nearest.x, nearest.y);
 
-      // Only draw dot once per metMs
       if (!drawnDots.has(wp.metMs)) {
         drawnDots.add(wp.metMs);
         ctx.save();
@@ -342,14 +381,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
 
     // --- Orion position ---
     let orionPx: { x: number; y: number };
+    let hasLivePosition = false;
 
     if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
-      // Use live state vector — convert km to normalized coords
-      const moonDistKm = 384400;
-      orionPx = toCanvas(stateVector.position.x / moonDistKm, stateVector.position.y / moonDistKm);
+      // Use live state vector - position is in km, geocentric
+      orionPx = kmToCanvas(stateVector.position.x, stateVector.position.y);
+      hasLivePosition = true;
     } else {
       // Estimate from reference trajectory with smooth interpolation
-      // Find the two nearest reference points bracketing current metMs
       let idxA = 0;
       for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
         if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
@@ -371,6 +410,83 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
         }
       }
       orionPx = toCanvas(refPt.x, refPt.y);
+    }
+
+    // --- Draw actual traveled path (solid bright green/cyan line) ---
+    const path = pathRef.current;
+    if (path.length > 1) {
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.lineWidth = 2;
+
+      // Gradient: starts more cyan, ends bright green
+      ctx.strokeStyle = "#00ff88";
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+
+      // Draw with a subtle glow
+      ctx.shadowColor = "rgba(0,255,136,0.3)";
+      ctx.shadowBlur = 4;
+
+      ctx.beginPath();
+      const p0c = kmToCanvas(path[0].x, path[0].y);
+      ctx.moveTo(p0c.x, p0c.y);
+      for (let i = 1; i < path.length; i++) {
+        const pc = kmToCanvas(path[i].x, path[i].y);
+        ctx.lineTo(pc.x, pc.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // --- Distance line from Earth to Orion ---
+    ctx.save();
+    ctx.setLineDash([2, 4]);
+    ctx.strokeStyle = "rgba(0,255,136,0.25)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(earthPx.x, earthPx.y);
+    ctx.lineTo(orionPx.x, orionPx.y);
+    ctx.stroke();
+    ctx.restore();
+
+    // Earth distance label along the line
+    const earthDistKm = telemetry?.earthDistKm
+      ?? (stateVector ? Math.sqrt(
+          stateVector.position.x ** 2 +
+          stateVector.position.y ** 2 +
+          stateVector.position.z ** 2
+        ) : null);
+
+    if (earthDistKm != null) {
+      const labelFrac = 0.35; // position label 35% along Earth->Orion line
+      const lx = earthPx.x + (orionPx.x - earthPx.x) * labelFrac;
+      const ly = earthPx.y + (orionPx.y - earthPx.y) * labelFrac;
+      const distText = `${fmtKm(earthDistKm)} km`;
+
+      ctx.save();
+      ctx.font = "bold 9px monospace";
+      ctx.fillStyle = "rgba(0,255,136,0.75)";
+      ctx.textAlign = "center";
+      // Draw with a dark background for readability
+      const textW = ctx.measureText(distText).width;
+      ctx.fillStyle = "rgba(6,11,20,0.7)";
+      ctx.fillRect(lx - textW / 2 - 3, ly - 10, textW + 6, 14);
+      ctx.fillStyle = "rgba(0,255,136,0.85)";
+      ctx.fillText(distText, lx, ly);
+      ctx.restore();
+    }
+
+    // --- Moon distance label (near the Moon) ---
+    const moonDistKm = telemetry?.moonDistKm ?? null;
+    if (moonDistKm != null) {
+      const moonDistText = `${fmtKm(moonDistKm)} km`;
+      ctx.save();
+      ctx.font = "8px monospace";
+      ctx.fillStyle = "rgba(180,185,190,0.6)";
+      ctx.textAlign = "center";
+      ctx.fillText(moonDistText, moonPx.x, moonPx.y - moonR - 6);
+      ctx.restore();
     }
 
     // Orion glow
@@ -400,8 +516,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     ctx.fillText("Orion", orionPx.x + 7, orionPx.y - 8);
     ctx.restore();
 
-    // Ground track — show what region Orion is above
-    if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
+    // Ground track - show what region Orion is above
+    if (hasLivePosition && stateVector) {
       const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
       ctx.save();
       ctx.font = "8px monospace";
@@ -409,9 +525,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
       ctx.textAlign = "left";
       ctx.fillText(groundLabel, orionPx.x + 7, orionPx.y + 4);
       ctx.restore();
-
     }
-  }, [stateVector, moonPosition, metMs]);
+  }, [stateVector, moonPosition, metMs, telemetry]);
 
   // Animation loop
   useEffect(() => {
