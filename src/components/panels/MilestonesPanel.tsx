@@ -34,7 +34,11 @@ function MilestoneRow({
       <span
         className={dotClass}
         style={{ marginTop: 3, flexShrink: 0 }}
+        aria-hidden="true"
       />
+      <span className="sr-only">
+        {status === "completed" ? "(completed)" : status === "next" ? "(next)" : "(upcoming)"}
+      </span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

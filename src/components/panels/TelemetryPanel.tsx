@@ -82,6 +82,7 @@ export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
         </span>
       }
     >
+      <div aria-live="polite" aria-atomic="false">
       <TelemSection label="Dynamics" />
       <TelemRow
         label="Velocity"
@@ -127,6 +128,7 @@ export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
         value={fmtKm(t?.apoapsisKm)}
         unit="km"
       />
+      </div>
     </PanelFrame>
   );
 }

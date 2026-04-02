@@ -40,6 +40,9 @@ export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: 
       }}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
         style={{
           background: "var(--bg-secondary)",
@@ -66,6 +69,7 @@ export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: 
           }}
         >
           <span
+            id="modal-title"
             style={{
               fontSize: 13,
               fontWeight: 700,

@@ -507,6 +507,8 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
           return !prev;
         });
       }}
+      aria-label={autoTrack ? "Timeline tracking enabled — click to disable" : "Enable timeline tracking"}
+      aria-pressed={autoTrack}
       style={{
         background: autoTrack ? "rgba(0,200,150,0.15)" : "rgba(255,255,255,0.05)",
         border: `1px solid ${autoTrack ? "rgba(0,200,150,0.4)" : "rgba(255,255,255,0.1)"}`,
@@ -524,6 +526,17 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     </button>
   );
 
+  // Accessible description of current timeline state
+  const currentActivity = timeline.currentActivity;
+  const nextMilestone = timeline.nextMilestone;
+  const timelineDescription = [
+    "Mission timeline.",
+    currentActivity ? `Current activity: ${currentActivity.name}.` : "",
+    nextMilestone ? `Next milestone: ${nextMilestone.name}.` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <PanelFrame
       title="Mission Timeline"
@@ -540,8 +553,10 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         onMouseLeave={handleMouseLeave}
         onWheel={handleWheel}
       >
+        <span className="sr-only">{timelineDescription}</span>
         <canvas
           ref={canvasRef}
+          aria-hidden="true"
           style={{ display: "block", width: "100%", height: "100%" }}
         />
       </div>

@@ -447,14 +447,25 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs }: OrbitMapPane
     return () => ro.disconnect();
   }, [draw]);
 
+  // Compute accessible ground track description
+  const groundLabel =
+    stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)
+      ? getGroundTrackLabel(stateVector.position, metMs)
+      : null;
+  const orbitDescription = groundLabel
+    ? `Orbit map showing Orion spacecraft ${groundLabel.toLowerCase()}`
+    : "Orbit map showing Orion spacecraft on free-return lunar flyby trajectory";
+
   return (
     <PanelFrame title="Figure-8 Lunar Flyby Trajectory" accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>2D TOP-DOWN VIEW</span>}>
       <div
         ref={containerRef}
         style={{ width: "100%", height: 320, position: "relative", overflow: "hidden", borderRadius: 4 }}
       >
+        <span className="sr-only">{orbitDescription}</span>
         <canvas
           ref={canvasRef}
+          aria-hidden="true"
           style={{ display: "block", width: "100%", height: "100%" }}
         />
       </div>

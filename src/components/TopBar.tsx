@@ -187,7 +187,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
       </div>
 
       {/* Telemetry: VEL, ALT, EARTH */}
-      <div style={{ ...pillStyle, gap: 10 }}>
+      <div aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>VEL</span>
           <span style={valueStyle}>
@@ -217,6 +217,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
       <button
         style={infoButtonStyle}
         onClick={() => setCrewOpen(true)}
+        aria-label="View crew information"
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-cyan)";
           (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.35)";
@@ -231,6 +232,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline }: TopBarProps) {
       <button
         style={infoButtonStyle}
         onClick={() => setVehicleOpen(true)}
+        aria-label="View vehicle information"
         onMouseEnter={(e) => {
           (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-cyan)";
           (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.35)";

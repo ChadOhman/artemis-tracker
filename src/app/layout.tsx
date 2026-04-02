@@ -21,7 +21,10 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <a href="#main-content" className="skip-nav">Skip to main content</a>
+        {children}
+      </body>
     </html>
   );
 }

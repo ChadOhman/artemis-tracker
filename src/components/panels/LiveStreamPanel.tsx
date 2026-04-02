@@ -20,6 +20,8 @@ export function LiveStreamPanel() {
         <button
           key={s.id}
           onClick={() => setActiveStream(s.id)}
+          aria-label={`Switch to ${s.label} stream`}
+          aria-pressed={activeStream === s.id}
           style={{
             padding: "2px 8px",
             borderRadius: 3,
@@ -65,7 +67,7 @@ export function LiveStreamPanel() {
         <iframe
           key={stream.videoId}
           src={`https://www.youtube.com/embed/${stream.videoId}?autoplay=0&rel=0&modestbranding=1`}
-          title={stream.label}
+          title={`NASA Artemis II Live Stream — ${stream.label}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           style={{

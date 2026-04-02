@@ -27,6 +27,8 @@ export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps)
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       className="panel"
       style={{
         borderLeft: "2px solid var(--accent-orange)",

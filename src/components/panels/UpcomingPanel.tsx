@@ -35,13 +35,14 @@ function UpcomingRow({ activity, diffMs }: { activity: TimelineActivity; diffMs:
   const color = TYPE_COLORS[activity.type] ?? "var(--color-other)";
 
   return (
-    <div
+    <li
       style={{
         display: "flex",
         alignItems: "center",
         gap: 8,
         padding: "4px 0",
         borderBottom: "1px solid var(--border-subtle)",
+        listStyle: "none",
       }}
     >
       {/* Type color bar */}
@@ -82,7 +83,7 @@ function UpcomingRow({ activity, diffMs }: { activity: TimelineActivity; diffMs:
       >
         {formatCountdown(diffMs)}
       </div>
-    </div>
+    </li>
   );
 }
 
@@ -113,13 +114,15 @@ export function UpcomingPanel({ timeline, metMs }: UpcomingPanelProps) {
           No upcoming activities
         </div>
       ) : (
-        upcoming.map((activity, i) => (
-          <UpcomingRow
-            key={`${activity.name}-${activity.startMetMs}`}
-            activity={activity}
-            diffMs={activity.startMetMs - metMs}
-          />
-        ))
+        <ul style={{ margin: 0, padding: 0 }}>
+          {upcoming.map((activity) => (
+            <UpcomingRow
+              key={`${activity.name}-${activity.startMetMs}`}
+              activity={activity}
+              diffMs={activity.startMetMs - metMs}
+            />
+          ))}
+        </ul>
       )}
     </PanelFrame>
   );

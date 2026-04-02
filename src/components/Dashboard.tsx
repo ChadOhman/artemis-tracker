@@ -21,7 +21,7 @@ function DashboardInner() {
   const timeline = useTimeline(metMs);
 
   return (
-    <div className="dashboard-grid">
+    <div id="main-content" role="main" className="dashboard-grid">
       <div className="dashboard-topbar">
         <TopBar metMs={metMs} telemetry={telemetry} dsn={dsn} timeline={timeline} />
       </div>

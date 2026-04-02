@@ -41,9 +41,15 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ProgressBar({ pct, color }: { pct: number; color: string }) {
+function ProgressBar({ pct, color, label }: { pct: number; color: string; label?: string }) {
+  const clampedPct = Math.min(100, Math.max(0, pct));
   return (
     <div
+      role="progressbar"
+      aria-valuenow={Math.round(clampedPct)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-label={label ?? "Progress"}
       style={{
         height: 4,
         background: "var(--bg-surface)",
@@ -55,7 +61,7 @@ function ProgressBar({ pct, color }: { pct: number; color: string }) {
     >
       <div
         style={{
-          width: `${Math.min(100, Math.max(0, pct))}%`,
+          width: `${clampedPct}%`,
           height: "100%",
           background: color,
           borderRadius: 2,
@@ -151,7 +157,7 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
       </div>
 
       {/* Activity progress bar */}
-      <ProgressBar pct={activityPct} color={typeColor} />
+      <ProgressBar pct={activityPct} color={typeColor} label={`Activity progress: ${Math.min(100, Math.max(0, activityPct)).toFixed(1)}%`} />
 
       <InfoRow label="Start (MET)" value={formatMet(activity.startMetMs)} />
       <InfoRow label="End (MET)" value={formatMet(activity.endMetMs)} />
@@ -181,7 +187,7 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
           >
             Mission Phase — {phase.phase}
           </div>
-          <ProgressBar pct={phasePct} color="var(--accent-green)" />
+          <ProgressBar pct={phasePct} color="var(--accent-green)" label={`Mission phase progress: ${phasePct.toFixed(1)}%`} />
           <div style={{ fontSize: 9, color: "var(--text-dim)", textAlign: "right" }}>
             {phasePct.toFixed(1)}% complete
           </div>

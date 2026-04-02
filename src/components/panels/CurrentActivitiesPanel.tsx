@@ -26,6 +26,7 @@ export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps
 
   return (
     <PanelFrame title="Current Activity" icon="⚡" accentColor="var(--accent-cyan)">
+      <div aria-live="polite" aria-atomic="true">
       {!activity ? (
         <div
           style={{
@@ -92,6 +93,7 @@ export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps
           )}
         </>
       )}
+      </div>
     </PanelFrame>
   );
 }

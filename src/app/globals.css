@@ -23,7 +23,7 @@
   /* Text */
   --text-primary: #e8f0fe;
   --text-secondary: #8ba0b8;
-  --text-dim: #4a5f78;
+  --text-dim: #5a7088;
   --text-accent: var(--accent-cyan);
 
   /* Borders */
@@ -407,4 +407,49 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
 .sim-jump-select option {
   background: var(--bg-panel);
   color: var(--text-secondary);
+}
+
+/* ── Accessibility ── */
+
+/* Skip navigation */
+.skip-nav {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--accent-cyan);
+  color: #000;
+  font-weight: bold;
+  text-decoration: none;
+  font-family: var(--font-mono);
+}
+.skip-nav:focus { left: 0; }
+
+/* Focus visible */
+*:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

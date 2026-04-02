@@ -40,6 +40,19 @@ export function PanelFrame({
       <div
         className="panel-header"
         onClick={collapsible ? () => setCollapsed((c) => !c) : undefined}
+        onKeyDown={
+          collapsible
+            ? (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setCollapsed((c) => !c);
+                }
+              }
+            : undefined
+        }
+        role={collapsible ? "button" : undefined}
+        tabIndex={collapsible ? 0 : undefined}
+        aria-expanded={collapsible ? !collapsed : undefined}
         style={collapsible ? { cursor: "pointer", userSelect: "none" } : undefined}
       >
         <div className="panel-header-title">

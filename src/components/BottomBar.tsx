@@ -56,6 +56,7 @@ export function BottomBar({ milestones }: BottomBarProps) {
       <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
         <button
           onClick={handleSwitchToLive}
+          aria-pressed={isLive}
           style={{
             padding: "2px 10px",
             borderRadius: 3,
@@ -75,6 +76,7 @@ export function BottomBar({ milestones }: BottomBarProps) {
         </button>
         <button
           onClick={isLive ? handleSwitchToSim : undefined}
+          aria-pressed={!isLive}
           style={{
             padding: "2px 10px",
             borderRadius: 3,
@@ -108,6 +110,7 @@ export function BottomBar({ milestones }: BottomBarProps) {
               setSimMetMs(Number(e.target.value));
               setPlaybackSpeed(0);
             }}
+            aria-label="Mission time scrubber"
             style={{ flex: 1, minWidth: 80 }}
           />
 
@@ -117,6 +120,8 @@ export function BottomBar({ milestones }: BottomBarProps) {
               <button
                 key={opt.value}
                 onClick={() => setPlaybackSpeed(opt.value)}
+                aria-label={opt.value === 0 ? "Pause simulation" : `Set playback speed to ${opt.value}×`}
+                aria-pressed={playbackSpeed === opt.value}
                 style={{
                   padding: "2px 6px",
                   borderRadius: 3,
@@ -153,6 +158,7 @@ export function BottomBar({ milestones }: BottomBarProps) {
                 const ms = Number(e.target.value);
                 if (!isNaN(ms)) jumpTo(ms);
               }}
+              aria-label="Jump to milestone"
               style={{ flexShrink: 0 }}
             >
               <option value="" disabled>

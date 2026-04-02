@@ -48,7 +48,9 @@ function DishCard({ dish }: { dish: DsnDish }) {
         <span
           className={`live-dot ${hasSignal ? "" : "inactive"}`}
           style={{ width: 7, height: 7, flexShrink: 0 }}
+          aria-hidden="true"
         />
+        <span className="sr-only">{hasSignal ? "(active)" : "(no signal)"}</span>
         <span
           style={{
             fontSize: 11,
