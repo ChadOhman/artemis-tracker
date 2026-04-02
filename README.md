@@ -33,7 +33,80 @@ npm run dev
 
 Open http://localhost:3000
 
-## Deploy to LXC (Production)
+## One-Command Deploy from Proxmox Host
+
+Create and deploy to an LXC container in a single command. Replace `CTID` with your desired container ID and `REPO_URL` with your git repo URL.
+
+```bash
+# From the Proxmox host — creates LXC, installs everything, starts the app
+CTID=200 REPO="https://github.com/your-org/artemis-tracker.git" bash -c '
+pct create $CTID local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+  --hostname artemis-tracker \
+  --memory 2048 --cores 2 --swap 512 \
+  --rootfs local-lvm:8 \
+  --net0 name=eth0,bridge=vmbr0,ip=dhcp \
+  --unprivileged 1 --features nesting=1 \
+  --start 1 && sleep 5 && \
+pct exec $CTID -- bash -c "
+  apt-get update && apt-get install -y curl git ca-certificates && \
+  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+  apt-get install -y nodejs && \
+  git clone $REPO /opt/artemis-tracker && \
+  cd /opt/artemis-tracker && \
+  npm ci && npm run build && \
+  mkdir -p data && echo \"[]\" > data/telemetry-history.json && \
+  cat > /etc/systemd/system/artemis-tracker.service <<EOF
+[Unit]
+Description=Artemis II Mission Tracker
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/artemis-tracker
+ExecStart=/usr/bin/node node_modules/.bin/next start -p 3000
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+Environment=PORT=3000
+
+[Install]
+WantedBy=multi-user.target
+EOF
+  systemctl daemon-reload && \
+  systemctl enable --now artemis-tracker
+"
+echo "Deployed! Access at http://\$(pct exec $CTID -- hostname -I | tr -d \" \"):3000"
+'
+```
+
+### Update an Existing Deployment
+
+```bash
+CTID=200 bash -c '
+pct exec $CTID -- bash -c "
+  cd /opt/artemis-tracker && \
+  git pull && npm ci && npm run build && \
+  systemctl restart artemis-tracker
+"
+'
+```
+
+### Cloudflare Tunnel
+
+If you're exposing through a Cloudflare Tunnel, add an ingress rule to your `config.yml`:
+
+```yaml
+ingress:
+  - hostname: artemis.yourdomain.com
+    service: http://localhost:3000
+  - service: http_status:404
+```
+
+The SSE endpoint includes 30-second keepalives for Cloudflare Tunnel compatibility (100s idle timeout).
+
+## Deploy to LXC (Manual)
+
+If you prefer step-by-step instead of the one-liner:
 
 ### Prerequisites
 
@@ -44,89 +117,24 @@ Open http://localhost:3000
 ### Setup
 
 ```bash
-# Clone the repo
 git clone https://github.com/your-org/artemis-tracker.git
 cd artemis-tracker
-
-# Install dependencies
-npm ci --production=false
-
-# Build for production
+npm ci
 npm run build
-
-# Create data directory for telemetry persistence
-mkdir -p data
-echo "[]" > data/telemetry-history.json
+mkdir -p data && echo "[]" > data/telemetry-history.json
 ```
 
-### Run with systemd
-
-Create `/etc/systemd/system/artemis-tracker.service`:
-
-```ini
-[Unit]
-Description=Artemis II Mission Tracker
-After=network.target
-
-[Service]
-Type=simple
-User=www-data
-WorkingDirectory=/opt/artemis-tracker
-ExecStart=/usr/bin/node node_modules/.bin/next start -p 3000
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-Environment=PORT=3000
-
-[Install]
-WantedBy=multi-user.target
-```
+### Run
 
 ```bash
-# Copy files to /opt
-sudo cp -r . /opt/artemis-tracker
-sudo chown -R www-data:www-data /opt/artemis-tracker
+# With systemd (recommended)
+sudo cp artemis-tracker.service /etc/systemd/system/  # if provided
+sudo systemctl enable --now artemis-tracker
 
-# Enable and start
-sudo systemctl daemon-reload
-sudo systemctl enable artemis-tracker
-sudo systemctl start artemis-tracker
-
-# Check status
-sudo systemctl status artemis-tracker
-```
-
-### Cloudflare Tunnel
-
-If you're running behind a Cloudflare Tunnel:
-
-```bash
-# Install cloudflared
-curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg
-echo "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflared.list
-sudo apt update && sudo apt install cloudflared
-
-# Configure tunnel (replace with your tunnel ID)
-cloudflared tunnel route dns YOUR_TUNNEL_ID artemis.yourdomain.com
-
-# Add ingress rule to ~/.cloudflared/config.yml:
-# ingress:
-#   - hostname: artemis.yourdomain.com
-#     service: http://localhost:3000
-#   - service: http_status:404
-```
-
-The SSE endpoint includes 30-second keepalives for Cloudflare Tunnel compatibility (100s idle timeout).
-
-### PM2 Alternative
-
-If you prefer PM2 over systemd:
-
-```bash
+# Or with PM2
 npm install -g pm2
 pm2 start node_modules/.bin/next --name artemis-tracker -- start -p 3000
-pm2 save
-pm2 startup
+pm2 save && pm2 startup
 ```
 
 ## Data Sources
