@@ -39,8 +39,8 @@ Create and deploy to an LXC container in a single command. Replace `CTID` with y
 
 ```bash
 # From the Proxmox host — creates LXC, installs everything, starts the app
-CTID=200 REPO="https://github.com/your-org/artemis-tracker.git" bash -c '
-pct create $CTID local:vztmpl/debian-12-standard_12.7-1_amd64.tar.zst \
+CTID=200 bash -c '
+pct create $CTID local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst \
   --hostname artemis-tracker \
   --memory 2048 --cores 2 --swap 512 \
   --rootfs local-lvm:8 \
@@ -51,7 +51,7 @@ pct exec $CTID -- bash -c "
   apt-get update && apt-get install -y curl git ca-certificates && \
   curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
   apt-get install -y nodejs && \
-  git clone $REPO /opt/artemis-tracker && \
+  git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker && \
   cd /opt/artemis-tracker && \
   npm ci && npm run build && \
   mkdir -p data && echo \"[]\" > data/telemetry-history.json && \
@@ -117,7 +117,7 @@ If you prefer step-by-step instead of the one-liner:
 ### Setup
 
 ```bash
-git clone https://github.com/your-org/artemis-tracker.git
+git clone https://github.com/ChadOhman/artemis-tracker.git
 cd artemis-tracker
 npm ci
 npm run build
