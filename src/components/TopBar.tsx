@@ -6,6 +6,7 @@ import type { Telemetry, DsnStatus } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { CrewModal } from "./modals/CrewModal";
 import { SpacecraftModal } from "./modals/SpacecraftModal";
+import { useMetContext } from "@/context/MetContext";
 
 function formatNumber(n: number): string {
   return Math.round(n).toLocaleString();
@@ -89,6 +90,7 @@ const infoButtonStyle: React.CSSProperties = {
 export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate }: TopBarProps) {
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
+  const { speedUnit } = useMetContext();
 
   const isStale =
     lastUpdate !== null && Date.now() - lastUpdate > STALE_THRESHOLD_MS;
@@ -228,9 +230,9 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>VEL</span>
           <span style={valueStyle}>
-            {telemetry ? formatNumber(telemetry.speedKmH) : "—"}
+            {telemetry ? (speedUnit === "km/h" ? formatNumber(telemetry.speedKmH) : telemetry.speedKmS.toFixed(3)) : "—"}
           </span>
-          <span style={unitStyle}>km/h</span>
+          <span style={unitStyle}>{speedUnit}</span>
         </div>
         <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>

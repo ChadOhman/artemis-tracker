@@ -1,5 +1,6 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
+import { useMetContext } from "@/context/MetContext";
 import type { Telemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 
@@ -64,6 +65,7 @@ function TelemRow({
 export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
   const t = telemetry;
   const phaseName = timeline.currentPhaseName ?? "Unknown";
+  const { speedUnit } = useMetContext();
 
   return (
     <PanelFrame
@@ -88,8 +90,8 @@ export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
       <TelemSection label="Dynamics" />
       <TelemRow
         label="Velocity"
-        value={t ? Math.round(t.speedKmH).toLocaleString() : "—"}
-        unit="km/h"
+        value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : t.speedKmS.toFixed(3)) : "—"}
+        unit={speedUnit}
       />
       <TelemRow
         label="G-Force"

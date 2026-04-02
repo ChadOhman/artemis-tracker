@@ -1,6 +1,6 @@
 "use client";
 import { MetClock } from "./shared/MetClock";
-import { useMetContext, type PlaybackSpeed } from "@/context/MetContext";
+import { useMetContext, type PlaybackSpeed, type SpeedUnit } from "@/context/MetContext";
 import { MISSION_DURATION_MS } from "@/lib/constants";
 import type { Milestone } from "@/lib/types";
 
@@ -26,6 +26,8 @@ export function BottomBar({ milestones }: BottomBarProps) {
     playbackSpeed,
     setPlaybackSpeed,
     jumpTo,
+    speedUnit,
+    setSpeedUnit,
   } = useMetContext();
 
   const handleSwitchToSim = () => {
@@ -95,6 +97,34 @@ export function BottomBar({ milestones }: BottomBarProps) {
         >
           SIM
         </button>
+      </div>
+
+      {/* Speed unit toggle */}
+      <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+        {(["km/h", "m/s"] as SpeedUnit[]).map((unit) => (
+          <button
+            key={unit}
+            onClick={() => setSpeedUnit(unit)}
+            aria-label={`Show velocity in ${unit}`}
+            aria-pressed={speedUnit === unit}
+            style={{
+              padding: "2px 8px",
+              borderRadius: 3,
+              border: speedUnit === unit
+                ? "1px solid var(--accent-purple)"
+                : "1px solid var(--border-panel)",
+              background: speedUnit === unit ? "rgba(179,136,255,0.15)" : "transparent",
+              color: speedUnit === unit ? "var(--accent-purple)" : "var(--text-dim)",
+              fontSize: 9,
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              letterSpacing: "0.04em",
+            }}
+          >
+            {unit}
+          </button>
+        ))}
       </div>
 
       {/* SIM controls — only visible in SIM mode */}
