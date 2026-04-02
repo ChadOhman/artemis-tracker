@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { formatMet } from "@/lib/met";
 
 type MetClockSize = "large" | "medium" | "small";
@@ -44,7 +45,11 @@ export function MetClock({
   showTPlus = false,
   className = "",
 }: MetClockProps) {
-  const formatted = formatMet(metMs);
+  // Avoid hydration mismatch: render placeholder on server, real time on client
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const formatted = mounted ? formatMet(metMs) : "---:--:--:--";
   const prefix = showTPlus ? "T+" : "MET ";
   const isNegative = metMs < 0;
 
