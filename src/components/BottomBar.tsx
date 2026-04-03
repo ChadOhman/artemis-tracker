@@ -255,6 +255,13 @@ export function BottomBar({ milestones }: BottomBarProps) {
         >
           Credits
         </button>
+        <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+        <a
+          href="mailto:cdnspace@ohman.ca?subject=Artemis%20II%20Tracker%20Feedback"
+          style={{ color: "var(--text-dim)", textDecoration: "none" }}
+        >
+          Feedback
+        </a>
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <span style={{ marginLeft: 8, opacity: 0.5 }}>
             build {process.env.NEXT_PUBLIC_BUILD_ID}
