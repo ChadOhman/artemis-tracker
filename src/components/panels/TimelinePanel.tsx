@@ -253,7 +253,65 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       return;
     }
 
-    /* ── crew activity blocks ────────────────────────────────── */
+    /* ── pre/post-sleep background blocks (drawn FIRST, behind activities) ── */
+    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
+    const POST_SLEEP_MS = 0.5 * MS_HOUR;
+    for (const act of raw.activities) {
+      if (act.type !== "sleep") continue;
+      const preStart = act.startMetMs - PRE_SLEEP_MS;
+      const postEnd = act.endMetMs + POST_SLEEP_MS;
+      if (postEnd < viewStart || preStart > viewEnd) continue;
+
+      // Pre-sleep: full-height grey block in activity row
+      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
+      const px2 = Math.min(msToX(act.startMetMs), w);
+      const pbw = px2 - px1;
+      if (pbw >= 1) {
+        ctx.fillStyle = "#546e7a";
+        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 0.5;
+        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
+        ctx.stroke();
+        if (pbw > 55) {
+          ctx.fillStyle = "rgba(255,255,255,0.7)";
+          ctx.font = `9px ${FONT}`;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(px1 + 2, crewY, pbw - 4, crewH);
+          ctx.clip();
+          ctx.fillText("Pre-Sleep", px1 + 4, crewY + crewH / 2 + 3);
+          ctx.restore();
+        }
+      }
+
+      // Post-sleep: full-height grey block in activity row
+      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
+      const qx2 = Math.min(msToX(postEnd), w);
+      const qbw = qx2 - qx1;
+      if (qbw >= 1) {
+        ctx.fillStyle = "#546e7a";
+        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 0.5;
+        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
+        ctx.stroke();
+        if (qbw > 60) {
+          ctx.fillStyle = "rgba(255,255,255,0.7)";
+          ctx.font = `9px ${FONT}`;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(qx1 + 2, crewY, qbw - 4, crewH);
+          ctx.clip();
+          ctx.fillText("Post-Sleep", qx1 + 4, crewY + crewH / 2 + 3);
+          ctx.restore();
+        }
+      }
+    }
+
+    /* ── crew activity blocks (drawn AFTER pre/post-sleep, so they render on top) ── */
     for (const act of raw.activities) {
       if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
       const x1 = Math.max(msToX(act.startMetMs), LABEL_GUTTER);
@@ -281,46 +339,6 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         ctx.clip();
         ctx.fillText(act.name, x1 + 4, crewY + crewH / 2 + 3);
         ctx.restore();
-      }
-    }
-
-    /* ── pre/post-sleep markers (thin bar above crew activity row) ── */
-    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
-    const POST_SLEEP_MS = 0.5 * MS_HOUR;
-    const MARKER_H = 4;
-    const MARKER_Y = crewY - MARKER_H - 1;
-    for (const act of raw.activities) {
-      if (act.type !== "sleep") continue;
-      const preStart = act.startMetMs - PRE_SLEEP_MS;
-      const postEnd = act.endMetMs + POST_SLEEP_MS;
-      if (postEnd < viewStart || preStart > viewEnd) continue;
-
-      // Pre-sleep: colored bar above the crew row
-      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
-      const px2 = Math.min(msToX(act.startMetMs), w);
-      const pbw = px2 - px1;
-      if (pbw >= 1) {
-        ctx.fillStyle = "#78909c";
-        ctx.fillRect(px1, MARKER_Y, pbw, MARKER_H);
-        if (pbw > 55) {
-          ctx.fillStyle = "#90a4ae";
-          ctx.font = `bold 7px ${FONT}`;
-          ctx.fillText("PRE-SLEEP", px1 + 3, MARKER_Y - 2);
-        }
-      }
-
-      // Post-sleep: colored bar above the crew row
-      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
-      const qx2 = Math.min(msToX(postEnd), w);
-      const qbw = qx2 - qx1;
-      if (qbw >= 1) {
-        ctx.fillStyle = "#78909c";
-        ctx.fillRect(qx1, MARKER_Y, qbw, MARKER_H);
-        if (qbw > 60) {
-          ctx.fillStyle = "#90a4ae";
-          ctx.font = `bold 7px ${FONT}`;
-          ctx.fillText("POST-SLEEP", qx1 + 3, MARKER_Y - 2);
-        }
       }
     }
 
