@@ -332,15 +332,15 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PMC", "config", 1, 6, 0, 1, 6, 30, "Private Medical Conference"),
   act("FD Conference", "config", 1, 6, 30, 1, 7, 0),
   act("TLI Confirmation", "config", 1, 7, 0, 1, 8, 0),
-  act("Sleep", "sleep", 1, 8, 0, 1, 16, 30, "8.5-hour rest period"),
+  act("Sleep", "sleep", 1, 11, 15, 1, 19, 45, "8.5-hour rest period"),
 
-  // ── FD03: Outbound Cruise 1 (MET ~1/16:30 to ~2/19:00) ─────────────────
-  act("DPC", "config", 1, 16, 30, 1, 17, 0, "Daily Planning Conference"),
-  act("Pulse Oximetry", "science", 1, 17, 0, 1, 17, 30),
-  act("PFC", "other", 1, 17, 30, 1, 18, 0, "Private Family Conference"),
-  act("NatGeo", "science", 1, 18, 0, 1, 19, 0),
-  act("Toilet Noise Measurement", "science", 1, 19, 0, 1, 19, 30),
-  act("Dual Cam Bracket Uninstall", "config", 1, 19, 30, 1, 20, 0),
+  // ── FD03: Outbound Cruise 1 (MET ~1/19:45 to ~2/09:30) ────────────────
+  act("DPC", "config", 1, 19, 45, 1, 20, 15, "Daily Planning Conference"),
+  act("Pulse Oximetry", "science", 1, 20, 15, 1, 20, 45),
+  act("PFC", "other", 1, 20, 45, 1, 21, 15, "Private Family Conference"),
+  act("NatGeo", "science", 1, 21, 15, 1, 22, 15),
+  act("Toilet Noise Measurement", "science", 1, 22, 15, 1, 22, 45),
+  act("Dual Cam Bracket Uninstall", "config", 1, 22, 45, 1, 23, 15),
   act("OTC-1 Burn", "maneuver", 2, 1, 5, 2, 1, 15, "Outbound trajectory correction 1"),
   act("Meal", "meal", 2, 1, 30, 2, 2, 30),
   act("CPR Demo", "science", 2, 2, 30, 2, 3, 30, "Medical procedure demonstration"),
@@ -350,13 +350,13 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Lunar Cabin Config", "config", 2, 7, 0, 2, 7, 30),
   act("D5 Cam Window", "science", 2, 7, 30, 2, 8, 0),
   act("DSN Emergency Comm Test", "config", 2, 8, 0, 2, 9, 0, "DFTO-EM2-22"),
-  act("CSA PAO", "pao", 2, 9, 0, 2, 9, 30, "Canadian Space Agency event"),
-  act("PMC", "config", 2, 9, 30, 2, 10, 0, "Private Medical Conference"),
-  act("FD Conference", "config", 2, 10, 0, 2, 10, 30),
-  act("Sleep", "sleep", 2, 10, 30, 2, 19, 0, "8.5-hour rest period"),
+  act("CSA PAO", "pao", 2, 8, 0, 2, 8, 30, "Canadian Space Agency event"),
+  act("PMC", "config", 2, 8, 30, 2, 9, 0, "Private Medical Conference"),
+  act("FD Conference", "config", 2, 9, 0, 2, 9, 30),
+  act("Sleep", "sleep", 2, 9, 30, 2, 18, 0, "8.5-hour rest period"),
 
-  // ── FD04: Outbound Cruise 2 (MET ~2/19:00 to ~3/18:15) ─────────────────
-  act("DPC", "config", 2, 19, 0, 2, 19, 30, "Daily Planning Conference"),
+  // ── FD04: Outbound Cruise 2 (MET ~2/18:00 to ~3/18:15) ─────────────────
+  act("DPC", "config", 2, 18, 0, 2, 18, 30, "Daily Planning Conference"),
   act("Pulse Oximetry", "science", 2, 19, 30, 2, 20, 0),
   act("PWD Operations", "config", 2, 20, 0, 2, 20, 30, "Portable Water Dispenser"),
   act("NatGeo", "science", 2, 20, 30, 2, 21, 30),
