@@ -20,16 +20,18 @@ export function BuyMeACoffee() {
   if (!visible) return null;
 
   return (
-    <div
+    <aside
+      role="complementary"
+      aria-label="Support this project"
       style={{
         position: "fixed",
-        bottom: "1rem",
-        right: "1rem",
+        bottom: "max(1rem, env(safe-area-inset-bottom, 0px))",
+        right: "max(1rem, env(safe-area-inset-right, 0px))",
         display: "flex",
         alignItems: "center",
         gap: "0.5rem",
-        padding: "0.4rem 0.75rem 0.4rem 0.6rem",
-        background: "rgba(10, 14, 20, 0.9)",
+        padding: "0.5rem 0.75rem 0.5rem 0.7rem",
+        background: "rgba(10, 14, 20, 0.92)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         border: "1px solid var(--border-panel)",
@@ -44,7 +46,7 @@ export function BuyMeACoffee() {
           to   { opacity: 1; transform: translateY(0)   scale(1);    }
         }
         .bmac-link {
-          font-size: 0.78rem;
+          font-size: 0.8rem;
           font-weight: 500;
           letter-spacing: 0.01em;
           color: var(--text-dim);
@@ -52,19 +54,31 @@ export function BuyMeACoffee() {
           transition: color 0.15s;
           white-space: nowrap;
         }
-        .bmac-link:hover { color: var(--accent-cyan); }
+        .bmac-link:hover, .bmac-link:focus-visible { color: var(--accent-cyan); }
+        .bmac-link:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; border-radius: 4px; }
         .bmac-dismiss {
           background: none;
           border: none;
-          padding: 0 0 0 0.25rem;
+          padding: 0.25rem;
           cursor: pointer;
-          font-size: 0.75rem;
+          font-size: 1rem;
           line-height: 1;
           color: var(--text-dim);
           opacity: 0.7;
           transition: opacity 0.15s;
+          min-width: 44px;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          margin: -0.25rem -0.25rem -0.25rem 0;
         }
-        .bmac-dismiss:hover { opacity: 1; }
+        .bmac-dismiss:hover, .bmac-dismiss:focus-visible { opacity: 1; }
+        .bmac-dismiss:focus-visible { outline: 2px solid var(--accent-cyan); outline-offset: 2px; }
+        @media (max-width: 480px) {
+          .bmac-container { bottom: max(4.5rem, env(safe-area-inset-bottom, 4.5rem)) !important; }
+        }
       `}</style>
       <a
         href="https://buymeacoffee.com/chadohman"
@@ -77,10 +91,11 @@ export function BuyMeACoffee() {
       <button
         className="bmac-dismiss"
         onClick={dismiss}
-        aria-label="Dismiss"
+        type="button"
+        aria-label="Dismiss support banner"
       >
         ×
       </button>
-    </div>
+    </aside>
   );
 }
