@@ -1,12 +1,13 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { useMetContext } from "@/context/MetContext";
-import type { Telemetry } from "@/lib/types";
+import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
   timeline: TimelineState;
+  arow: ArowTelemetry | null;
 }
 
 function fmt(n: number | undefined, decimals = 1): string {
@@ -62,7 +63,7 @@ function TelemRow({
   );
 }
 
-export function TelemetryPanel({ telemetry, timeline }: TelemetryPanelProps) {
+export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProps) {
   const t = telemetry;
   const phaseName = timeline.currentPhaseName ?? "Unknown";
   const { speedUnit } = useMetContext();

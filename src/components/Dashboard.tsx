@@ -25,6 +25,7 @@ function DashboardInner() {
     stateVector: liveStateVector,
     moonPosition: liveMoonPosition,
     dsn,
+    arow,
     connected,
     reconnecting,
     lastUpdate,
@@ -59,7 +60,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-left">
         <OrbitMapPanel stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
-        <TelemetryPanel telemetry={telemetry} timeline={timeline} />
+        <TelemetryPanel telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
         <DsnPanel dsn={dsn} />
       </div>
       <div className="dashboard-timeline">
