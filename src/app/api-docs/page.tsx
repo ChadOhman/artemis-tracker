@@ -192,6 +192,105 @@ es.addEventListener("error", () => {
         <SubHeading>Example (curl)</SubHeading>
         <CodeBlock>{`curl -N https://artemis.cdnspace.ca/api/arow/stream`}</CodeBlock>
 
+        {/* Additional Endpoints */}
+        <SectionHeading>Additional Endpoints</SectionHeading>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/orbit
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Computed orbital telemetry from JPL Horizons. Updates every 5 minutes.
+          </p>
+          <CodeBlock>{`{
+  "metMs": 119700000,
+  "speedKmS": 2.755,
+  "speedKmH": 9918.0,
+  "altitudeKm": 79149.3,
+  "earthDistKm": 85520.3,
+  "moonDistKm": 319868.1,
+  "periapsisKm": 185.0,
+  "apoapsisKm": 70377.0,
+  "gForce": 0.0001
+}`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/state
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Raw state vectors (position &amp; velocity in km and km/s, Earth-centered) for Orion and the Moon.
+          </p>
+          <CodeBlock>{`{
+  "stateVector": {
+    "timestamp": "2026-04-03T06:00:00Z",
+    "metMs": 113100000,
+    "position": { "x": -56241.2, "y": -64095.3, "z": -6501.4 },
+    "velocity": { "x": -1.092, "y": -2.518, "z": -0.236 }
+  },
+  "moonPosition": { "x": -355007.6, "y": -176537.5, "z": -26760.0 }
+}`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/dsn
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Deep Space Network dish contacts for Artemis II (EM2). Updates every 10 seconds.
+          </p>
+          <CodeBlock>{`{
+  "timestamp": "2026-04-03T06:18:00Z",
+  "dishes": [
+    {
+      "dish": "DSS54", "station": "mdscc", "stationName": "Madrid",
+      "azimuth": 250.5, "elevation": 35.2,
+      "downlinkActive": true, "downlinkRate": 2000000, "downlinkBand": "S",
+      "uplinkActive": true, "uplinkRate": 1000, "uplinkBand": "S",
+      "rangeKm": 66100.5, "rtltSeconds": 0.441
+    }
+  ],
+  "signalActive": true
+}`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/timeline
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Full mission timeline: crew activities, mission phases, attitude modes, and milestones.
+          </p>
+          <CodeBlock>{`curl -s https://artemis.cdnspace.ca/api/timeline | jq '.activities | length'
+# 150+`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#a6da95">GET</Badge>
+            <code style={{ fontSize: 14, color: "#a6da95", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/all
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Everything in one request — telemetry, state vector, Moon position, DSN, and AROW combined.
+          </p>
+          <CodeBlock>{`curl -s https://artemis.cdnspace.ca/api/all | jq .`}</CodeBlock>
+        </div>
+
         {/* Field Reference */}
         <SectionHeading>Field Reference</SectionHeading>
         <div style={{ overflowX: "auto" }}>

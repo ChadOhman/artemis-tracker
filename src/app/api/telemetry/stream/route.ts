@@ -12,11 +12,11 @@ import {
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry } from "@/lib/types";
 
-const cache = new TelemetryCache();
+export const cache = new TelemetryCache();
 const sseManager = new SseManager();
 let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
-let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
+export let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
 let arowTimer: ReturnType<typeof setInterval> | null = null;
 /** Latest AROW telemetry — exported so the REST endpoint can read it. */
 export let latestArow: ArowTelemetry | null = null;
