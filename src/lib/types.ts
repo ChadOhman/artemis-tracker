@@ -56,6 +56,23 @@ export interface SsePayload {
   stateVector: StateVector;
   moonPosition: { x: number; y: number; z: number };
   dsn: DsnStatus;
+  arow?: ArowTelemetry;
+}
+
+export interface ArowTelemetry {
+  timestamp: string;
+  quaternion: { w: number; x: number; y: number; z: number };
+  eulerDeg: { roll: number; pitch: number; yaw: number };
+  rollRate: number;
+  pitchRate: number;
+  yawRate: number;
+  antennaGimbal: { az1: number; el1: number; az2: number; el2: number };
+  sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number };
+  icps: {
+    quaternion: { w: number; x: number; y: number; z: number };
+    active: boolean;
+  };
+  spacecraftMode: string;
 }
 
 export type MissionPhase =

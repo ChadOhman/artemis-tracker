@@ -12,3 +12,6 @@ export const DSN_POLL_INTERVAL_MS = 10 * 1000;
 export const SSE_KEEPALIVE_INTERVAL_MS = 30 * 1000;
 export const EARTH_RADIUS_KM = 6371;
 export const MISSION_DURATION_MS = (9 * 24 * 60 * 60 + 1 * 60 * 60 + 42 * 60 + 48) * 1000;
+export const AROW_POLL_INTERVAL_MS = 1000;
+export const AROW_OCTOBER_URL =
+  "https://storage.googleapis.com/p-2-cen1/October/1/October_105_1.txt";
