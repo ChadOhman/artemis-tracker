@@ -130,7 +130,7 @@ export default function ApiDocsPage() {
         </p>
 
         <SubHeading>Example</SubHeading>
-        <CodeBlock>{`curl -s https://artemis.lambnet.ca/api/arow | jq .`}</CodeBlock>
+        <CodeBlock>{`curl -s https://artemis.cdnspace.ca/api/arow | jq .`}</CodeBlock>
 
         <SubHeading>Response (200 OK)</SubHeading>
         <CodeBlock>{`{
@@ -176,7 +176,7 @@ export default function ApiDocsPage() {
         </p>
 
         <SubHeading>Example (JavaScript)</SubHeading>
-        <CodeBlock>{`const es = new EventSource("https://artemis.lambnet.ca/api/arow/stream");
+        <CodeBlock>{`const es = new EventSource("https://artemis.cdnspace.ca/api/arow/stream");
 
 es.addEventListener("arow", (event) => {
   const telemetry = JSON.parse(event.data);
@@ -190,7 +190,7 @@ es.addEventListener("error", () => {
 });`}</CodeBlock>
 
         <SubHeading>Example (curl)</SubHeading>
-        <CodeBlock>{`curl -N https://artemis.lambnet.ca/api/arow/stream`}</CodeBlock>
+        <CodeBlock>{`curl -N https://artemis.cdnspace.ca/api/arow/stream`}</CodeBlock>
 
         {/* Field Reference */}
         <SectionHeading>Field Reference</SectionHeading>
