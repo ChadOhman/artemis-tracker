@@ -237,7 +237,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>VEL</span>
           <span style={valueStyle}>
-            {telemetry ? (speedUnit === "km/h" ? formatNumber(telemetry.speedKmH) : telemetry.speedKmS.toFixed(3)) : "—"}
+            {telemetry ? (speedUnit === "km/h" ? formatNumber(telemetry.speedKmH) : (telemetry.speedKmS * 1000).toFixed(1)) : "—"}
           </span>
           <span style={unitStyle}>{speedUnit}</span>
         </div>
