@@ -4,14 +4,22 @@ import { SseManager } from "@/lib/telemetry/sse-manager";
 import { transformStateVector } from "@/lib/telemetry/transformer";
 import { pollJplHorizons } from "@/lib/pollers/jpl-horizons";
 import { pollDsnNow } from "@/lib/pollers/dsn-now";
-import { JPL_POLL_INTERVAL_MS, DSN_POLL_INTERVAL_MS } from "@/lib/constants";
-import type { SsePayload, DsnStatus } from "@/lib/types";
+import { pollArow } from "@/lib/pollers/arow";
+import {
+  JPL_POLL_INTERVAL_MS,
+  DSN_POLL_INTERVAL_MS,
+  AROW_POLL_INTERVAL_MS,
+} from "@/lib/constants";
+import type { SsePayload, DsnStatus, ArowTelemetry } from "@/lib/types";
 
 const cache = new TelemetryCache();
 const sseManager = new SseManager();
 let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
 let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
+let arowTimer: ReturnType<typeof setInterval> | null = null;
+/** Latest AROW telemetry — exported so the REST endpoint can read it. */
+export let latestArow: ArowTelemetry | null = null;
 let initialized = false;
 
 async function pollJpl(): Promise<void> {
@@ -29,7 +37,14 @@ async function pollDsn(): Promise<void> {
   sseManager.broadcast("dsn", latestDsn);
 }
 
-function ensurePollers(): void {
+async function pollArowData(): Promise<void> {
+  const arow = await pollArow();
+  if (!arow) return;
+  latestArow = arow;
+  sseManager.broadcast("arow", arow);
+}
+
+export function ensurePollers(): void {
   if (initialized) return;
   initialized = true;
   cache.loadFromDisk();
@@ -37,6 +52,8 @@ function ensurePollers(): void {
   pollDsn();
   jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);
   dsnTimer = setInterval(pollDsn, DSN_POLL_INTERVAL_MS);
+  pollArowData();
+  arowTimer = setInterval(pollArowData, AROW_POLL_INTERVAL_MS);
 }
 
 export const dynamic = "force-dynamic";
