@@ -284,54 +284,42 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       }
     }
 
-    /* ── pre/post-sleep overlays (drawn ON TOP of activity blocks) ── */
+    /* ── pre/post-sleep markers (thin bar above crew activity row) ── */
     const PRE_SLEEP_MS = 1.5 * MS_HOUR;
     const POST_SLEEP_MS = 0.5 * MS_HOUR;
-    const STRIPE_H = 8;
+    const MARKER_H = 4;
+    const MARKER_Y = crewY - MARKER_H - 1;
     for (const act of raw.activities) {
       if (act.type !== "sleep") continue;
-      // Check if sleep OR its pre/post zones overlap the view
       const preStart = act.startMetMs - PRE_SLEEP_MS;
       const postEnd = act.endMetMs + POST_SLEEP_MS;
       if (postEnd < viewStart || preStart > viewEnd) continue;
 
-      // Pre-sleep overlay
+      // Pre-sleep: colored bar above the crew row
       const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
       const px2 = Math.min(msToX(act.startMetMs), w);
       const pbw = px2 - px1;
       if (pbw >= 1) {
-        // Grey wash
-        ctx.fillStyle = "rgba(100, 130, 145, 0.45)";
-        ctx.fillRect(px1, crewY + 2, pbw, crewH - 4);
-        // Top stripe
         ctx.fillStyle = "#78909c";
-        ctx.fillRect(px1, crewY + 2, pbw, STRIPE_H);
-        // Bottom stripe
-        ctx.fillStyle = "#78909c";
-        ctx.fillRect(px1, crewY + crewH - 2 - STRIPE_H, pbw, STRIPE_H);
-        // Label
-        if (pbw > 50) {
-          ctx.fillStyle = "#cfd8dc";
-          ctx.font = `bold 8px ${FONT}`;
-          ctx.fillText("PRE-SLEEP", px1 + 4, crewY + crewH / 2 + 3);
+        ctx.fillRect(px1, MARKER_Y, pbw, MARKER_H);
+        if (pbw > 55) {
+          ctx.fillStyle = "#90a4ae";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.fillText("PRE-SLEEP", px1 + 3, MARKER_Y - 2);
         }
       }
 
-      // Post-sleep overlay
+      // Post-sleep: colored bar above the crew row
       const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
       const qx2 = Math.min(msToX(postEnd), w);
       const qbw = qx2 - qx1;
       if (qbw >= 1) {
-        ctx.fillStyle = "rgba(100, 130, 145, 0.45)";
-        ctx.fillRect(qx1, crewY + 2, qbw, crewH - 4);
         ctx.fillStyle = "#78909c";
-        ctx.fillRect(qx1, crewY + 2, qbw, STRIPE_H);
-        ctx.fillStyle = "#78909c";
-        ctx.fillRect(qx1, crewY + crewH - 2 - STRIPE_H, qbw, STRIPE_H);
-        if (qbw > 55) {
-          ctx.fillStyle = "#cfd8dc";
-          ctx.font = `bold 8px ${FONT}`;
-          ctx.fillText("POST-SLEEP", qx1 + 4, crewY + crewH / 2 + 3);
+        ctx.fillRect(qx1, MARKER_Y, qbw, MARKER_H);
+        if (qbw > 60) {
+          ctx.fillStyle = "#90a4ae";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.fillText("POST-SLEEP", qx1 + 3, MARKER_Y - 2);
         }
       }
     }
