@@ -157,6 +157,11 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           url="https://github.com/ChadOhman/artemis-tracker"
           description="Open source. Built by Canadian Space (cdnspace.ca)."
         />
+        <Source
+          name="Public API"
+          url="/api-docs"
+          description="All telemetry data is available via free REST and SSE endpoints. See the API documentation for details."
+        />
       </div>
     </Modal>
   );
