@@ -1,8 +1,10 @@
 "use client";
+import { useState } from "react";
 import { MetClock } from "./shared/MetClock";
 import { useMetContext, type PlaybackSpeed, type SpeedUnit } from "@/context/MetContext";
 import { MISSION_DURATION_MS } from "@/lib/constants";
 import type { Milestone } from "@/lib/types";
+import { CreditsModal } from "./modals/CreditsModal";
 
 interface BottomBarProps {
   milestones: Milestone[];
@@ -17,6 +19,7 @@ const SPEED_OPTIONS: { label: string; value: PlaybackSpeed }[] = [
 ];
 
 export function BottomBar({ milestones }: BottomBarProps) {
+  const [creditsOpen, setCreditsOpen] = useState(false);
   const {
     metMs,
     mode,
@@ -236,12 +239,29 @@ export function BottomBar({ milestones }: BottomBarProps) {
         >
           Created by Canadian Space
         </a>
+        <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+        <button
+          onClick={() => setCreditsOpen(true)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--text-dim)",
+            cursor: "pointer",
+            padding: 0,
+            fontSize: "inherit",
+            fontFamily: "inherit",
+            letterSpacing: "inherit",
+          }}
+        >
+          Credits
+        </button>
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <span style={{ marginLeft: 8, opacity: 0.5 }}>
             build {process.env.NEXT_PUBLIC_BUILD_ID}
           </span>
         )}
       </div>
+      <CreditsModal isOpen={creditsOpen} onClose={() => setCreditsOpen(false)} />
     </div>
   );
 }
