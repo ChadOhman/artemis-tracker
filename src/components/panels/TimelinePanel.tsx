@@ -253,56 +253,6 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       return;
     }
 
-    /* ── pre/post-sleep zones (grey background behind activities) ── */
-    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
-    const POST_SLEEP_MS = 0.5 * MS_HOUR;
-    for (const act of raw.activities) {
-      if (act.type !== "sleep") continue;
-      if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
-
-      // Pre-sleep zone
-      const preStart = act.startMetMs - PRE_SLEEP_MS;
-      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
-      const px2 = Math.min(msToX(act.startMetMs), w);
-      const pbw = px2 - px1;
-      if (pbw >= 1) {
-        ctx.fillStyle = "#37474f";
-        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
-        ctx.fill();
-        if (pbw > 50) {
-          ctx.fillStyle = "rgba(255,255,255,0.4)";
-          ctx.font = `8px ${FONT}`;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(px1 + 2, crewY, pbw - 4, crewH);
-          ctx.clip();
-          ctx.fillText("Pre-Sleep", px1 + 4, crewY + crewH / 2 + 3);
-          ctx.restore();
-        }
-      }
-
-      // Post-sleep zone
-      const postEnd = act.endMetMs + POST_SLEEP_MS;
-      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
-      const qx2 = Math.min(msToX(postEnd), w);
-      const qbw = qx2 - qx1;
-      if (qbw >= 1) {
-        ctx.fillStyle = "#37474f";
-        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
-        ctx.fill();
-        if (qbw > 55) {
-          ctx.fillStyle = "rgba(255,255,255,0.4)";
-          ctx.font = `8px ${FONT}`;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(qx1 + 2, crewY, qbw - 4, crewH);
-          ctx.clip();
-          ctx.fillText("Post-Sleep", qx1 + 4, crewY + crewH / 2 + 3);
-          ctx.restore();
-        }
-      }
-    }
-
     /* ── crew activity blocks ────────────────────────────────── */
     for (const act of raw.activities) {
       if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
@@ -331,6 +281,54 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         ctx.clip();
         ctx.fillText(act.name, x1 + 4, crewY + crewH / 2 + 3);
         ctx.restore();
+      }
+    }
+
+    /* ── pre/post-sleep overlays (drawn ON TOP of activity blocks) ── */
+    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
+    const POST_SLEEP_MS = 0.5 * MS_HOUR;
+    const STRIPE_H = 6;
+    for (const act of raw.activities) {
+      if (act.type !== "sleep") continue;
+      if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
+
+      // Pre-sleep: semi-transparent overlay + top stripe + label
+      const preStart = act.startMetMs - PRE_SLEEP_MS;
+      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
+      const px2 = Math.min(msToX(act.startMetMs), w);
+      const pbw = px2 - px1;
+      if (pbw >= 1) {
+        // Translucent grey wash over activity blocks
+        ctx.fillStyle = "rgba(84, 110, 122, 0.35)";
+        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
+        ctx.fill();
+        // Solid stripe at top edge
+        ctx.fillStyle = "#546e7a";
+        ctx.fillRect(px1, crewY + 2, pbw, STRIPE_H);
+        // Label on the stripe
+        if (pbw > 50) {
+          ctx.fillStyle = "#b0bec5";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.fillText("PRE-SLEEP", px1 + 4, crewY + 2 + STRIPE_H - 1);
+        }
+      }
+
+      // Post-sleep: same treatment
+      const postEnd = act.endMetMs + POST_SLEEP_MS;
+      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
+      const qx2 = Math.min(msToX(postEnd), w);
+      const qbw = qx2 - qx1;
+      if (qbw >= 1) {
+        ctx.fillStyle = "rgba(84, 110, 122, 0.35)";
+        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
+        ctx.fill();
+        ctx.fillStyle = "#546e7a";
+        ctx.fillRect(qx1, crewY + 2, qbw, STRIPE_H);
+        if (qbw > 55) {
+          ctx.fillStyle = "#b0bec5";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.fillText("POST-SLEEP", qx1 + 4, crewY + 2 + STRIPE_H - 1);
+        }
       }
     }
 
