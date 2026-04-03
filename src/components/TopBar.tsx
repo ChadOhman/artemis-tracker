@@ -249,14 +249,6 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           </span>
           <span style={unitStyle}>km</span>
         </div>
-        <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={labelStyle}>EARTH</span>
-          <span style={valueStyle}>
-            {telemetry ? formatNumber(telemetry.earthDistKm) : "—"}
-          </span>
-          <span style={unitStyle}>km</span>
-        </div>
       </div>
 
       {/* Crew sleep countdown */}
