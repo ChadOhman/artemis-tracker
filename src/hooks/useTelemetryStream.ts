@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import type { Telemetry, StateVector, DsnStatus } from "@/lib/types";
+import type { Telemetry, StateVector, DsnStatus, ArowTelemetry } from "@/lib/types";
 
 interface TelemetryStreamState {
   telemetry: Telemetry | null;
   stateVector: StateVector | null;
   moonPosition: { x: number; y: number; z: number } | null;
   dsn: DsnStatus | null;
+  arow: ArowTelemetry | null;
   connected: boolean;
   /** True while the SSE connection is in the process of reconnecting after an error. */
   reconnecting: boolean;
@@ -19,6 +20,7 @@ const INITIAL_STATE: TelemetryStreamState = {
   stateVector: null,
   moonPosition: null,
   dsn: null,
+  arow: null,
   connected: false,
   reconnecting: false,
   lastUpdate: null,
@@ -78,6 +80,16 @@ export function useTelemetryStream(): TelemetryStreamState {
         try {
           const dsn: DsnStatus = JSON.parse(event.data);
           setState((prev) => ({ ...prev, dsn }));
+        } catch {
+          // malformed payload — ignore
+        }
+      });
+
+      es.addEventListener("arow", (event: MessageEvent) => {
+        if (unmounted) return;
+        try {
+          const arow: ArowTelemetry = JSON.parse(event.data);
+          setState((prev) => ({ ...prev, arow }));
         } catch {
           // malformed payload — ignore
         }
