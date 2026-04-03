@@ -14,7 +14,7 @@ const ACTIVITY_COLORS: Record<ActivityType, string> = {
   config: "#00838f",
   exercise: "#e65100",
   meal: "#4e342e",
-  "off-duty": "#37474f",
+  "off-duty": "#546e7a",
   other: "#455a64",
 };
 

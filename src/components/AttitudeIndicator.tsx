@@ -8,11 +8,69 @@ interface AttitudeIndicatorProps {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type THREE = typeof import("three");
 
+function makeTextSprite(T: THREE, text: string, color: string) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 128;
+  canvas.height = 48;
+  const ctx = canvas.getContext("2d")!;
+  ctx.font = "bold 28px 'JetBrains Mono', monospace";
+  ctx.fillStyle = color;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, 64, 24);
+
+  const tex = new T.CanvasTexture(canvas);
+  tex.minFilter = T.LinearFilter;
+  const mat = new T.SpriteMaterial({ map: tex, transparent: true, opacity: 0.7 });
+  const sprite = new T.Sprite(mat);
+  sprite.scale.set(1.0, 0.4, 1);
+  return sprite;
+}
+
+function buildReferenceAxes(T: THREE) {
+  const group = new T.Group();
+  const len = 2.8;
+
+  // X axis — red (Prograde)
+  const xMat = new T.LineBasicMaterial({ color: 0xed8796, transparent: true, opacity: 0.4 });
+  const xGeo = new T.BufferGeometry().setFromPoints([
+    new T.Vector3(0, 0, 0),
+    new T.Vector3(len, 0, 0),
+  ]);
+  group.add(new T.Line(xGeo, xMat));
+  const xLabel = makeTextSprite(T, "X", "#ed8796");
+  xLabel.position.set(len + 0.4, 0, 0);
+  group.add(xLabel);
+
+  // Y axis — green (Normal)
+  const yMat = new T.LineBasicMaterial({ color: 0xa6da95, transparent: true, opacity: 0.4 });
+  const yGeo = new T.BufferGeometry().setFromPoints([
+    new T.Vector3(0, 0, 0),
+    new T.Vector3(0, len, 0),
+  ]);
+  group.add(new T.Line(yGeo, yMat));
+  const yLabel = makeTextSprite(T, "Y", "#a6da95");
+  yLabel.position.set(0, len + 0.3, 0);
+  group.add(yLabel);
+
+  // Z axis — blue (Radial)
+  const zMat = new T.LineBasicMaterial({ color: 0x7dc4e4, transparent: true, opacity: 0.4 });
+  const zGeo = new T.BufferGeometry().setFromPoints([
+    new T.Vector3(0, 0, 0),
+    new T.Vector3(0, 0, len),
+  ]);
+  group.add(new T.Line(zGeo, zMat));
+  const zLabel = makeTextSprite(T, "Z", "#7dc4e4");
+  zLabel.position.set(0, 0, len + 0.4);
+  group.add(zLabel);
+
+  return group;
+}
+
 function buildOrionModel(T: THREE) {
   const group = new T.Group();
   const cyanWire = new T.LineBasicMaterial({ color: 0x8bd5ca, transparent: true, opacity: 0.7 });
   const cyanFill = new T.MeshBasicMaterial({ color: 0x8bd5ca, transparent: true, opacity: 0.08, side: T.DoubleSide });
-  const greenWire = new T.LineBasicMaterial({ color: 0xa6da95, transparent: true, opacity: 0.6 });
 
   // Crew module — tapered capsule (cone frustum)
   const cmGeo = new T.CylinderGeometry(0.55, 0.85, 1.2, 12);
@@ -66,20 +124,6 @@ function buildOrionModel(T: THREE) {
   noseWire.position.y = 0.85;
   group.add(noseWire);
 
-  // Forward axis indicator — green line pointing "up" (forward)
-  const fwdGeo = new T.BufferGeometry().setFromPoints([
-    new T.Vector3(0, 1.2, 0),
-    new T.Vector3(0, 1.8, 0),
-  ]);
-  group.add(new T.Line(fwdGeo, greenWire));
-
-  // Arrowhead
-  const arrowGeo = new T.ConeGeometry(0.08, 0.2, 4);
-  const arrowMat = new T.MeshBasicMaterial({ color: 0xa6da95, transparent: true, opacity: 0.6 });
-  const arrow = new T.Mesh(arrowGeo, arrowMat);
-  arrow.position.y = 1.9;
-  group.add(arrow);
-
   return group;
 }
 
@@ -116,9 +160,14 @@ export function AttitudeIndicator({ quaternion }: AttitudeIndicatorProps) {
 
       const scene = new T.Scene();
       const camera = new T.PerspectiveCamera(35, w / h, 0.1, 100);
-      camera.position.set(3, 2, 4);
+      camera.position.set(4, 3, 5);
       camera.lookAt(0, -0.3, 0);
 
+      // Fixed reference axes — don't rotate with model
+      const axes = buildReferenceAxes(T);
+      scene.add(axes);
+
+      // Spacecraft model — rotates with quaternion
       const model = buildOrionModel(T);
       scene.add(model);
 
@@ -168,14 +217,14 @@ export function AttitudeIndicator({ quaternion }: AttitudeIndicatorProps) {
     <div
       ref={containerRef}
       style={{
-        width: 100,
-        height: 100,
+        width: 120,
+        height: 120,
         flexShrink: 0,
         opacity: hasData ? 1 : 0.3,
       }}
       aria-label={
         hasData
-          ? "Spacecraft attitude indicator"
+          ? "Spacecraft attitude indicator with reference axes"
           : "Attitude indicator — no data"
       }
     />
