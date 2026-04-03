@@ -308,13 +308,13 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PAO Event", "pao", 0, 7, 30, 0, 8, 15),
   act("PMC", "config", 0, 8, 15, 0, 8, 30, "Private Medical Conference"),
   act("FD Conference", "config", 0, 8, 30, 0, 9, 0),
-  act("Pre-Sleep", "off-duty", 0, 9, 0, 0, 9, 30, "Hygiene, stow equipment, wind down"),
+
   act("Sleep Period 1", "sleep", 0, 9, 30, 0, 13, 0, "4-hour rest period"),
-  act("Post-Sleep", "off-duty", 0, 13, 0, 0, 13, 20, "Wake up, hygiene, meal prep"),
+
   act("Perigee Raise Burn", "maneuver", 0, 13, 20, 0, 13, 40, "Orion PRB ~0/13:30"),
   act("DSN Ops", "config", 0, 13, 40, 0, 14, 15, "DSN ARB comm checkout"),
   act("OpNav Checkout", "science", 0, 14, 15, 0, 14, 45, "Optical Navigation C/O ~0/14:15"),
-  act("Pre-Sleep", "off-duty", 0, 14, 45, 0, 15, 0, "Hygiene, stow equipment, wind down"),
+
   act("Sleep Period 2", "sleep", 0, 15, 0, 0, 21, 30, "4.5-hour rest period"),
 
   // ── FD02: TLI Day (MET ~0/21:30 to ~1/16:30) ───────────────────────────
@@ -375,7 +375,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PAO Event", "pao", 3, 8, 0, 3, 8, 30),
   act("PMC", "config", 3, 8, 30, 3, 9, 0, "Private Medical Conference"),
   act("FD Conference", "config", 3, 9, 0, 3, 9, 30),
-  act("Pre-Sleep", "off-duty", 3, 9, 30, 3, 9, 45, "Hygiene, wind down"),
+
   act("Sleep", "sleep", 3, 9, 45, 3, 18, 15, "8.5-hour rest period, shifting 45 min earlier"),
 
   // ── FD05: Lunar Approach (MET ~3/18:15 to ~4/17:15) ─────────────────────
@@ -393,7 +393,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PFC", "other", 4, 7, 0, 4, 7, 30, "Private Family Conference"),
   act("PMC", "config", 4, 7, 30, 4, 8, 0, "Private Medical Conference"),
   act("FD Conference", "config", 4, 8, 0, 4, 8, 30),
-  act("Pre-Sleep", "off-duty", 4, 8, 30, 4, 8, 45, "Hygiene, wind down"),
+
   act("Sleep", "sleep", 4, 8, 45, 4, 17, 15, "8.5-hour rest period, shifting 1 hr earlier"),
 
   // ── FD06: Lunar Flyby Day (MET ~4/17:15 to ~5/19:30) ───────────────────
@@ -414,7 +414,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PAO Event", "pao", 5, 5, 0, 5, 6, 0),
   act("PMC", "config", 5, 6, 0, 5, 6, 30, "Private Medical Conference"),
   act("FD Conference", "config", 5, 6, 30, 5, 7, 0),
-  act("Pre-Sleep", "off-duty", 5, 7, 0, 5, 10, 0, "Extended pre-sleep period — post-lunar flyby"),
+
   act("Sleep", "sleep", 5, 10, 0, 5, 19, 30, "9.5-hour rest period, shifting 1 hr later"),
 
   // ── FD07: Return Cruise 1 (MET ~5/19:30 to ~6/16:30) ───────────────────
@@ -431,7 +431,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("PAO Event", "pao", 6, 5, 0, 6, 6, 0),
   act("PMC", "config", 6, 6, 0, 6, 6, 30, "Private Medical Conference"),
   act("FD Conference", "config", 6, 6, 30, 6, 7, 0),
-  act("Pre-Sleep", "off-duty", 6, 7, 0, 6, 8, 0, "Hygiene, stow equipment, wind down"),
+
   act("Sleep", "sleep", 6, 8, 0, 6, 16, 30, "8.5-hour rest period"),
 
   // ── FD08: Return Cruise 2 (MET ~6/16:30 to ~7/16:30) ───────────────────
@@ -449,7 +449,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Manual Piloting DFTO", "science", 7, 1, 0, 7, 2, 0, "DFTO 1"),
   act("PAO Event", "pao", 7, 2, 0, 7, 3, 0),
   act("FD Conference", "config", 7, 3, 0, 7, 3, 30),
-  act("Pre-Sleep", "off-duty", 7, 3, 30, 7, 8, 0, "Extended pre-sleep period — crew rest before entry prep"),
+
   act("Sleep", "sleep", 7, 8, 0, 7, 16, 30, "8.5-hour rest period"),
 
   // ── FD09: Pre-Entry Day (MET ~7/16:30 to ~8/16:30) ─────────────────────
