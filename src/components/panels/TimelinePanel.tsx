@@ -287,47 +287,51 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     /* ── pre/post-sleep overlays (drawn ON TOP of activity blocks) ── */
     const PRE_SLEEP_MS = 1.5 * MS_HOUR;
     const POST_SLEEP_MS = 0.5 * MS_HOUR;
-    const STRIPE_H = 6;
+    const STRIPE_H = 8;
     for (const act of raw.activities) {
       if (act.type !== "sleep") continue;
-      if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
-
-      // Pre-sleep: semi-transparent overlay + top stripe + label
+      // Check if sleep OR its pre/post zones overlap the view
       const preStart = act.startMetMs - PRE_SLEEP_MS;
+      const postEnd = act.endMetMs + POST_SLEEP_MS;
+      if (postEnd < viewStart || preStart > viewEnd) continue;
+
+      // Pre-sleep overlay
       const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
       const px2 = Math.min(msToX(act.startMetMs), w);
       const pbw = px2 - px1;
       if (pbw >= 1) {
-        // Translucent grey wash over activity blocks
-        ctx.fillStyle = "rgba(84, 110, 122, 0.35)";
-        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
-        ctx.fill();
-        // Solid stripe at top edge
-        ctx.fillStyle = "#546e7a";
+        // Grey wash
+        ctx.fillStyle = "rgba(100, 130, 145, 0.45)";
+        ctx.fillRect(px1, crewY + 2, pbw, crewH - 4);
+        // Top stripe
+        ctx.fillStyle = "#78909c";
         ctx.fillRect(px1, crewY + 2, pbw, STRIPE_H);
-        // Label on the stripe
+        // Bottom stripe
+        ctx.fillStyle = "#78909c";
+        ctx.fillRect(px1, crewY + crewH - 2 - STRIPE_H, pbw, STRIPE_H);
+        // Label
         if (pbw > 50) {
-          ctx.fillStyle = "#b0bec5";
-          ctx.font = `bold 7px ${FONT}`;
-          ctx.fillText("PRE-SLEEP", px1 + 4, crewY + 2 + STRIPE_H - 1);
+          ctx.fillStyle = "#cfd8dc";
+          ctx.font = `bold 8px ${FONT}`;
+          ctx.fillText("PRE-SLEEP", px1 + 4, crewY + crewH / 2 + 3);
         }
       }
 
-      // Post-sleep: same treatment
-      const postEnd = act.endMetMs + POST_SLEEP_MS;
+      // Post-sleep overlay
       const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
       const qx2 = Math.min(msToX(postEnd), w);
       const qbw = qx2 - qx1;
       if (qbw >= 1) {
-        ctx.fillStyle = "rgba(84, 110, 122, 0.35)";
-        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
-        ctx.fill();
-        ctx.fillStyle = "#546e7a";
+        ctx.fillStyle = "rgba(100, 130, 145, 0.45)";
+        ctx.fillRect(qx1, crewY + 2, qbw, crewH - 4);
+        ctx.fillStyle = "#78909c";
         ctx.fillRect(qx1, crewY + 2, qbw, STRIPE_H);
+        ctx.fillStyle = "#78909c";
+        ctx.fillRect(qx1, crewY + crewH - 2 - STRIPE_H, qbw, STRIPE_H);
         if (qbw > 55) {
-          ctx.fillStyle = "#b0bec5";
-          ctx.font = `bold 7px ${FONT}`;
-          ctx.fillText("POST-SLEEP", qx1 + 4, crewY + 2 + STRIPE_H - 1);
+          ctx.fillStyle = "#cfd8dc";
+          ctx.font = `bold 8px ${FONT}`;
+          ctx.fillText("POST-SLEEP", qx1 + 4, crewY + crewH / 2 + 3);
         }
       }
     }
