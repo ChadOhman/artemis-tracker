@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
+import { execSync } from "child_process";
+
+const gitHash = execSync("git rev-parse --short HEAD").toString().trim();
 
 const nextConfig: NextConfig = {
-  /* basePath only needed if serving under a subpath */
+  env: {
+    NEXT_PUBLIC_BUILD_ID: gitHash,
+  },
 };
 
 export default nextConfig;

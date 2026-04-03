@@ -236,6 +236,11 @@ export function BottomBar({ milestones }: BottomBarProps) {
         >
           Created by Canadian Space
         </a>
+        {process.env.NEXT_PUBLIC_BUILD_ID && (
+          <span style={{ marginLeft: 8, opacity: 0.5 }}>
+            build {process.env.NEXT_PUBLIC_BUILD_ID}
+          </span>
+        )}
       </div>
     </div>
   );
