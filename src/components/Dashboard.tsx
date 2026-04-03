@@ -11,6 +11,7 @@ import { LiveStreamPanel } from "./panels/LiveStreamPanel";
 import { CurrentActivitiesPanel } from "./panels/CurrentActivitiesPanel";
 import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
+import { BuyMeACoffee } from "./BuyMeACoffee";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
@@ -79,6 +80,7 @@ function DashboardInner() {
       <div className="dashboard-bottombar">
         <BottomBar milestones={timeline.raw?.milestones ?? []} />
       </div>
+      <BuyMeACoffee />
     </div>
   );
 }
