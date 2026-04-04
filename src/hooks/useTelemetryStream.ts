@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import type { Telemetry, StateVector, DsnStatus, ArowTelemetry } from "@/lib/types";
+import type { Telemetry, StateVector, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
 
 interface TelemetryStreamState {
   telemetry: Telemetry | null;
@@ -8,10 +8,9 @@ interface TelemetryStreamState {
   moonPosition: { x: number; y: number; z: number } | null;
   dsn: DsnStatus | null;
   arow: ArowTelemetry | null;
+  solar: SolarActivity | null;
   connected: boolean;
-  /** True while the SSE connection is in the process of reconnecting after an error. */
   reconnecting: boolean;
-  /** Wall-clock timestamp (ms) of the last received telemetry event, or null if none yet. */
   lastUpdate: number | null;
 }
 
@@ -21,6 +20,7 @@ const INITIAL_STATE: TelemetryStreamState = {
   moonPosition: null,
   dsn: null,
   arow: null,
+  solar: null,
   connected: false,
   reconnecting: false,
   lastUpdate: null,
@@ -90,6 +90,16 @@ export function useTelemetryStream(): TelemetryStreamState {
         try {
           const arow: ArowTelemetry = JSON.parse(event.data);
           setState((prev) => ({ ...prev, arow }));
+        } catch {
+          // malformed payload — ignore
+        }
+      });
+
+      es.addEventListener("solar", (event: MessageEvent) => {
+        if (unmounted) return;
+        try {
+          const solar: SolarActivity = JSON.parse(event.data);
+          setState((prev) => ({ ...prev, solar }));
         } catch {
           // malformed payload — ignore
         }

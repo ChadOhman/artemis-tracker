@@ -12,6 +12,7 @@ import { LiveStreamPanel } from "./panels/LiveStreamPanel";
 import { CurrentActivitiesPanel } from "./panels/CurrentActivitiesPanel";
 import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
+import { SolarPanel } from "./panels/SolarPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
@@ -50,6 +51,7 @@ function DashboardInner() {
     moonPosition: liveMoonPosition,
     dsn,
     arow,
+    solar,
     connected,
     reconnecting,
     lastUpdate,
@@ -86,6 +88,7 @@ function DashboardInner() {
         <OrbitMapPanel stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
         <TelemetryPanel telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
         <DsnPanel dsn={dsn} />
+        <SolarPanel solar={solar} />
       </div>
       <div className="dashboard-timeline">
         <TimelinePanel metMs={metMs} timeline={timeline} />

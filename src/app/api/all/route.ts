@@ -1,5 +1,5 @@
 // src/app/api/all/route.ts
-import { ensurePollers, cache, latestDsn, latestArow } from "@/app/api/telemetry/stream/route";
+import { ensurePollers, cache, latestDsn, latestArow, latestSolar } from "@/app/api/telemetry/stream/route";
 
 export const dynamic = "force-dynamic";
 
@@ -13,5 +13,6 @@ export async function GET(): Promise<Response> {
     moonPosition: latest?.moonPosition ?? null,
     dsn: latestDsn,
     arow: latestArow,
+    solar: latestSolar,
   });
 }

@@ -75,6 +75,18 @@ export interface ArowTelemetry {
   spacecraftMode: string;
 }
 
+export interface SolarActivity {
+  timestamp: string;
+  kpIndex: number;
+  kpLabel: string;
+  xrayFlux: number;
+  xrayClass: string;
+  protonFlux1MeV: number;
+  protonFlux10MeV: number;
+  protonFlux100MeV: number;
+  radiationRisk: "low" | "moderate" | "high" | "severe";
+}
+
 export type MissionPhase =
   | "Prelaunch"
   | "LEO"

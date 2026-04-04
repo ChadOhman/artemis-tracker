@@ -5,12 +5,13 @@ import { transformStateVector } from "@/lib/telemetry/transformer";
 import { pollJplHorizons } from "@/lib/pollers/jpl-horizons";
 import { pollDsnNow } from "@/lib/pollers/dsn-now";
 import { pollArow } from "@/lib/pollers/arow";
+import { pollSolarActivity } from "@/lib/pollers/solar";
 import {
   JPL_POLL_INTERVAL_MS,
   DSN_POLL_INTERVAL_MS,
   AROW_POLL_INTERVAL_MS,
 } from "@/lib/constants";
-import type { SsePayload, DsnStatus, ArowTelemetry } from "@/lib/types";
+import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
 
 export const cache = new TelemetryCache();
 const sseManager = new SseManager();
@@ -18,8 +19,10 @@ let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
 export let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
 let arowTimer: ReturnType<typeof setInterval> | null = null;
+let solarTimer: ReturnType<typeof setInterval> | null = null;
 /** Latest AROW telemetry — exported so the REST endpoint can read it. */
 export let latestArow: ArowTelemetry | null = null;
+export let latestSolar: SolarActivity | null = null;
 let initialized = false;
 
 async function pollJpl(): Promise<void> {
@@ -44,6 +47,13 @@ async function pollArowData(): Promise<void> {
   sseManager.broadcast("arow", arow);
 }
 
+async function pollSolar(): Promise<void> {
+  const solar = await pollSolarActivity();
+  if (!solar) return;
+  latestSolar = solar;
+  sseManager.broadcast("solar", solar);
+}
+
 export function ensurePollers(): void {
   if (initialized) return;
   initialized = true;
@@ -54,6 +64,8 @@ export function ensurePollers(): void {
   dsnTimer = setInterval(pollDsn, DSN_POLL_INTERVAL_MS);
   pollArowData();
   arowTimer = setInterval(pollArowData, AROW_POLL_INTERVAL_MS);
+  pollSolar();
+  solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
 }
 
 export const dynamic = "force-dynamic";
