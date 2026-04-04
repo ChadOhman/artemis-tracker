@@ -61,13 +61,13 @@ export interface SsePayload {
 
 export interface ArowTelemetry {
   timestamp: string;
-  quaternion: { w: number; x: number; y: number; z: number };
-  eulerDeg: { roll: number; pitch: number; yaw: number };
-  rollRate: number;
-  pitchRate: number;
-  yawRate: number;
-  antennaGimbal: { az1: number; el1: number; az2: number; el2: number };
-  sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number };
+  quaternion: { w: number; x: number; y: number; z: number } | null;
+  eulerDeg: { roll: number; pitch: number; yaw: number } | null;
+  rollRate: number | null;
+  pitchRate: number | null;
+  yawRate: number | null;
+  antennaGimbal: { az1: number; el1: number; az2: number; el2: number } | null;
+  sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number } | null;
   icps: {
     quaternion: { w: number; x: number; y: number; z: number };
     active: boolean;

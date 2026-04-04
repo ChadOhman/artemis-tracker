@@ -158,30 +158,30 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemSection label="Attitude" />
       <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <TelemRow label="Roll" value={arow ? fmtDeg(arow.eulerDeg.roll) : "—"} />
-          <TelemRow label="Pitch" value={arow ? fmtDeg(arow.eulerDeg.pitch) : "—"} />
-          <TelemRow label="Yaw" value={arow ? fmtDeg(arow.eulerDeg.yaw) : "—"} />
-          <TelemRow label="Roll Rate" value={arow ? fmt(arow.rollRate, 2) : "—"} unit="°/s" />
-          <TelemRow label="Pitch Rate" value={arow ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
-          <TelemRow label="Yaw Rate" value={arow ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
+          <TelemRow label="Roll" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.roll) : "—"} />
+          <TelemRow label="Pitch" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.pitch) : "—"} />
+          <TelemRow label="Yaw" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.yaw) : "—"} />
+          <TelemRow label="Roll Rate" value={arow?.rollRate != null ? fmt(arow.rollRate, 2) : "—"} unit="°/s" />
+          <TelemRow label="Pitch Rate" value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
+          <TelemRow label="Yaw Rate" value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
         </div>
         <AttitudeIndicator quaternion={arow?.quaternion ?? null} />
       </div>
 
       <TelemSection label="Solar Arrays" />
-      <TelemRow label="SAW 1" value={arow ? fmtDeg(arow.sawAngles.saw1) : "—"} />
-      <TelemRow label="SAW 2" value={arow ? fmtDeg(arow.sawAngles.saw2) : "—"} />
-      <TelemRow label="SAW 3" value={arow ? fmtDeg(arow.sawAngles.saw3) : "—"} />
-      <TelemRow label="SAW 4" value={arow ? fmtDeg(arow.sawAngles.saw4) : "—"} />
+      <TelemRow label="SAW 1" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw1) : "—"} />
+      <TelemRow label="SAW 2" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw2) : "—"} />
+      <TelemRow label="SAW 3" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw3) : "—"} />
+      <TelemRow label="SAW 4" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw4) : "—"} />
 
       <TelemSection label="Comm Link" />
       <TelemRow
         label="Ant 1 Az/El"
-        value={arow ? `${fmt(arow.antennaGimbal.az1)}° / ${fmt(arow.antennaGimbal.el1)}°` : "—"}
+        value={arow?.antennaGimbal ? `${fmt(arow.antennaGimbal.az1)}° / ${fmt(arow.antennaGimbal.el1)}°` : "—"}
       />
       <TelemRow
         label="Ant 2 Az/El"
-        value={arow ? `${fmt(arow.antennaGimbal.az2)}° / ${fmt(arow.antennaGimbal.el2)}°` : "—"}
+        value={arow?.antennaGimbal ? `${fmt(arow.antennaGimbal.az2)}° / ${fmt(arow.antennaGimbal.el2)}°` : "—"}
       />
       <TelemRow
         label="Mode"

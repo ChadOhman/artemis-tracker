@@ -42,62 +42,69 @@ function getParamStatus(data: Record<string, any>, num: string): string | undefi
   return data[`Parameter_${num}`]?.Status;
 }
 
-/** Parse raw AROW JSON response into ArowTelemetry, or null on failure. */
+/** Parse raw AROW JSON response into ArowTelemetry, or null if no data at all. */
 export function parseArowResponse(data: Record<string, any>): ArowTelemetry | null {
+  // Must have at least the File header and one parameter to be valid
+  if (!data?.File) return null;
+
+  const mode = getParam(data, "2016") ?? "??";
+
+  // Attitude — all four quaternion components required, or null
   const qw = getParamFloat(data, "2074");
   const qx = getParamFloat(data, "2075");
   const qy = getParamFloat(data, "2076");
   const qz = getParamFloat(data, "2077");
+  const quaternion = (qw != null && qx != null && qy != null && qz != null)
+    ? { w: qw, x: qx, y: qy, z: qz } : null;
 
+  // Euler angles — all three required, or null
   const pitchRad = getParamFloat(data, "2078");
   const yawRad = getParamFloat(data, "2079");
   const rollRad = getParamFloat(data, "2080");
+  const eulerDeg = (pitchRad != null && yawRad != null && rollRad != null)
+    ? { roll: rollRad * RAD2DEG, pitch: pitchRad * RAD2DEG, yaw: yawRad * RAD2DEG } : null;
 
+  // Angular rates — each independently nullable
   const rollRateRad = getParamFloat(data, "2091");
   const pitchRateRad = getParamFloat(data, "2092");
   const yawRateRad = getParamFloat(data, "2093");
 
+  // Antenna gimbal — all four required, or null
   const az1 = getParamFloat(data, "5002");
   const el1 = getParamFloat(data, "5003");
   const az2 = getParamFloat(data, "5004");
   const el2 = getParamFloat(data, "5005");
+  const antennaGimbal = (az1 != null && el1 != null && az2 != null && el2 != null)
+    ? { az1, el1, az2, el2 } : null;
 
+  // SAW angles — all four required, or null
   const saw1 = getParamFloat(data, "5006");
   const saw2 = getParamFloat(data, "5007");
   const saw3 = getParamFloat(data, "5008");
   const saw4 = getParamFloat(data, "5009");
+  const sawAngles = (saw1 != null && saw2 != null && saw3 != null && saw4 != null)
+    ? { saw1, saw2, saw3, saw4 } : null;
 
+  // ICPS
   const icpsQw = getParamFloat(data, "2084") ?? 0;
   const icpsQx = getParamFloat(data, "2085") ?? 0;
   const icpsQy = getParamFloat(data, "2086") ?? 0;
   const icpsQz = getParamFloat(data, "2087") ?? 0;
   const icpsActive = getParamStatus(data, "2084") === "Good";
 
-  const mode = getParam(data, "2016");
-
-  if (
-    qw === undefined || qx === undefined || qy === undefined || qz === undefined ||
-    pitchRad === undefined || yawRad === undefined || rollRad === undefined ||
-    rollRateRad === undefined || pitchRateRad === undefined || yawRateRad === undefined ||
-    az1 === undefined || el1 === undefined || az2 === undefined || el2 === undefined ||
-    saw1 === undefined || saw2 === undefined || saw3 === undefined || saw4 === undefined ||
-    mode === undefined
-  ) {
-    return null;
-  }
-
-  const timeStr = getParamTime(data, "2074");
+  // Timestamp: try attitude params first, fall back to any available param
+  const timeStr = getParamTime(data, "2074") || getParamTime(data, "2016") || getParamTime(data, "5010");
   const timestamp = timeStr ? parseDoyTimestamp(timeStr) : new Date().toISOString();
 
   return {
     timestamp,
-    quaternion: { w: qw, x: qx, y: qy, z: qz },
-    eulerDeg: { roll: rollRad * RAD2DEG, pitch: pitchRad * RAD2DEG, yaw: yawRad * RAD2DEG },
-    rollRate: rollRateRad * RAD2DEG,
-    pitchRate: pitchRateRad * RAD2DEG,
-    yawRate: yawRateRad * RAD2DEG,
-    antennaGimbal: { az1, el1, az2, el2 },
-    sawAngles: { saw1, saw2, saw3, saw4 },
+    quaternion,
+    eulerDeg,
+    rollRate: rollRateRad != null ? rollRateRad * RAD2DEG : null,
+    pitchRate: pitchRateRad != null ? pitchRateRad * RAD2DEG : null,
+    yawRate: yawRateRad != null ? yawRateRad * RAD2DEG : null,
+    antennaGimbal,
+    sawAngles,
     icps: { quaternion: { w: icpsQw, x: icpsQx, y: icpsQy, z: icpsQz }, active: icpsActive },
     spacecraftMode: mode,
   };

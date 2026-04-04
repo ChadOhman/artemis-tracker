@@ -96,10 +96,11 @@ describe("AROW poller", () => {
     test("extracts antenna gimbal angles from params 5002-5005", () => {
       const result = parseArowResponse(SAMPLE_RESPONSE);
       expect(result).not.toBeNull();
-      expect(result!.antennaGimbal.az1).toBeCloseTo(19.3717, 2);
-      expect(result!.antennaGimbal.el1).toBeCloseTo(7.0479, 2);
-      expect(result!.antennaGimbal.az2).toBeCloseTo(-19.3671, 2);
-      expect(result!.antennaGimbal.el2).toBeCloseTo(-7.0411, 2);
+      expect(result!.antennaGimbal).not.toBeNull();
+      expect(result!.antennaGimbal!.az1).toBeCloseTo(19.3717, 2);
+      expect(result!.antennaGimbal!.el1).toBeCloseTo(7.0479, 2);
+      expect(result!.antennaGimbal!.az2).toBeCloseTo(-19.3671, 2);
+      expect(result!.antennaGimbal!.el2).toBeCloseTo(-7.0411, 2);
     });
 
     test("extracts spacecraft mode and timestamp", () => {
@@ -113,11 +114,17 @@ describe("AROW poller", () => {
       expect(parseArowResponse({})).toBeNull();
     });
 
-    test("returns null when required parameters are missing", () => {
-      expect(parseArowResponse({
+    test("returns partial data when only mode is available", () => {
+      const result = parseArowResponse({
         File: { Date: "2026/04/03", Activity: "MIS", Type: 4 },
         Parameter_2016: { Number: "2016", Status: "Good", Time: "2026:093:06:18:55.441", Type: "3", Value: "ec" },
-      })).toBeNull();
+      });
+      expect(result).not.toBeNull();
+      expect(result!.spacecraftMode).toBe("ec");
+      expect(result!.quaternion).toBeNull();
+      expect(result!.eulerDeg).toBeNull();
+      expect(result!.antennaGimbal).toBeNull();
+      expect(result!.sawAngles).toBeNull();
     });
 
     test("still parses when ICPS params are missing (icps defaults)", () => {
