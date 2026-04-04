@@ -1,11 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
-  <!-- Rocket body -->
-  <path d="M16 3 C16 3 10 10 10 20 L22 20 C22 10 16 3 16 3Z" fill="#00e5ff"/>
-  <!-- Rocket fins -->
-  <path d="M10 20 L7 26 L12 23Z" fill="#00e5ff"/>
-  <path d="M22 20 L25 26 L20 23Z" fill="#00e5ff"/>
-  <!-- Exhaust -->
-  <ellipse cx="16" cy="24" rx="3" ry="2" fill="#00e5ff" opacity="0.5"/>
+  <!-- Orion crew module - tapered capsule shape -->
+  <path d="M12 6 L20 6 L22 8 L23 18 L9 18 L10 8 Z" fill="#00e5ff" opacity="0.9"/>
+  <!-- Heat shield - flat bottom -->
+  <rect x="8" y="18" width="16" height="2.5" rx="0.5" fill="#00e5ff" opacity="0.7"/>
+  <!-- Service module -->
+  <rect x="8" y="20.5" width="16" height="6" fill="#00e5ff" opacity="0.5"/>
+  <!-- Engine bell -->
+  <path d="M13 26.5 L12 29 L20 29 L19 26.5" fill="#00e5ff" opacity="0.4"/>
+  <!-- Docking adapter / nose cone -->
+  <path d="M14 6 L16 3 L18 6" fill="#00e5ff" opacity="0.8"/>
+  <!-- Solar array wings -->
+  <rect x="1" y="22" width="7" height="2" rx="0.5" fill="#00e5ff" opacity="0.45"/>
+  <rect x="24" y="22" width="7" height="2" rx="0.5" fill="#00e5ff" opacity="0.45"/>
   <!-- Window -->
-  <circle cx="16" cy="14" r="2.5" fill="#0a0e14" stroke="#00e5ff" stroke-width="1"/>
+  <circle cx="16" cy="11" r="2" fill="#0a0e14" stroke="#00e5ff" stroke-width="0.8" opacity="0.9"/>
 </svg>
