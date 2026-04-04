@@ -1,6 +1,8 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { SolarActivity } from "@/lib/types";
+import { estimateRadiation } from "@/lib/radiation";
+import { LAUNCH_TIME_MS } from "@/lib/constants";
 
 interface SolarPanelProps {
   solar: SolarActivity | null;
@@ -47,10 +49,19 @@ function formatFlux(flux: number): string {
   return flux.toExponential(1);
 }
 
+const RADIATION_RISK_COLORS: Record<string, string> = {
+  nominal: "var(--accent-green)",
+  elevated: "var(--accent-yellow)",
+  high: "var(--accent-red)",
+};
+
 export function SolarPanel({ solar }: SolarPanelProps) {
   const s = solar;
   const risk = s?.radiationRisk ?? "low";
   const riskColor = RISK_COLORS[risk] ?? "var(--text-dim)";
+
+  const metMs = Date.now() - LAUNCH_TIME_MS;
+  const radiation = s ? estimateRadiation(metMs, s.protonFlux10MeV) : null;
 
   return (
     <PanelFrame
@@ -105,6 +116,63 @@ export function SolarPanel({ solar }: SolarPanelProps) {
         label="≥100 MeV"
         value={s ? `${s.protonFlux100MeV.toFixed(2)} pfu` : "—"}
         color={s && s.protonFlux100MeV >= 1 ? "var(--accent-red)" : undefined}
+      />
+
+      <Section label="Radiation Dose (Est.)" />
+      <Row
+        label="Daily Rate"
+        value={radiation ? `${radiation.dailyRate} mSv/day` : "—"}
+      />
+      <Row
+        label="Mission Total"
+        value={radiation ? `${radiation.totalDose} mSv` : "—"}
+        color={
+          radiation && radiation.totalDose > 50
+            ? "var(--accent-red)"
+            : radiation && radiation.totalDose > 10
+            ? "var(--accent-yellow)"
+            : undefined
+        }
+      />
+      <Row
+        label="GCR"
+        value={radiation ? `${radiation.missionDoseGcr} mSv` : "—"}
+      />
+      <Row
+        label="Belt Transit"
+        value={radiation ? `${radiation.missionDoseBelt} mSv` : "—"}
+      />
+      <Row
+        label="Solar Events"
+        value={radiation ? `${radiation.missionDoseSep} mSv` : "—"}
+      />
+      {radiation && (
+        <div style={{ paddingTop: 4, paddingBottom: 2 }}>
+          <div className="telem-row">
+            <span className="telem-label">Annual Limit</span>
+            <span className="telem-value">{radiation.annualLimitPercent}% of 500 mSv</span>
+          </div>
+          <div style={{ background: "#1a2332", borderRadius: 3, height: 6, marginTop: 4 }}>
+            <div
+              style={{
+                width: `${Math.min(100, radiation.annualLimitPercent)}%`,
+                height: "100%",
+                borderRadius: 3,
+                background:
+                  radiation.annualLimitPercent > 50
+                    ? "var(--accent-red)"
+                    : radiation.annualLimitPercent > 20
+                    ? "var(--accent-orange)"
+                    : "var(--accent-green)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+      <Row
+        label="Status"
+        value={radiation ? radiation.riskDescription : "—"}
+        color={radiation ? RADIATION_RISK_COLORS[radiation.riskLevel] : undefined}
       />
     </PanelFrame>
   );

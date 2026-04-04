@@ -12,6 +12,7 @@ import {
   AROW_POLL_INTERVAL_MS,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
+import { archiveStateVector, archiveArow, archiveDsn, archiveSolar } from "@/lib/db";
 
 export const cache = new TelemetryCache();
 const sseManager = new SseManager();
@@ -33,11 +34,13 @@ async function pollJpl(): Promise<void> {
   cache.push(orion, telemetry, moonPosition);
   const payload: SsePayload = { telemetry, stateVector: orion, moonPosition, dsn: latestDsn };
   sseManager.broadcast("telemetry", payload);
+  try { archiveStateVector(orion, moonPosition, telemetry); } catch { /* db error — non-fatal */ }
 }
 
 async function pollDsn(): Promise<void> {
   latestDsn = await pollDsnNow();
   sseManager.broadcast("dsn", latestDsn);
+  try { archiveDsn(latestDsn); } catch { /* db error — non-fatal */ }
 }
 
 async function pollArowData(): Promise<void> {
@@ -45,6 +48,7 @@ async function pollArowData(): Promise<void> {
   if (!arow) return;
   latestArow = arow;
   sseManager.broadcast("arow", arow);
+  try { archiveArow(arow); } catch { /* db error — non-fatal */ }
 }
 
 async function pollSolar(): Promise<void> {
@@ -52,6 +56,7 @@ async function pollSolar(): Promise<void> {
   if (!solar) return;
   latestSolar = solar;
   sseManager.broadcast("solar", solar);
+  try { archiveSolar(solar); } catch { /* db error — non-fatal */ }
 }
 
 export function ensurePollers(): void {
