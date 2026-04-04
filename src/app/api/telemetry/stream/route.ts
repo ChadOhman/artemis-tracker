@@ -89,9 +89,19 @@ export async function GET(): Promise<Response> {
           moonPosition: latest.moonPosition,
           dsn: latestDsn,
         };
-        const message = SseManager.encodeEvent("telemetry", payload);
-        controller.enqueue(encoder.encode(message));
-      } else {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("telemetry", payload)));
+      }
+      // Send all cached data immediately on connect
+      if (latestDsn.signalActive || latestDsn.dishes.length > 0) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("dsn", latestDsn)));
+      }
+      if (latestArow) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("arow", latestArow)));
+      }
+      if (latestSolar) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("solar", latestSolar)));
+      }
+      if (!latest) {
         // Data not yet available — retry every 2 s for up to 30 s so the first
         // client doesn't sit on "—" until the next scheduled poll fires.
         const checkInterval = setInterval(() => {
