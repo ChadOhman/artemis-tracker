@@ -161,13 +161,15 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
 
     // Row layout
     const bodyH = h - RULER_H;
-    const crewH = bodyH * 0.4;
-    const attH = bodyH * 0.2;
-    const phaseH = bodyH * 0.2;
-    // remaining 20% is padding/milestones
+    const crewH = bodyH * 0.32;
+    const sleepH = bodyH * 0.1;
+    const attH = bodyH * 0.18;
+    const phaseH = bodyH * 0.18;
+    // remaining ~22% is padding/milestones
 
     const crewY = RULER_H;
-    const attY = crewY + crewH;
+    const sleepY = crewY + crewH;
+    const attY = sleepY + sleepH;
     const phaseY = attY + attH;
 
     /* ── background ──────────────────────────────────────────── */
@@ -253,65 +255,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
       return;
     }
 
-    /* ── pre/post-sleep background blocks (drawn FIRST, behind activities) ── */
-    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
-    const POST_SLEEP_MS = 0.5 * MS_HOUR;
-    for (const act of raw.activities) {
-      if (act.type !== "sleep") continue;
-      const preStart = act.startMetMs - PRE_SLEEP_MS;
-      const postEnd = act.endMetMs + POST_SLEEP_MS;
-      if (postEnd < viewStart || preStart > viewEnd) continue;
-
-      // Pre-sleep: full-height grey block in activity row
-      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
-      const px2 = Math.min(msToX(act.startMetMs), w);
-      const pbw = px2 - px1;
-      if (pbw >= 1) {
-        ctx.fillStyle = "#546e7a";
-        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.lineWidth = 0.5;
-        roundedRect(ctx, px1, crewY + 2, pbw, crewH - 4, 3);
-        ctx.stroke();
-        if (pbw > 55) {
-          ctx.fillStyle = "rgba(255,255,255,0.7)";
-          ctx.font = `9px ${FONT}`;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(px1 + 2, crewY, pbw - 4, crewH);
-          ctx.clip();
-          ctx.fillText("Pre-Sleep", px1 + 4, crewY + crewH / 2 + 3);
-          ctx.restore();
-        }
-      }
-
-      // Post-sleep: full-height grey block in activity row
-      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
-      const qx2 = Math.min(msToX(postEnd), w);
-      const qbw = qx2 - qx1;
-      if (qbw >= 1) {
-        ctx.fillStyle = "#546e7a";
-        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.08)";
-        ctx.lineWidth = 0.5;
-        roundedRect(ctx, qx1, crewY + 2, qbw, crewH - 4, 3);
-        ctx.stroke();
-        if (qbw > 60) {
-          ctx.fillStyle = "rgba(255,255,255,0.7)";
-          ctx.font = `9px ${FONT}`;
-          ctx.save();
-          ctx.beginPath();
-          ctx.rect(qx1 + 2, crewY, qbw - 4, crewH);
-          ctx.clip();
-          ctx.fillText("Post-Sleep", qx1 + 4, crewY + crewH / 2 + 3);
-          ctx.restore();
-        }
-      }
-    }
-
-    /* ── crew activity blocks (drawn AFTER pre/post-sleep, so they render on top) ── */
+    /* ── crew activity blocks ────────────────────────────────── */
     for (const act of raw.activities) {
       if (act.endMetMs < viewStart || act.startMetMs > viewEnd) continue;
       const x1 = Math.max(msToX(act.startMetMs), LABEL_GUTTER);
@@ -339,6 +283,88 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         ctx.clip();
         ctx.fillText(act.name, x1 + 4, crewY + crewH / 2 + 3);
         ctx.restore();
+      }
+    }
+
+    /* ── sleep row (dedicated row: pre-sleep | sleep | post-sleep) ── */
+    const PRE_SLEEP_MS = 1.5 * MS_HOUR;
+    const POST_SLEEP_MS = 0.5 * MS_HOUR;
+    // Row label
+    ctx.save();
+    ctx.fillStyle = "#5a6a7a";
+    ctx.font = `bold 8px ${FONT}`;
+    ctx.textAlign = "right";
+    ctx.fillText("SLEEP", LABEL_GUTTER - 4, sleepY + sleepH / 2 + 3);
+    ctx.restore();
+
+    for (const act of raw.activities) {
+      if (act.type !== "sleep") continue;
+      const preStart = act.startMetMs - PRE_SLEEP_MS;
+      const postEnd = act.endMetMs + POST_SLEEP_MS;
+      if (postEnd < viewStart || preStart > viewEnd) continue;
+
+      // Pre-sleep block
+      const px1 = Math.max(msToX(preStart), LABEL_GUTTER);
+      const px2 = Math.min(msToX(act.startMetMs), w);
+      const pbw = px2 - px1;
+      if (pbw >= 1) {
+        ctx.fillStyle = "#546e7a";
+        roundedRect(ctx, px1, sleepY + 1, pbw, sleepH - 2, 2);
+        ctx.fill();
+        if (pbw > 40) {
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(px1, sleepY, pbw, sleepH);
+          ctx.clip();
+          ctx.fillText("Pre", px1 + 3, sleepY + sleepH / 2 + 3);
+          ctx.restore();
+        }
+      }
+
+      // Sleep block
+      const sx1 = Math.max(msToX(act.startMetMs), LABEL_GUTTER);
+      const sx2 = Math.min(msToX(act.endMetMs), w);
+      const sbw = sx2 - sx1;
+      if (sbw >= 1) {
+        ctx.fillStyle = "#263238";
+        roundedRect(ctx, sx1, sleepY + 1, sbw, sleepH - 2, 2);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.08)";
+        ctx.lineWidth = 0.5;
+        roundedRect(ctx, sx1, sleepY + 1, sbw, sleepH - 2, 2);
+        ctx.stroke();
+        if (sbw > 30) {
+          ctx.fillStyle = "rgba(255,255,255,0.5)";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(sx1, sleepY, sbw, sleepH);
+          ctx.clip();
+          ctx.fillText("Sleep", sx1 + 3, sleepY + sleepH / 2 + 3);
+          ctx.restore();
+        }
+      }
+
+      // Post-sleep block
+      const qx1 = Math.max(msToX(act.endMetMs), LABEL_GUTTER);
+      const qx2 = Math.min(msToX(postEnd), w);
+      const qbw = qx2 - qx1;
+      if (qbw >= 1) {
+        ctx.fillStyle = "#546e7a";
+        roundedRect(ctx, qx1, sleepY + 1, qbw, sleepH - 2, 2);
+        ctx.fill();
+        if (qbw > 40) {
+          ctx.fillStyle = "rgba(255,255,255,0.6)";
+          ctx.font = `bold 7px ${FONT}`;
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(qx1, sleepY, qbw, sleepH);
+          ctx.clip();
+          ctx.fillText("Post", qx1 + 3, sleepY + sleepH / 2 + 3);
+          ctx.restore();
+        }
       }
     }
 

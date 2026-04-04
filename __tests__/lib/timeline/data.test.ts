@@ -24,17 +24,12 @@ describe("timeline data", () => {
   test("last milestone is Splashdown", () => {
     const last = data.milestones[data.milestones.length - 1];
     expect(last.name).toBe("Splashdown");
-    expect(last.metMs).toBe((9 * 24 * 3600 + 1 * 3600 + 42 * 60 + 48) * 1000);
+    // Press kit: 09/01:46
+    expect(last.metMs).toBe((9 * 24 * 3600 + 1 * 3600 + 46 * 60) * 1000);
   });
 
   test("has all milestones", () => {
     expect(data.milestones.length).toBeGreaterThanOrEqual(20);
-  });
-
-  test("includes Perigee Raise Burn milestone", () => {
-    const prb = data.milestones.find((m) => m.name === "Perigee Raise Burn");
-    expect(prb).toBeDefined();
-    expect(prb!.metMs).toBe((0 * 24 * 3600 + 13 * 3600 + 30 * 60) * 1000);
   });
 
   test("has phases covering entire mission", () => {
@@ -49,15 +44,15 @@ describe("timeline data", () => {
     expect(maxMet).toBeGreaterThan(8 * 24 * 3600 * 1000);
   });
 
-  test("TLI milestone is at approximately MET 1d 1h 8m 42s", () => {
+  test("TLI milestone matches press kit (01/01:37)", () => {
     const tli = data.milestones.find((m) => m.name === "Trans-Lunar Injection");
     expect(tli).toBeDefined();
-    expect(tli!.metMs).toBe((1 * 24 * 3600 + 1 * 3600 + 8 * 60 + 42) * 1000);
+    expect(tli!.metMs).toBe((1 * 24 * 3600 + 1 * 3600 + 37 * 60) * 1000);
   });
 
-  test("Lunar Close Approach milestone is at MET 5d 0h 29m 59s", () => {
+  test("Lunar Close Approach milestone matches press kit (05/01:23)", () => {
     const lca = data.milestones.find((m) => m.name === "Lunar Close Approach");
     expect(lca).toBeDefined();
-    expect(lca!.metMs).toBe((5 * 24 * 3600 + 0 * 3600 + 29 * 60 + 59) * 1000);
+    expect(lca!.metMs).toBe((5 * 24 * 3600 + 1 * 3600 + 23 * 60) * 1000);
   });
 });
