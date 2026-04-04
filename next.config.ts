@@ -9,11 +9,19 @@ const nextConfig: NextConfig = {
   },
   headers: async () => [
     {
-      source: "/:path*",
+      source: "/",
       headers: [
-        { key: "Cache-Control", value: "no-store, must-revalidate" },
-        { key: "CDN-Cache-Control", value: "no-store" },
-        { key: "Cloudflare-CDN-Cache-Control", value: "no-store" },
+        { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        { key: "Pragma", value: "no-cache" },
+        { key: "Expires", value: "0" },
+      ],
+    },
+    {
+      source: "/:path((?!_next/static|_next/image|icon\\.svg).*)",
+      headers: [
+        { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+        { key: "Pragma", value: "no-cache" },
+        { key: "Expires", value: "0" },
       ],
     },
   ],
