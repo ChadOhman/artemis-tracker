@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MetClock } from "./shared/MetClock";
 import { useMetContext, type PlaybackSpeed, type SpeedUnit } from "@/context/MetContext";
 import { MISSION_DURATION_MS } from "@/lib/constants";
@@ -8,6 +8,7 @@ import { CreditsModal } from "./modals/CreditsModal";
 
 interface BottomBarProps {
   milestones: Milestone[];
+  lastUpdate: number | null;
 }
 
 const SPEED_OPTIONS: { label: string; value: PlaybackSpeed }[] = [
@@ -18,8 +19,18 @@ const SPEED_OPTIONS: { label: string; value: PlaybackSpeed }[] = [
   { label: "1000\u00D7", value: 1000 },
 ];
 
-export function BottomBar({ milestones }: BottomBarProps) {
+export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [ago, setAgo] = useState<number | null>(null);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (lastUpdate != null) {
+        setAgo(Math.floor((Date.now() - lastUpdate) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [lastUpdate]);
   const {
     metMs,
     mode,
@@ -262,6 +273,11 @@ export function BottomBar({ milestones }: BottomBarProps) {
         >
           Feedback
         </a>
+        {ago != null && (
+          <span style={{ marginLeft: 8, opacity: 0.5 }}>
+            updated {ago}s ago
+          </span>
+        )}
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <span style={{ marginLeft: 8, opacity: 0.5 }}>
             build {process.env.NEXT_PUBLIC_BUILD_ID}

@@ -101,7 +101,7 @@ function DashboardInner() {
         <MilestonesPanel timeline={timeline} metMs={metMs} />
       </div>
       <div className="dashboard-bottombar">
-        <BottomBar milestones={timeline.raw?.milestones ?? []} />
+        <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />
       </div>
       <BuyMeACoffee />
     </div>
