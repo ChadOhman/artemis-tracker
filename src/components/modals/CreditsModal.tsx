@@ -19,11 +19,13 @@ function Source({
     <div style={{ marginBottom: 16 }}>
       <a
         href={url}
-        target="_blank"
-        rel="noopener noreferrer"
+        target={url.startsWith("/") ? undefined : "_blank"}
+        rel={url.startsWith("/") ? undefined : "noopener noreferrer"}
         style={{
           color: "var(--accent-cyan)",
-          textDecoration: "none",
+          textDecoration: "underline",
+          textDecorationColor: "rgba(0, 229, 255, 0.3)",
+          textUnderlineOffset: 3,
           fontSize: 13,
           fontWeight: 600,
         }}
