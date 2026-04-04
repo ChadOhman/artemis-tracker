@@ -12,7 +12,7 @@ import {
   AROW_POLL_INTERVAL_MS,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
-import { archiveStateVector, archiveArow, archiveDsn, archiveSolar } from "@/lib/db";
+import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData } from "@/lib/db";
 
 export const cache = new TelemetryCache();
 const sseManager = new SseManager();
@@ -25,6 +25,7 @@ let solarTimer: ReturnType<typeof setInterval> | null = null;
 export let latestArow: ArowTelemetry | null = null;
 export let latestSolar: SolarActivity | null = null;
 let initialized = false;
+let arowArchiveCounter = 0;
 
 async function pollJpl(): Promise<void> {
   const { orion, moonPosition } = await pollJplHorizons();
@@ -48,7 +49,9 @@ async function pollArowData(): Promise<void> {
   if (!arow) return;
   latestArow = arow;
   sseManager.broadcast("arow", arow);
-  try { archiveArow(arow); } catch { /* db error — non-fatal */ }
+  if (++arowArchiveCounter % 10 === 0) {
+    try { archiveArow(arow); } catch { /* db error — non-fatal */ }
+  }
 }
 
 async function pollSolar(): Promise<void> {
@@ -63,6 +66,7 @@ export function ensurePollers(): void {
   if (initialized) return;
   initialized = true;
   cache.loadFromDisk();
+  try { pruneOldData(); } catch { /* non-fatal */ }
   pollJpl();
   pollDsn();
   jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);

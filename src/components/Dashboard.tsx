@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 import { TopBar } from "./TopBar";
 import { BottomBar } from "./BottomBar";
 import { OrbitMapPanel } from "./panels/OrbitMapPanel";
@@ -18,6 +18,17 @@ import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
 import { MetProvider, useMetContext } from "@/context/MetContext";
+
+const MemoOrbitMap = memo(OrbitMapPanel);
+const MemoTimeline = memo(TimelinePanel);
+const MemoTelemetry = memo(TelemetryPanel);
+const MemoDsn = memo(DsnPanel);
+const MemoSolar = memo(SolarPanel);
+const MemoActivity = memo(ActivityDetailPanel);
+const MemoNextMilestone = memo(NextMilestonePanel);
+const MemoCurrentActivities = memo(CurrentActivitiesPanel);
+const MemoUpcoming = memo(UpcomingPanel);
+const MemoMilestones = memo(MilestonesPanel);
 
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
@@ -85,23 +96,23 @@ function DashboardInner() {
         />
       </div>
       <div className="dashboard-left">
-        <OrbitMapPanel stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
-        <TelemetryPanel telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
-        <DsnPanel dsn={dsn} />
-        <SolarPanel solar={solar} />
+        <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
+        <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
+        <MemoDsn dsn={dsn} />
+        <MemoSolar solar={solar} />
       </div>
       <div className="dashboard-timeline">
-        <TimelinePanel metMs={metMs} timeline={timeline} />
+        <MemoTimeline metMs={metMs} timeline={timeline} />
       </div>
       <div className="dashboard-center">
-        <ActivityDetailPanel timeline={timeline} metMs={metMs} />
-        <NextMilestonePanel timeline={timeline} metMs={metMs} />
+        <MemoActivity timeline={timeline} metMs={metMs} />
+        <MemoNextMilestone timeline={timeline} metMs={metMs} />
         <LiveStreamPanel />
       </div>
       <div className="dashboard-right">
-        <CurrentActivitiesPanel timeline={timeline} />
-        <UpcomingPanel timeline={timeline} metMs={metMs} />
-        <MilestonesPanel timeline={timeline} metMs={metMs} />
+        <MemoCurrentActivities timeline={timeline} />
+        <MemoUpcoming timeline={timeline} metMs={metMs} />
+        <MemoMilestones timeline={timeline} metMs={metMs} />
       </div>
       <div className="dashboard-bottombar">
         <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />

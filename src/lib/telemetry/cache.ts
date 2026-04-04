@@ -14,6 +14,7 @@ const HISTORY_FILE = path.join(process.cwd(), "data", "telemetry-history.json");
 export class TelemetryCache {
   private entries: CacheEntry[] = [];
   private persistTimer: ReturnType<typeof setTimeout> | null = null;
+  private static MAX_ENTRIES = 10000;
 
   push(
     stateVector: StateVector,
@@ -21,6 +22,9 @@ export class TelemetryCache {
     moonPosition: { x: number; y: number; z: number }
   ): void {
     this.entries.push({ stateVector, telemetry, moonPosition });
+    if (this.entries.length > TelemetryCache.MAX_ENTRIES) {
+      this.entries = this.entries.slice(-TelemetryCache.MAX_ENTRIES);
+    }
     this.schedulePersist();
   }
 

@@ -249,6 +249,18 @@ export function getSolarHistory(hours: number): {
   `).all(-hours) as any[];
 }
 
+/** Delete data older than the given number of days. */
+export function pruneOldData(retentionDays = 14): void {
+  const db = getDb();
+  const threshold = `-${retentionDays} days`;
+  db.prepare("DELETE FROM arow_telemetry WHERE created_at < datetime('now', ?)").run(threshold);
+  db.prepare("DELETE FROM dsn_contacts WHERE created_at < datetime('now', ?)").run(threshold);
+  db.prepare("DELETE FROM solar_activity WHERE created_at < datetime('now', ?)").run(threshold);
+  // Keep state_vectors longer — they're less frequent and more valuable
+  db.prepare("DELETE FROM state_vectors WHERE created_at < datetime('now', ?)").run(`-${retentionDays * 2} days`);
+  db.exec("PRAGMA optimize");
+}
+
 export function getCumulativeProtonDose(): {
   total_hours: number;
   avg_proton_10mev: number;
