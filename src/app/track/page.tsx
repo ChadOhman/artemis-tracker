@@ -24,6 +24,13 @@ import {
   type AlpacaState,
 } from "@/lib/alpaca";
 import type { SsePayload } from "@/lib/types";
+import {
+  predictVisibility,
+  azToCardinal,
+  formatLocalTime,
+  formatLocalDate,
+  type VisibilityWindow,
+} from "@/lib/visibility";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -33,11 +40,6 @@ function formatLatLon(lat: number, lon: number): string {
   const latStr = `${Math.abs(lat).toFixed(2)}°${lat >= 0 ? "N" : "S"}`;
   const lonStr = `${Math.abs(lon).toFixed(2)}°${lon >= 0 ? "E" : "W"}`;
   return `${latStr} · ${lonStr}`;
-}
-
-function azToCardinal(az: number): string {
-  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-  return dirs[Math.round(az / 45) % 8];
 }
 
 function deriveFlightState(earthDistKm: number, moonDistKm: number): string {
@@ -243,6 +245,26 @@ export default function TrackPage() {
   );
   const [telescopeError, setTelescopeError] = useState<string | null>(null);
   const [isTracking, setIsTracking] = useState(false);
+
+  // Visibility forecast
+  const [forecast, setForecast] = useState<VisibilityWindow[]>([]);
+  const lastForecastRef = useRef(0);
+
+  // Recompute forecast every 5 minutes when we have data + location
+  useEffect(() => {
+    if (!payload || geoStatus !== "ok" || !observer) return;
+    const now = Date.now();
+    if (now - lastForecastRef.current < 300_000) return; // throttle to 5 min
+    lastForecastRef.current = now;
+    const sv = payload.stateVector;
+    const windows = predictVisibility(
+      sv.position,
+      sv.velocity,
+      observer,
+      48
+    );
+    setForecast(windows);
+  }, [payload, geoStatus, observer]);
 
   // Map
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -778,6 +800,113 @@ export default function TrackPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Visibility Forecast */}
+      <div style={{ padding: "24px 24px 0" }}>
+        <h2
+          style={{
+            fontSize: 10,
+            fontWeight: 700,
+            letterSpacing: "0.16em",
+            color: "#00e5ff",
+            textTransform: "uppercase",
+            margin: "0 0 14px",
+          }}
+        >
+          When Can I See Orion? — 48h Forecast
+        </h2>
+        {geoStatus !== "ok" ? (
+          <div style={{ background: "#0d1117", border: "1px solid rgba(0,229,255,0.1)", borderRadius: 8, padding: 16, color: "#5a7a8a", fontSize: 13 }}>
+            {geoStatus === "requesting" ? "Requesting your location to compute visibility windows..." : "Location required for visibility predictions. Please allow browser geolocation."}
+          </div>
+        ) : forecast.length === 0 ? (
+          <div style={{ background: "#0d1117", border: "1px solid rgba(0,229,255,0.1)", borderRadius: 8, padding: 16, color: "#5a7a8a", fontSize: 13 }}>
+            {payload ? "No visible passes in the next 48 hours from your location. Orion may be too faint or only above the horizon during daylight." : "Waiting for telemetry data..."}
+          </div>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table
+              style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                fontSize: 12,
+                fontFamily: "'JetBrains Mono', monospace",
+                background: "#0d1117",
+                borderRadius: 8,
+                overflow: "hidden",
+              }}
+            >
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(0,229,255,0.15)", color: "#5a7a8a", textAlign: "left" }}>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Date</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Start</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>End</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Duration</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Max El.</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Direction</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>RA / Dec</th>
+                  {telescopeStatus === "connected" && (
+                    <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Slew</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {forecast.map((w, i) => {
+                  const isBest = w.maxElevation >= 20;
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                        color: isBest ? "#e0e8f0" : "#8a9db0",
+                      }}
+                    >
+                      <td style={{ padding: "8px 12px" }}>{formatLocalDate(w.startUtc)}</td>
+                      <td style={{ padding: "8px 12px" }}>{formatLocalTime(w.startUtc)}</td>
+                      <td style={{ padding: "8px 12px" }}>{formatLocalTime(w.endUtc)}</td>
+                      <td style={{ padding: "8px 12px" }}>{w.durationMin} min</td>
+                      <td style={{ padding: "8px 12px", color: isBest ? "#00ff88" : undefined }}>
+                        {w.maxElevation}° {azToCardinal(w.maxElevationAz)}
+                      </td>
+                      <td style={{ padding: "8px 12px", fontSize: 11 }}>
+                        {azToCardinal(w.startAz)} → {azToCardinal(w.endAz)}
+                      </td>
+                      <td style={{ padding: "8px 12px", fontSize: 11 }}>
+                        {formatRA(w.ra)}<br />
+                        {formatDec(w.dec)}
+                      </td>
+                      {telescopeStatus === "connected" && (
+                        <td style={{ padding: "8px 12px" }}>
+                          <button
+                            onClick={() => slewToCoordinates(telescopeHost, w.ra, w.dec)}
+                            style={{
+                              padding: "3px 10px",
+                              background: "rgba(0,229,255,0.1)",
+                              border: "1px solid rgba(0,229,255,0.3)",
+                              borderRadius: 4,
+                              color: "#00e5ff",
+                              fontSize: 10,
+                              cursor: "pointer",
+                              fontFamily: "'JetBrains Mono', monospace",
+                            }}
+                          >
+                            Goto
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div style={{ fontSize: 10, color: "#4a5a6a", marginTop: 8, lineHeight: 1.6 }}>
+              Passes with max elevation ≥20° are highlighted — these offer the best viewing.
+              Times shown in your local timezone. Visibility requires dark sky (sun below -6°) and Orion above the horizon.
+              {telescopeStatus === "connected" && " Click Goto to pre-slew your telescope to the predicted RA/Dec at max elevation."}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Full-width ground map */}
