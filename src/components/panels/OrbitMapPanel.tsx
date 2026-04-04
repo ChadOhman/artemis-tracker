@@ -230,56 +230,51 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       }
     }
 
-    // Draw future path (dashed, faint)
-    if (orionRefIdx < REFERENCE_TRAJECTORY.length - 1) {
+    // Determine how far along the trajectory Orion actually is (by distance)
+    const earthDist = telemetry?.earthDistKm ?? 0;
+    const distFrac = earthDist / MOON_DIST_KM;
+    let distIdx = 0;
+    for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
+      if (REFERENCE_TRAJECTORY[i].x <= distFrac) {
+        distIdx = i;
+      }
+    }
+    const splitIdx = Math.max(distIdx, orionRefIdx);
+
+    // Draw past path (solid, cyan) — up to Orion's actual position
+    let lastPastPt: { x: number; y: number } | null = null;
+    if (splitIdx > 0) {
       ctx.save();
-      ctx.setLineDash([3, 5]);
-      ctx.strokeStyle = "rgba(0,220,255,0.22)";
-      ctx.lineWidth = 2;
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(0,220,255,0.4)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      const startFuture = REFERENCE_TRAJECTORY[orionRefIdx];
-      const sf = toCanvas(startFuture.x, startFuture.y);
-      ctx.moveTo(sf.x, sf.y);
-      for (let i = orionRefIdx + 1; i < REFERENCE_TRAJECTORY.length; i++) {
+      const first = toCanvas(REFERENCE_TRAJECTORY[0].x, REFERENCE_TRAJECTORY[0].y);
+      ctx.moveTo(first.x, first.y);
+      for (let i = 1; i <= Math.min(splitIdx, REFERENCE_TRAJECTORY.length - 1); i++) {
         const p = toCanvas(REFERENCE_TRAJECTORY[i].x, REFERENCE_TRAJECTORY[i].y);
         ctx.lineTo(p.x, p.y);
+        lastPastPt = p;
       }
       ctx.stroke();
       ctx.restore();
     }
 
-    // Draw past path (solid, cyan) — uses Earth distance to find how far
-    // along the reference trajectory Orion has actually traveled.
-    // We store the last drawn point so we can connect to orionPx later.
-    let lastPastPt: { x: number; y: number } | null = null;
-    {
-      const earthDist = telemetry?.earthDistKm ?? 0;
-      const frac = earthDist / MOON_DIST_KM;
-
-      let pastIdx = 0;
-      for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
-        if (REFERENCE_TRAJECTORY[i].x <= frac) {
-          pastIdx = i;
-        }
+    // Draw future path (dashed, faint) — from Orion's position onward
+    if (splitIdx < REFERENCE_TRAJECTORY.length - 1) {
+      ctx.save();
+      ctx.setLineDash([3, 5]);
+      ctx.strokeStyle = "rgba(0,220,255,0.22)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const sf = toCanvas(REFERENCE_TRAJECTORY[splitIdx].x, REFERENCE_TRAJECTORY[splitIdx].y);
+      ctx.moveTo(sf.x, sf.y);
+      for (let i = splitIdx + 1; i < REFERENCE_TRAJECTORY.length; i++) {
+        const p = toCanvas(REFERENCE_TRAJECTORY[i].x, REFERENCE_TRAJECTORY[i].y);
+        ctx.lineTo(p.x, p.y);
       }
-      const drawUpTo = Math.max(pastIdx, orionRefIdx);
-
-      if (drawUpTo > 0) {
-        ctx.save();
-        ctx.setLineDash([]);
-        ctx.strokeStyle = "rgba(0,220,255,0.4)";
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        const first = toCanvas(REFERENCE_TRAJECTORY[0].x, REFERENCE_TRAJECTORY[0].y);
-        ctx.moveTo(first.x, first.y);
-        for (let i = 1; i <= Math.min(drawUpTo, REFERENCE_TRAJECTORY.length - 1); i++) {
-          const p = toCanvas(REFERENCE_TRAJECTORY[i].x, REFERENCE_TRAJECTORY[i].y);
-          ctx.lineTo(p.x, p.y);
-          lastPastPt = p;
-        }
-        ctx.stroke();
-        ctx.restore();
-      }
+      ctx.stroke();
+      ctx.restore();
     }
 
     // --- Waypoint labels ---
