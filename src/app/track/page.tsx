@@ -41,10 +41,13 @@ function azToCardinal(az: number): string {
 }
 
 function deriveFlightState(earthDistKm: number, moonDistKm: number): string {
-  const MOON_DIST_KM = 384400;
   if (earthDistKm < 2000) return "LEO";
-  if (moonDistKm < 10000) return "Lunar Flyby";
-  if (earthDistKm < moonDistKm * 0.5 || earthDistKm < MOON_DIST_KM * 0.5) return "Outbound from Earth";
+  if (moonDistKm < 15000) return "Lunar Flyby";
+  // Use current MET to determine outbound vs inbound
+  // Closest approach is at MET 5/01:23 = ~5d 1.4h after launch
+  const launchMs = Date.UTC(2026, 3, 1, 22, 35, 0);
+  const closestApproachMs = launchMs + (5 * 24 + 1) * 3600000 + 23 * 60000;
+  if (Date.now() < closestApproachMs) return "Outbound from Earth";
   return "Inbound to Earth";
 }
 
