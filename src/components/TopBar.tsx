@@ -117,6 +117,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         overflow: "hidden",
       }}
     >
+      <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       {/* Title + LIVE */}
       <div className="topbar-pill" style={{ ...pillStyle, gap: 8, paddingLeft: 12, paddingRight: 12 }}>
         <span
@@ -225,12 +226,43 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         </span>
       </div>
 
+      {/* Crew */}
+      <button
+        className="topbar-pill"
+        onClick={() => setCrewOpen(true)}
+        style={{
+          ...pillStyle,
+          background: "none",
+          border: "1px solid var(--border-subtle)",
+          cursor: "pointer",
+          gap: 4,
+          padding: "2px 10px",
+        }}
+      >
+        <span style={{ fontSize: 10, letterSpacing: 1 }}>🇺🇸🇺🇸🇺🇸🇨🇦</span>
+        <span style={{ ...labelStyle, fontSize: 9 }}>CREW</span>
+      </button>
+
       {/* Toilet Status */}
       <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>TOILET</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block" }} />
         <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>INOP</span>
       </div>
+
+      {/* Comm Status */}
+      {dsn && !dsn.signalActive && (
+        <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(255,61,61,0.3)" }}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block", animation: "pulse 1.5s infinite" }} />
+          <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>LOS</span>
+        </div>
+      )}
+      {dsn && dsn.signalActive && (
+        <div className="topbar-pill topbar-hide-mobile" style={pillStyle}>
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
+          <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>AOS</span>
+        </div>
+      )}
 
       {/* Telemetry: VEL, ALT, EARTH */}
       <div className="topbar-pill" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
@@ -267,6 +299,16 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           </div>
         );
       })()}
+
+      {/* Lunar Approach Countdown */}
+      {telemetry && telemetry.moonDistKm < 100000 && (
+        <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(180,185,190,0.3)" }}>
+          <span style={labelStyle}>MOON</span>
+          <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+            {Math.round(telemetry.moonDistKm).toLocaleString()} km
+          </span>
+        </div>
+      )}
 
       {/* Info buttons */}
       <button

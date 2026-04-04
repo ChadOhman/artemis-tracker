@@ -464,13 +464,14 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
     grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
       "topbar"
-      "timeline"
       "left"
+      "timeline"
       "center"
       "right"
       "bottombar";
     height: auto;
     min-height: 100vh;
+    overflow-y: auto;
   }
   html, body { overflow: auto; }
   .dashboard-left, .dashboard-center, .dashboard-right {
@@ -482,6 +483,10 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
     height: auto !important;
     padding: 6px 8px !important;
     gap: 4px;
+  }
+  .dashboard-timeline {
+    min-height: 180px;
+    max-height: 220px;
   }
   .dashboard-bottombar {
     flex-wrap: wrap;
@@ -505,6 +510,11 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
   .topbar-inner .topbar-hide-mobile {
     display: none !important;
   }
+  /* Stack orbit map and telemetry vertically */
+  .dashboard-left .panel:first-child {
+    min-height: 250px;
+    max-height: 300px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -521,6 +531,14 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
   }
   .telem-value {
     font-size: 12px;
+  }
+  .dashboard-left .panel:first-child {
+    min-height: 200px;
+    max-height: 250px;
+  }
+  .dashboard-timeline {
+    min-height: 150px;
+    max-height: 180px;
   }
 }
 
