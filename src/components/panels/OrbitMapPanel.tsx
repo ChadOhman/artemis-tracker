@@ -249,20 +249,19 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     }
 
     // Draw past path (solid, cyan) — uses Earth distance to find how far
-    // along the reference trajectory Orion has actually traveled
+    // along the reference trajectory Orion has actually traveled.
+    // We store the last drawn point so we can connect to orionPx later.
+    let lastPastPt: { x: number; y: number } | null = null;
     {
-      const earthDistKm = telemetry?.earthDistKm ?? 0;
-      const frac = earthDistKm / MOON_DIST_KM;
+      const earthDist = telemetry?.earthDistKm ?? 0;
+      const frac = earthDist / MOON_DIST_KM;
 
-      // Find the reference trajectory point closest to the actual distance fraction
       let pastIdx = 0;
       for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
-        // Reference trajectory x is normalized (0=Earth, 1=Moon)
         if (REFERENCE_TRAJECTORY[i].x <= frac) {
           pastIdx = i;
         }
       }
-      // Use whichever is further along: MET-based or distance-based
       const drawUpTo = Math.max(pastIdx, orionRefIdx);
 
       if (drawUpTo > 0) {
@@ -276,9 +275,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         for (let i = 1; i <= Math.min(drawUpTo, REFERENCE_TRAJECTORY.length - 1); i++) {
           const p = toCanvas(REFERENCE_TRAJECTORY[i].x, REFERENCE_TRAJECTORY[i].y);
           ctx.lineTo(p.x, p.y);
+          lastPastPt = p;
         }
-        // Connect to Orion's actual position
-        ctx.lineTo(orionPx.x, orionPx.y);
         ctx.stroke();
         ctx.restore();
       }
@@ -415,6 +413,19 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       orionPx = { x: realX, y: refCanvas.y };
     } else {
       orionPx = toCanvas(refPt.x, refPt.y);
+    }
+
+    // Connect past path to Orion's actual position
+    if (lastPastPt) {
+      ctx.save();
+      ctx.setLineDash([]);
+      ctx.strokeStyle = "rgba(0,220,255,0.4)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(lastPastPt.x, lastPastPt.y);
+      ctx.lineTo(orionPx.x, orionPx.y);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // --- Earth distance label near Orion ---
