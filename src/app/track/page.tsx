@@ -447,6 +447,17 @@ export default function TrackPage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <a
+            href="/"
+            style={{
+              fontSize: 11,
+              color: "#5a7a8a",
+              textDecoration: "none",
+              marginRight: 4,
+            }}
+          >
+            &larr; Dashboard
+          </a>
           <div
             style={{ width: 3, height: 22, background: "#00ff88", borderRadius: 2 }}
           />
