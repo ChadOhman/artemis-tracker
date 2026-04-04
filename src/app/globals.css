@@ -22,8 +22,8 @@
 
   /* Text */
   --text-primary: #e8f0fe;
-  --text-secondary: #8ba0b8;
-  --text-dim: #7a94ab;
+  --text-secondary: #a0b8cf;
+  --text-dim: #94adc4;
   --text-accent: var(--accent-cyan);
 
   /* Borders */
@@ -433,6 +433,12 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
 *:focus-visible {
   outline: 2px solid var(--accent-cyan);
   outline-offset: 2px;
+}
+
+.topbar-pill:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 /* Reduced motion */

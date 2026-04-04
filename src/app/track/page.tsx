@@ -426,7 +426,8 @@ export default function TrackPage() {
   // Render
   // ---------------------------------------------------------------------------
   return (
-    <div
+    <main
+      id="main-content"
       style={{
         minHeight: "100vh",
         background: "#060a10",
@@ -461,17 +462,18 @@ export default function TrackPage() {
           <div
             style={{ width: 3, height: 22, background: "#00ff88", borderRadius: 2 }}
           />
-          <span
+          <h1
             style={{
               fontSize: 14,
               fontWeight: 700,
               letterSpacing: "0.16em",
               color: "#e0e8f0",
               textTransform: "uppercase",
+              margin: 0,
             }}
           >
             Live Tracking
-          </span>
+          </h1>
         </div>
         <div
           style={{
@@ -504,18 +506,18 @@ export default function TrackPage() {
       >
         {/* Left column: Mission Geometry */}
         <div>
-          <div
+          <h2
             style={{
               fontSize: 10,
               fontWeight: 700,
               letterSpacing: "0.16em",
               color: "#00e5ff",
               textTransform: "uppercase",
-              marginBottom: 14,
+              margin: "0 0 14px",
             }}
           >
             Mission Geometry
-          </div>
+          </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <Card label="Telemetry Source">JPL Horizons</Card>
 
@@ -563,18 +565,18 @@ export default function TrackPage() {
 
         {/* Right column: Your Sky + Telescope Control */}
         <div>
-          <div
+          <h2
             style={{
               fontSize: 10,
               fontWeight: 700,
               letterSpacing: "0.16em",
               color: "#00e5ff",
               textTransform: "uppercase",
-              marginBottom: 14,
+              margin: "0 0 14px",
             }}
           >
             Your Sky
-          </div>
+          </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <Card label="Visibility">
               {geoStatus === "requesting" ? (
@@ -631,18 +633,18 @@ export default function TrackPage() {
 
           {/* Telescope Control */}
           <div style={{ marginTop: 20 }}>
-            <div
+            <h2
               style={{
                 fontSize: 10,
                 fontWeight: 700,
                 letterSpacing: "0.16em",
                 color: "#00e5ff",
                 textTransform: "uppercase",
-                marginBottom: 14,
+                margin: "0 0 14px",
               }}
             >
               Telescope Control
-            </div>
+            </h2>
             <div
               style={{
                 background: "#0d1117",
@@ -656,7 +658,11 @@ export default function TrackPage() {
             >
               {/* Host input + connect/disconnect */}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <label htmlFor="telescope-host" className="sr-only">
+                  Telescope host address
+                </label>
                 <input
+                  id="telescope-host"
                   type="text"
                   value={telescopeHost}
                   onChange={(e) => setTelescopeHost(e.target.value)}
@@ -692,6 +698,7 @@ export default function TrackPage() {
 
               {/* Status indicator */}
               <div
+                aria-label={`Telescope status: ${telescopeStatus}${alpacaState?.slewing ? ", slewing" : ""}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -701,6 +708,7 @@ export default function TrackPage() {
                 }}
               >
                 <div
+                  aria-hidden="true"
                   style={{
                     width: 8,
                     height: 8,
@@ -776,18 +784,24 @@ export default function TrackPage() {
       <div style={{ padding: "24px 24px 0" }}>
         <div
           style={{
-            fontSize: 10,
-            fontWeight: 700,
-            letterSpacing: "0.16em",
-            color: "#00e5ff",
-            textTransform: "uppercase",
-            marginBottom: 14,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            marginBottom: 14,
           }}
         >
-          <span>Live Ground Map</span>
+          <h2
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.16em",
+              color: "#00e5ff",
+              textTransform: "uppercase",
+              margin: 0,
+            }}
+          >
+            Live Ground Map
+          </h2>
           <span style={{ color: "#5a7a8a", fontSize: 9 }}>
             <span style={{ color: "#00ff88" }}>●</span> Orion Sub-Point
             {"  "}
@@ -796,6 +810,8 @@ export default function TrackPage() {
         </div>
         <div
           ref={mapContainerRef}
+          aria-label="Live ground map showing Orion sub-satellite point and observer location"
+          role="img"
           style={{
             height: 400,
             borderRadius: 8,
@@ -805,7 +821,7 @@ export default function TrackPage() {
           }}
         />
       </div>
-    </div>
+    </main>
   );
 }
 

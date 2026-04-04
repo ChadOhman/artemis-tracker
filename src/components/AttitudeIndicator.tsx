@@ -3,6 +3,7 @@ import { useRef, useEffect, useState } from "react";
 
 interface AttitudeIndicatorProps {
   quaternion: { w: number; x: number; y: number; z: number } | null;
+  eulerDeg?: { roll: number; pitch: number; yaw: number } | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,7 +128,7 @@ function buildOrionModel(T: THREE) {
   return group;
 }
 
-export function AttitudeIndicator({ quaternion }: AttitudeIndicatorProps) {
+export function AttitudeIndicator({ quaternion, eulerDeg }: AttitudeIndicatorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [threeLoaded, setThreeLoaded] = useState(false);
   const stateRef = useRef<{
@@ -178,9 +179,12 @@ export function AttitudeIndicator({ quaternion }: AttitudeIndicatorProps) {
       stateRef.current = state;
       setThreeLoaded(true);
 
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
       function animate() {
         state.animId = requestAnimationFrame(animate);
-        state.currentQuat.slerp(state.targetQuat, 0.1);
+        const lerpFactor = prefersReducedMotion ? 1.0 : 0.1;
+        state.currentQuat.slerp(state.targetQuat, lerpFactor);
         state.model.quaternion.copy(state.currentQuat);
         renderer.render(scene, camera);
       }
@@ -223,8 +227,10 @@ export function AttitudeIndicator({ quaternion }: AttitudeIndicatorProps) {
         opacity: hasData ? 1 : 0.3,
       }}
       aria-label={
-        hasData
-          ? "Spacecraft attitude indicator with reference axes"
+        hasData && eulerDeg
+          ? `Spacecraft attitude: Roll ${eulerDeg.roll.toFixed(1)}°, Pitch ${eulerDeg.pitch.toFixed(1)}°, Yaw ${eulerDeg.yaw.toFixed(1)}°`
+          : hasData
+          ? "Spacecraft attitude indicator"
           : "Attitude indicator — no data"
       }
     />

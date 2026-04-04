@@ -207,7 +207,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.save();
     ctx.strokeStyle = FD_COLOR;
     ctx.lineWidth = 1;
-    ctx.fillStyle = "#7a9ab8";
+    ctx.fillStyle = "#a0b8cf";
     ctx.font = `bold 9px ${FONT}`;
     for (let d = firstDay; d <= lastDay; d++) {
       const dayMs = d * MS_DAY;
@@ -227,7 +227,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.fillStyle = "#0a0f18";
     ctx.fillRect(0, 0, w, RULER_H);
 
-    ctx.fillStyle = "#6a8aaa";
+    ctx.fillStyle = "#9eb5cc";
     ctx.font = `9px ${FONT}`;
     ctx.textAlign = "center";
     for (let t = firstTick; t <= viewEnd; t += tickMs) {
@@ -246,7 +246,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.textAlign = "left";
 
     if (!raw) {
-      ctx.fillStyle = "#5a6a7a";
+      ctx.fillStyle = "#8a9db0";
       ctx.font = `11px ${FONT}`;
       ctx.textAlign = "center";
       ctx.fillText("Loading timeline data…", w / 2, h / 2);
@@ -291,7 +291,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     const POST_SLEEP_MS = 0.5 * MS_HOUR;
     // Row label
     ctx.save();
-    ctx.fillStyle = "#5a6a7a";
+    ctx.fillStyle = "#8a9db0";
     ctx.font = `bold 8px ${FONT}`;
     ctx.textAlign = "right";
     ctx.fillText("SLEEP", LABEL_GUTTER - 4, sleepY + sleepH / 2 + 3);
@@ -481,7 +481,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.fillStyle = "#0a0f18";
     ctx.fillRect(0, RULER_H, LABEL_GUTTER, h - RULER_H);
 
-    ctx.fillStyle = "#7a9ab8";
+    ctx.fillStyle = "#a0b8cf";
     ctx.font = `bold 8px ${FONT}`;
     ctx.textAlign = "center";
     ctx.fillText("CREW", LABEL_GUTTER / 2, crewY + crewH / 2 + 3);
@@ -627,7 +627,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         background: autoTrack ? "rgba(0,200,150,0.15)" : "rgba(255,255,255,0.05)",
         border: `1px solid ${autoTrack ? "rgba(0,200,150,0.4)" : "rgba(255,255,255,0.1)"}`,
         borderRadius: 3,
-        color: autoTrack ? "#00c896" : "#5a6a7a",
+        color: autoTrack ? "#00c896" : "#8a9db0",
         fontSize: 9,
         padding: "2px 6px",
         cursor: "pointer",
@@ -641,15 +641,15 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
   );
 
   // Accessible description of current timeline state
-  const currentActivity = timeline.currentActivity;
-  const nextMilestone = timeline.nextMilestone;
-  const timelineDescription = [
+  const currentAct = timeline.raw?.activities.find(
+    a => a.startMetMs <= metMs && a.endMetMs > metMs
+  );
+  const nextMilestone = timeline.raw?.milestones.find(m => m.metMs > metMs);
+  const timelineDesc = [
     "Mission timeline.",
-    currentActivity ? `Current activity: ${currentActivity.name}.` : "",
+    currentAct ? `Current activity: ${currentAct.name}.` : "No current activity.",
     nextMilestone ? `Next milestone: ${nextMilestone.name}.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  ].filter(Boolean).join(" ");
 
   return (
     <PanelFrame
@@ -667,7 +667,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         onMouseLeave={handleMouseLeave}
         onWheel={handleWheel}
       >
-        <span className="sr-only">{timelineDescription}</span>
+        <span className="sr-only">{timelineDesc}</span>
         <canvas
           ref={canvasRef}
           aria-hidden="true"

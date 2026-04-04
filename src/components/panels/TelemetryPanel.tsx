@@ -165,7 +165,7 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
           <TelemRow label="Pitch Rate" value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
           <TelemRow label="Yaw Rate" value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
         </div>
-        <AttitudeIndicator quaternion={arow?.quaternion ?? null} />
+        <AttitudeIndicator quaternion={arow?.quaternion ?? null} eulerDeg={arow?.eulerDeg} />
       </div>
 
       <TelemSection label="Solar Arrays" />

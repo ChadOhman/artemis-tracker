@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef } from "react";
 
 interface ModalProps {
   title: string;
@@ -10,9 +10,31 @@ interface ModalProps {
 }
 
 export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: ModalProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "Tab" && modalRef.current) {
+        const focusable = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else {
+          if (document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+          }
+        }
+      }
     },
     [onClose]
   );
@@ -22,6 +44,12 @@ export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, handleKeyDown]);
+
+  useEffect(() => {
+    if (isOpen && closeRef.current) {
+      closeRef.current.focus();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -40,6 +68,7 @@ export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: 
       }}
     >
       <div
+        ref={modalRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -81,6 +110,7 @@ export function Modal({ title, isOpen, onClose, children, maxWidth = "800px" }: 
             {title}
           </span>
           <button
+            ref={closeRef}
             onClick={onClose}
             style={{
               background: "none",
