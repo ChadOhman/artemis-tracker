@@ -13,8 +13,12 @@ const GMST_J2000 = 4.89496121274;
 /** J2000.0 epoch in ms */
 const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 
+/** Mean obliquity of ecliptic at J2000 */
+const OBLIQUITY = 23.4393 * (Math.PI / 180);
+
 /**
- * Compute sub-satellite latitude and longitude from a J2000 geocentric position vector.
+ * Compute sub-satellite latitude and longitude from a J2000 ecliptic
+ * geocentric position vector. Converts to equatorial first.
  * Returns { lat, lon } in degrees.
  */
 export function positionToLatLon(
@@ -24,11 +28,18 @@ export function positionToLatLon(
   const r = Math.sqrt(position.x ** 2 + position.y ** 2 + position.z ** 2);
   if (r === 0) return { lat: 0, lon: 0 };
 
-  // Declination (latitude) — angle from equatorial plane
-  const lat = Math.asin(position.z / r) * (180 / Math.PI);
+  // Convert ecliptic → equatorial (rotate around X axis by obliquity)
+  const cosE = Math.cos(OBLIQUITY);
+  const sinE = Math.sin(OBLIQUITY);
+  const eqX = position.x;
+  const eqY = position.y * cosE - position.z * sinE;
+  const eqZ = position.y * sinE + position.z * cosE;
 
-  // Right ascension in J2000 frame
-  const raJ2000 = Math.atan2(position.y, position.x);
+  // Declination (latitude) — angle from equatorial plane
+  const lat = Math.asin(eqZ / r) * (180 / Math.PI);
+
+  // Right ascension in J2000 equatorial frame
+  const raJ2000 = Math.atan2(eqY, eqX);
 
   // Convert J2000 RA to Earth-fixed longitude by subtracting Earth's rotation
   const utcMs = LAUNCH_TIME_MS + metMs;
