@@ -1,4 +1,5 @@
 "use client";
+import { useEffect } from "react";
 import { TopBar } from "./TopBar";
 import { BottomBar } from "./BottomBar";
 import { OrbitMapPanel } from "./panels/OrbitMapPanel";
@@ -17,7 +18,29 @@ import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
 import { MetProvider, useMetContext } from "@/context/MetContext";
 
+const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
+const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
+
+function useBuildCheck() {
+  useEffect(() => {
+    if (!BUILD_ID) return;
+    const id = setInterval(async () => {
+      try {
+        const res = await fetch("/api/build");
+        const data = await res.json();
+        if (data.buildId && data.buildId !== BUILD_ID) {
+          window.location.reload();
+        }
+      } catch {
+        // ignore fetch errors
+      }
+    }, BUILD_CHECK_INTERVAL);
+    return () => clearInterval(id);
+  }, []);
+}
+
 function DashboardInner() {
+  useBuildCheck();
   const { metMs, mode, simMetMs } = useMetContext();
 
   // Live SSE stream — always running, provides connected/lastUpdate/reconnecting
