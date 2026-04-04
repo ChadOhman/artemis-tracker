@@ -246,8 +246,8 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       {/* Toilet Status */}
       <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>TOILET</span>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block" }} />
-        <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>INOP</span>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
+        <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>GO</span>
       </div>
 
       {/* Comm Status */}
