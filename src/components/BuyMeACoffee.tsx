@@ -7,13 +7,10 @@ export function BuyMeACoffee() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!sessionStorage.getItem(STORAGE_KEY)) {
-      setVisible(true);
-    }
+    setVisible(true);
   }, []);
 
   function dismiss() {
-    sessionStorage.setItem(STORAGE_KEY, "1");
     setVisible(false);
   }
 
