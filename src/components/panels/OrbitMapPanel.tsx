@@ -527,16 +527,51 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       }
     }
 
-    // If we have real Earth distance, adjust the position along the Earth-Moon line
-    // to match the actual distance, while keeping the trajectory's Y offset for the arc.
+    // Place Orion on the reference trajectory curve at the distance-matched position.
+    // Find the two reference points that bracket the actual distance fraction,
+    // then interpolate Y to keep Orion exactly on the drawn curve.
     let orionPx: { x: number; y: number };
     if (telemetry?.earthDistKm != null) {
-      const frac = telemetry.earthDistKm / MOON_DIST_KM; // 0 = at Earth, 1 = at Moon
-      // Use the reference trajectory's Y offset for visual arc shape,
-      // but override X to match the real Earth distance fraction
-      const refCanvas = toCanvas(refPt.x, refPt.y);
-      const realX = earthPx.x + frac * trackWidth;
-      orionPx = { x: realX, y: refCanvas.y };
+      const frac = telemetry.earthDistKm / MOON_DIST_KM;
+
+      // Find the segment on the OUTBOUND arc where x brackets frac
+      // (outbound only — x increases monotonically on the first half)
+      let matchA = REFERENCE_TRAJECTORY[0];
+      let matchB = REFERENCE_TRAJECTORY[1];
+      const isOutbound = metMs < 5 * 24 * 3600 * 1000; // before closest approach
+
+      if (isOutbound) {
+        // Search outbound half (first ~60% of trajectory points)
+        const midIdx = Math.floor(REFERENCE_TRAJECTORY.length * 0.55);
+        for (let i = 0; i < midIdx - 1; i++) {
+          if (REFERENCE_TRAJECTORY[i].x <= frac && REFERENCE_TRAJECTORY[i + 1].x >= frac) {
+            matchA = REFERENCE_TRAJECTORY[i];
+            matchB = REFERENCE_TRAJECTORY[i + 1];
+            break;
+          }
+        }
+      } else {
+        // Search return half (last ~45% of trajectory points, x decreases)
+        const midIdx = Math.floor(REFERENCE_TRAJECTORY.length * 0.55);
+        for (let i = REFERENCE_TRAJECTORY.length - 2; i >= midIdx; i--) {
+          if (REFERENCE_TRAJECTORY[i].x <= frac && REFERENCE_TRAJECTORY[i + 1].x >= frac) {
+            matchA = REFERENCE_TRAJECTORY[i + 1];
+            matchB = REFERENCE_TRAJECTORY[i];
+            break;
+          }
+          if (REFERENCE_TRAJECTORY[i].x >= frac && REFERENCE_TRAJECTORY[i + 1].x <= frac) {
+            matchA = REFERENCE_TRAJECTORY[i];
+            matchB = REFERENCE_TRAJECTORY[i + 1];
+            break;
+          }
+        }
+      }
+
+      // Interpolate Y between the two bracketing points
+      const dx = matchB.x - matchA.x;
+      const t = dx !== 0 ? (frac - matchA.x) / dx : 0;
+      const interpY = matchA.y + t * (matchB.y - matchA.y);
+      orionPx = toCanvas(frac, interpY);
     } else {
       orionPx = toCanvas(refPt.x, refPt.y);
     }
