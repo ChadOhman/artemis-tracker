@@ -347,6 +347,77 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillText("Earth", earthPx.x, earthPx.y + earthR + 13);
     ctx.restore();
 
+    // --- Lunar gravity contours ---
+    // Draw concentric rings around the Moon showing gravitational influence.
+    // Lunar Hill sphere ≈ 61,500 km — the region where Moon's gravity dominates.
+    const LUNAR_HILL_SPHERE_KM = 61500;
+    const hillPx = LUNAR_HILL_SPHERE_KM * pixelsPerKm;
+
+    // Gravity contour rings at various distances (km from Moon center)
+    const gravityRings = [
+      { radiusKm: 10000, opacity: 0.12, label: "" },
+      { radiusKm: 20000, opacity: 0.09, label: "" },
+      { radiusKm: 35000, opacity: 0.06, label: "" },
+      { radiusKm: LUNAR_HILL_SPHERE_KM, opacity: 0.10, label: "Hill Sphere" },
+    ];
+
+    for (const ring of gravityRings) {
+      const rPx = ring.radiusKm * pixelsPerKm;
+      if (rPx < 3) continue; // too small to render
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(moonPx.x, moonPx.y, rPx, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(180, 190, 210, ${ring.opacity})`;
+      ctx.lineWidth = ring.radiusKm === LUNAR_HILL_SPHERE_KM ? 1.2 : 0.6;
+      if (ring.radiusKm === LUNAR_HILL_SPHERE_KM) {
+        ctx.setLineDash([4, 6]);
+      }
+      ctx.stroke();
+      ctx.restore();
+
+      // Label for Hill sphere
+      if (ring.label && rPx > 20) {
+        ctx.save();
+        ctx.font = "7px monospace";
+        ctx.fillStyle = `rgba(180, 190, 210, 0.35)`;
+        ctx.textAlign = "center";
+        ctx.fillText(ring.label, moonPx.x, moonPx.y - rPx - 3);
+        ctx.restore();
+      }
+    }
+
+    // Subtle radial gradient showing gravity well
+    ctx.save();
+    const gravGrad = ctx.createRadialGradient(
+      moonPx.x, moonPx.y, 0,
+      moonPx.x, moonPx.y, hillPx
+    );
+    gravGrad.addColorStop(0, "rgba(140, 160, 200, 0.06)");
+    gravGrad.addColorStop(0.3, "rgba(140, 160, 200, 0.03)");
+    gravGrad.addColorStop(1, "rgba(140, 160, 200, 0)");
+    ctx.beginPath();
+    ctx.arc(moonPx.x, moonPx.y, hillPx, 0, Math.PI * 2);
+    ctx.fillStyle = gravGrad;
+    ctx.fill();
+    ctx.restore();
+
+    // Also show Earth's gravity influence as a subtle gradient
+    ctx.save();
+    const earthGravR = w * 0.35; // visual representation, not to scale
+    const earthGravGrad = ctx.createRadialGradient(
+      earthPx.x, earthPx.y, 0,
+      earthPx.x, earthPx.y, earthGravR
+    );
+    earthGravGrad.addColorStop(0, "rgba(80, 140, 255, 0.04)");
+    earthGravGrad.addColorStop(0.5, "rgba(80, 140, 255, 0.015)");
+    earthGravGrad.addColorStop(1, "rgba(80, 140, 255, 0)");
+    ctx.beginPath();
+    ctx.arc(earthPx.x, earthPx.y, earthGravR, 0, Math.PI * 2);
+    ctx.fillStyle = earthGravGrad;
+    ctx.fill();
+    ctx.restore();
+
     // --- Moon ---
     const moonR = Math.max(6, Math.min(w, h) * 0.03);
     const moonGrad = ctx.createRadialGradient(
