@@ -360,7 +360,9 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillText("Moon", moonPx.x, moonPx.y + moonR + 13);
     ctx.restore();
 
-    // --- Orion position (always on the reference trajectory, interpolated by MET) ---
+    // --- Orion position ---
+    // Use Earth distance from telemetry to place Orion along the reference trajectory
+    // at the correct fractional distance, rather than interpolating by MET alone.
     let idxA = 0;
     for (let i = 0; i < REFERENCE_TRAJECTORY.length; i++) {
       if (REFERENCE_TRAJECTORY[i].metMs <= metMs) {
@@ -381,7 +383,20 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         };
       }
     }
-    const orionPx = toCanvas(refPt.x, refPt.y);
+
+    // If we have real Earth distance, adjust the position along the Earth-Moon line
+    // to match the actual distance, while keeping the trajectory's Y offset for the arc.
+    let orionPx: { x: number; y: number };
+    if (telemetry?.earthDistKm != null) {
+      const frac = telemetry.earthDistKm / MOON_DIST_KM; // 0 = at Earth, 1 = at Moon
+      // Use the reference trajectory's Y offset for visual arc shape,
+      // but override X to match the real Earth distance fraction
+      const refCanvas = toCanvas(refPt.x, refPt.y);
+      const realX = earthPx.x + frac * trackWidth;
+      orionPx = { x: realX, y: refCanvas.y };
+    } else {
+      orionPx = toCanvas(refPt.x, refPt.y);
+    }
 
     // --- Earth distance label near Orion ---
     const earthDistKm = telemetry?.earthDistKm ?? null;
