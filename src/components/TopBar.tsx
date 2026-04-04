@@ -314,22 +314,6 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       <button
         className="topbar-pill topbar-hide-mobile"
         style={infoButtonStyle}
-        onClick={() => setCrewOpen(true)}
-        aria-label="View crew information"
-        onMouseEnter={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--accent-cyan)";
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(0,229,255,0.35)";
-        }}
-        onMouseLeave={(e) => {
-          (e.currentTarget as HTMLButtonElement).style.color = "var(--text-secondary)";
-          (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-panel)";
-        }}
-      >
-        CREW
-      </button>
-      <button
-        className="topbar-pill topbar-hide-mobile"
-        style={infoButtonStyle}
         onClick={() => setVehicleOpen(true)}
         aria-label="View vehicle information"
         onMouseEnter={(e) => {
