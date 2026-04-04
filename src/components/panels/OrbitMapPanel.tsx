@@ -263,9 +263,9 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     // Draw future path (dashed, faint) — from Orion's position onward
     if (splitIdx < REFERENCE_TRAJECTORY.length - 1) {
       ctx.save();
-      ctx.setLineDash([3, 5]);
-      ctx.strokeStyle = "rgba(0,220,255,0.22)";
-      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 12]);
+      ctx.strokeStyle = "rgba(0,220,255,0.18)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       const sf = toCanvas(REFERENCE_TRAJECTORY[splitIdx].x, REFERENCE_TRAJECTORY[splitIdx].y);
       ctx.moveTo(sf.x, sf.y);
