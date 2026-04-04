@@ -229,7 +229,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>TOILET</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block" }} />
-        <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>NO GO</span>
+        <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>INOP</span>
       </div>
 
       {/* Telemetry: VEL, ALT, EARTH */}
