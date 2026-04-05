@@ -9,6 +9,7 @@ import { TimelinePanel } from "./panels/TimelinePanel";
 import { ActivityDetailPanel } from "./panels/ActivityDetailPanel";
 import { NextMilestonePanel } from "./panels/NextMilestonePanel";
 import { LiveStreamPanel } from "./panels/LiveStreamPanel";
+import { Apollo8Panel } from "./panels/Apollo8Panel";
 import { CurrentActivitiesPanel } from "./panels/CurrentActivitiesPanel";
 import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
@@ -17,6 +18,7 @@ import { DeltaVPanel } from "./panels/DeltaVPanel";
 import { Co2Panel } from "./panels/Co2Panel";
 import { StationSchedulePanel } from "./panels/StationSchedulePanel";
 import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
+import { ThermalPanel } from "./panels/ThermalPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
@@ -32,11 +34,13 @@ const MemoDeltaV = memo(DeltaVPanel);
 const MemoCo2 = memo(Co2Panel);
 const MemoStationSchedule = memo(StationSchedulePanel);
 const MemoDsnBandwidth = memo(DsnBandwidthPanel);
+const MemoThermal = memo(ThermalPanel);
 const MemoActivity = memo(ActivityDetailPanel);
 const MemoNextMilestone = memo(NextMilestonePanel);
 const MemoCurrentActivities = memo(CurrentActivitiesPanel);
 const MemoUpcoming = memo(UpcomingPanel);
 const MemoMilestones = memo(MilestonesPanel);
+const MemoApollo8 = memo(Apollo8Panel);
 
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
@@ -114,6 +118,7 @@ function DashboardInner() {
         <MemoDeltaV metMs={metMs} />
         <MemoCo2 metMs={metMs} />
         <MemoStationSchedule stateVector={stateVector} />
+        <MemoThermal stateVector={stateVector} arow={mode === "LIVE" ? arow : null} metMs={metMs} />
       </div>
       <div className="dashboard-timeline">
         <MemoTimeline metMs={metMs} timeline={timeline} />
@@ -122,6 +127,7 @@ function DashboardInner() {
         <MemoActivity timeline={timeline} metMs={metMs} />
         <MemoNextMilestone timeline={timeline} metMs={metMs} />
         <LiveStreamPanel />
+        <MemoApollo8 metMs={metMs} />
       </div>
       <div className="dashboard-right">
         <MemoCurrentActivities timeline={timeline} />
