@@ -139,6 +139,12 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Crew activities, mission phases, milestones, and sleep schedule derived from the official Artemis II flight plan PDF."
         />
 
+        <Source
+          name="jakobrosin/artemis-data"
+          url="https://github.com/jakobrosin/artemis-data"
+          description="Community-maintained Artemis II mission timeline data — provides the crew schedule and milestone MET times used throughout this tracker. Huge thanks to Jakob Rosin for maintaining this open dataset."
+        />
+
         <div
           style={{
             fontSize: 9,
