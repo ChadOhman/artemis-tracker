@@ -100,6 +100,28 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Deep Space Network dish status — active contacts, signal bands, data rates, range, and round-trip light time. Polled every 10 seconds."
         />
 
+        <SectionHeader label={t("credits.spaceWeather")} />
+
+        <Source
+          name="NOAA Space Weather Prediction Center"
+          url="https://www.swpc.noaa.gov/"
+          description="Planetary K-index (geomagnetic activity), GOES X-ray flux (solar flare class), and proton flux at 1/10/100 MeV (radiation risk to crew). Polled from services.swpc.noaa.gov every 60 seconds. Operated by NOAA, a U.S. agency."
+        />
+
+        <SectionHeader label={t("credits.groundTrack")} />
+
+        <Source
+          name="OpenStreetMap contributors"
+          url="https://www.openstreetmap.org/copyright"
+          description="Underlying map data for the Earth ground track visualization. © OpenStreetMap contributors, available under the Open Database License."
+        />
+
+        <Source
+          name="CARTO"
+          url="https://carto.com/attributions"
+          description="Dark basemap tile styling served via CARTO's free basemap CDN."
+        />
+
         <SectionHeader label={t("credits.missionTimeline")} />
 
         <Source
