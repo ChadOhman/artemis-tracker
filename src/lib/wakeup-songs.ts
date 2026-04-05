@@ -41,4 +41,10 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     year: 2020,
     notes: "Mission control famously cut the audio after 'heels' — Commander Wiseman quipped 'We were all eagerly awaiting the chorus.'",
   },
+  {
+    flightDay: 5,
+    title: "Working Class Heroes (Work)",
+    artist: "CeeLo Green",
+    notes: "Accompanied by a special wake-up message from Apollo 16 moonwalker Charlie Duke.",
+  },
 ];
