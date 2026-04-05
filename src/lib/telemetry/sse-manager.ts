@@ -3,8 +3,12 @@ import { SSE_KEEPALIVE_INTERVAL_MS } from "../constants";
 
 type SseClient = {
   controller: ReadableStreamDefaultController;
-  encoder: TextEncoder;
 };
+
+// Shared encoder — TextEncoder is stateless, no reason to allocate per-client.
+const SHARED_ENCODER = new TextEncoder();
+// Pre-encoded keepalive frame — never changes, compute once at module load.
+const KEEPALIVE_BYTES = SHARED_ENCODER.encode(":keepalive\n\n");
 
 export class SseManager {
   private clients: Set<SseClient> = new Set();
@@ -19,7 +23,7 @@ export class SseManager {
   }
 
   addClient(controller: ReadableStreamDefaultController): () => void {
-    const client: SseClient = { controller, encoder: new TextEncoder() };
+    const client: SseClient = { controller };
     this.clients.add(client);
     this.ensureKeepalive();
     return () => {
@@ -32,10 +36,12 @@ export class SseManager {
   }
 
   broadcast(event: string, data: unknown): void {
-    const message = SseManager.encodeEvent(event, data);
+    // Encode once — identical bytes go to every client. At 1000 clients this
+    // replaces 1000× TextEncoder.encode() calls with a single one.
+    const bytes = SHARED_ENCODER.encode(SseManager.encodeEvent(event, data));
     for (const client of this.clients) {
       try {
-        client.controller.enqueue(client.encoder.encode(message));
+        client.controller.enqueue(bytes);
       } catch {
         this.clients.delete(client);
       }
@@ -53,10 +59,9 @@ export class SseManager {
   private ensureKeepalive(): void {
     if (this.keepaliveTimer) return;
     this.keepaliveTimer = setInterval(() => {
-      const message = SseManager.encodeKeepAlive();
       for (const client of this.clients) {
         try {
-          client.controller.enqueue(client.encoder.encode(message));
+          client.controller.enqueue(KEEPALIVE_BYTES);
         } catch {
           this.clients.delete(client);
         }
