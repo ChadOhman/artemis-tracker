@@ -21,6 +21,7 @@ import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
 import { ThermalPanel } from "./panels/ThermalPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
 import { ChangelogModal } from "./modals/ChangelogModal";
+import { WakeupSongsPanel } from "./panels/WakeupSongsPanel";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
@@ -42,6 +43,7 @@ const MemoCurrentActivities = memo(CurrentActivitiesPanel);
 const MemoUpcoming = memo(UpcomingPanel);
 const MemoMilestones = memo(MilestonesPanel);
 const MemoApollo8 = memo(Apollo8Panel);
+const MemoWakeupSongs = memo(WakeupSongsPanel);
 
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
@@ -129,6 +131,7 @@ function DashboardInner() {
         <MemoNextMilestone timeline={timeline} metMs={metMs} />
         <LiveStreamPanel />
         <MemoApollo8 metMs={metMs} />
+        <MemoWakeupSongs />
       </div>
       <div className="dashboard-right">
         <MemoCurrentActivities timeline={timeline} />
