@@ -902,24 +902,25 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           🌙 {showInset ? "✕" : "Zoom"}
         </button>
 
-        {/* Moon detail inset canvas */}
-        {showInset && (
-          <canvas
-            ref={insetRef}
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              bottom: 8,
-              right: 8,
-              width: "clamp(140px, 32%, 200px)",
-              height: "clamp(140px, 32%, 200px)",
-              border: "1px solid rgba(0,229,255,0.35)",
-              borderRadius: 6,
-              boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
-              background: "#060b14",
-            }}
-          />
-        )}
+        {/* Moon detail inset canvas — always mounted so dimensions are valid */}
+        <canvas
+          ref={insetRef}
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: 8,
+            right: 8,
+            width: "clamp(140px, 32%, 200px)",
+            height: "clamp(140px, 32%, 200px)",
+            border: "1px solid rgba(0,229,255,0.35)",
+            borderRadius: 6,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
+            background: "#060b14",
+            opacity: showInset ? 1 : 0,
+            pointerEvents: showInset ? "auto" : "none",
+            transition: "opacity 200ms ease-out",
+          }}
+        />
       </div>
     </PanelFrame>
   );
