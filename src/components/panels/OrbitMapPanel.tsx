@@ -678,11 +678,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       const iw = inset.clientWidth;
       const ih = inset.clientHeight;
       if (iw > 0 && ih > 0) {
+        // Only resize the backing buffer. Leave inline CSS alone (clamp sizing).
         if (inset.width !== iw * dpr || inset.height !== ih * dpr) {
           inset.width = iw * dpr;
           inset.height = ih * dpr;
-          inset.style.width = `${iw}px`;
-          inset.style.height = `${ih}px`;
         }
         const ictx = inset.getContext("2d");
         if (ictx) {
@@ -915,19 +914,22 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         <canvas
           ref={insetRef}
           aria-hidden="true"
+          width={360}
+          height={360}
           style={{
             position: "absolute",
             bottom: 8,
             right: 8,
-            width: "clamp(140px, 32%, 200px)",
-            height: "clamp(140px, 32%, 200px)",
-            border: "1px solid rgba(0,229,255,0.35)",
+            width: 180,
+            height: 180,
+            border: "2px solid rgba(0,229,255,0.5)",
             borderRadius: 6,
             boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
             background: "#060b14",
             opacity: showInset ? 1 : 0,
             pointerEvents: showInset ? "auto" : "none",
             transition: "opacity 200ms ease-out",
+            zIndex: 10,
           }}
         />
       </div>
