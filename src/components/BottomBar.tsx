@@ -5,6 +5,7 @@ import { useMetContext, type PlaybackSpeed, type SpeedUnit } from "@/context/Met
 import { MISSION_DURATION_MS } from "@/lib/constants";
 import type { Milestone } from "@/lib/types";
 import { CreditsModal } from "./modals/CreditsModal";
+import { useLocale } from "@/context/LocaleContext";
 
 interface BottomBarProps {
   milestones: Milestone[];
@@ -22,6 +23,7 @@ const SPEED_OPTIONS: { label: string; value: PlaybackSpeed }[] = [
 export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
   const [creditsOpen, setCreditsOpen] = useState(false);
   const [ago, setAgo] = useState<number | null>(null);
+  const { locale, setLocale, t } = useLocale();
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -89,7 +91,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
             fontFamily: "inherit",
           }}
         >
-          LIVE
+          {t("common.live")}
         </button>
         <button
           onClick={isLive ? handleSwitchToSim : undefined}
@@ -109,7 +111,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
             fontFamily: "inherit",
           }}
         >
-          SIM
+          {t("common.sim")}
         </button>
       </div>
 
@@ -248,7 +250,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
           rel="noopener noreferrer"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          Created by Canadian Space
+          {t("bottomBar.createdBy")}
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <button
@@ -264,37 +266,53 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
             letterSpacing: "inherit",
           }}
         >
-          Credits
+          {t("bottomBar.credits")}
         </button>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
           href="/track"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          Track
+          {t("bottomBar.track")}
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
           href="/dsn"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          DSN
+          {t("bottomBar.dsn")}
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
           href="mailto:cdnspace@chadohman.ca?subject=Artemis%20II%20Tracker%20Feedback"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          Feedback
+          {t("bottomBar.feedback")}
         </a>
+        <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+        <button
+          onClick={() => setLocale(locale === "en" ? "fr" : "en")}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--text-dim)",
+            cursor: "pointer",
+            padding: 0,
+            fontSize: "inherit",
+            fontFamily: "inherit",
+            letterSpacing: "inherit",
+          }}
+        >
+          {locale === "en" ? "🇨🇦 FR" : "🇬🇧 EN"}
+        </button>
         {ago != null && (
           <span style={{ marginLeft: 8, opacity: 0.5 }}>
-            updated {ago}s ago
+            {t("bottomBar.updated")} {ago}{t("bottomBar.secondsAgo")}
           </span>
         )}
         {process.env.NEXT_PUBLIC_BUILD_ID && (
           <span style={{ marginLeft: 8, opacity: 0.5 }}>
-            build {process.env.NEXT_PUBLIC_BUILD_ID}
+            {t("bottomBar.build")} {process.env.NEXT_PUBLIC_BUILD_ID}
           </span>
         )}
       </div>

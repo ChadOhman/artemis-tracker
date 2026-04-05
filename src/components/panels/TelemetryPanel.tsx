@@ -4,6 +4,7 @@ import { useMetContext } from "@/context/MetContext";
 import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { AttitudeIndicator } from "@/components/AttitudeIndicator";
+import { useLocale } from "@/context/LocaleContext";
 
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
@@ -93,10 +94,11 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
   const t = telemetry;
   const phaseName = timeline.currentPhaseName ?? "Unknown";
   const { speedUnit } = useMetContext();
+  const { t: tr } = useLocale();
 
   return (
     <PanelFrame
-      title="Telemetry"
+      title={tr("panels.telemetry")}
       icon="📡"
       accentColor="var(--accent-cyan)"
       headerRight={
@@ -114,84 +116,84 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       }
     >
       <div aria-live="polite" aria-atomic="false">
-      <TelemSection label="Dynamics" />
+      <TelemSection label={tr("panels.dynamics")} />
       <TelemRow
-        label="Velocity"
+        label={tr("telemetry.speed")}
         value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : (t.speedKmS * 1000).toFixed(1)) : "—"}
         unit={speedUnit}
       />
       <TelemRow
-        label="G-Force"
+        label={tr("telemetry.gForce")}
         value={fmt(t?.gForce, 4)}
         unit="g"
       />
 
-      <TelemSection label="Position" />
+      <TelemSection label={tr("panels.position")} />
       <TelemRow
-        label="Altitude"
+        label={tr("topbar.altitude")}
         value={fmtKm(t?.altitudeKm)}
         unit="km"
       />
       <TelemRow
-        label="Earth Dist"
+        label={tr("telemetry.earthDist")}
         value={fmtKm(t?.earthDistKm)}
         unit="km"
       />
       <TelemRow
-        label="Moon Dist"
+        label={tr("telemetry.moonDist")}
         value={fmtKm(t?.moonDistKm)}
         unit="km"
       />
 
-      <TelemSection label="Orbit" />
+      <TelemSection label={tr("panels.orbit")} />
       <TelemRow
-        label="Periapsis"
+        label={tr("telemetry.periapsis")}
         value={fmtKm(t?.periapsisKm)}
         unit="km"
       />
       <TelemRow
-        label="Apoapsis"
+        label={tr("telemetry.apoapsis")}
         value={fmtKm(t?.apoapsisKm)}
         unit="km"
       />
 
-      <TelemSection label="Attitude" />
+      <TelemSection label={tr("panels.attitude")} />
       <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
         <div style={{ flex: 1 }}>
-          <TelemRow label="Roll" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.roll) : "—"} />
-          <TelemRow label="Pitch" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.pitch) : "—"} />
-          <TelemRow label="Yaw" value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.yaw) : "—"} />
-          <TelemRow label="Roll Rate" value={arow?.rollRate != null ? fmt(arow.rollRate, 2) : "—"} unit="°/s" />
-          <TelemRow label="Pitch Rate" value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
-          <TelemRow label="Yaw Rate" value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
+          <TelemRow label={tr("telemetry.roll")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.roll) : "—"} />
+          <TelemRow label={tr("telemetry.pitch")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.pitch) : "—"} />
+          <TelemRow label={tr("telemetry.yaw")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.yaw) : "—"} />
+          <TelemRow label={tr("telemetry.rollRate")} value={arow?.rollRate != null ? fmt(arow.rollRate, 2) : "—"} unit="°/s" />
+          <TelemRow label={tr("telemetry.pitchRate")} value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
+          <TelemRow label={tr("telemetry.yawRate")} value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
         </div>
         <AttitudeIndicator quaternion={arow?.quaternion ?? null} eulerDeg={arow?.eulerDeg} />
       </div>
 
-      <TelemSection label="Solar Arrays" />
+      <TelemSection label={tr("panels.solarArrays")} />
       <TelemRow label="SAW 1" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw1) : "—"} />
       <TelemRow label="SAW 2" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw2) : "—"} />
       <TelemRow label="SAW 3" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw3) : "—"} />
       <TelemRow label="SAW 4" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw4) : "—"} />
 
-      <TelemSection label="Comm Link" />
+      <TelemSection label={tr("panels.commLink")} />
       <TelemRow
-        label="Ant 1 Az/El"
+        label={tr("telemetry.antenna1")}
         value={arow?.antennaGimbal ? `${fmt(arow.antennaGimbal.az1)}° / ${fmt(arow.antennaGimbal.el1)}°` : "—"}
       />
       <TelemRow
-        label="Ant 2 Az/El"
+        label={tr("telemetry.antenna2")}
         value={arow?.antennaGimbal ? `${fmt(arow.antennaGimbal.az2)}° / ${fmt(arow.antennaGimbal.el2)}°` : "—"}
       />
       <TelemRow
-        label="Mode"
+        label={tr("telemetry.mode")}
         value={arow ? `0x${arow.spacecraftMode.toUpperCase()}` : "—"}
       />
 
-      <TelemSection label="ICPS Upper Stage" />
+      <TelemSection label={tr("panels.icpsUpperStage")} />
       {arow ? (
         <div className="telem-row">
-          <span className="telem-label">Status</span>
+          <span className="telem-label">{tr("telemetry.status")}</span>
           <span
             className="telem-value"
             style={{
@@ -199,19 +201,19 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
               fontWeight: 700,
             }}
           >
-            {arow.icps.active ? "ACTIVE" : "LOST"}
+            {arow.icps.active ? tr("telemetry.active") : tr("telemetry.lost")}
           </span>
         </div>
       ) : (
-        <TelemRow label="Status" value={"—"} />
+        <TelemRow label={tr("telemetry.status")} value={"—"} />
       )}
       {arow && arow.icps.active && (() => {
         const e = quaternionToEulerDeg(arow.icps.quaternion);
         return (
           <>
-            <TelemRow label="ICPS Roll" value={fmtDeg(e.roll)} />
-            <TelemRow label="ICPS Pitch" value={fmtDeg(e.pitch)} />
-            <TelemRow label="ICPS Yaw" value={fmtDeg(e.yaw)} />
+            <TelemRow label={tr("telemetry.icpsRoll")} value={fmtDeg(e.roll)} />
+            <TelemRow label={tr("telemetry.icpsPitch")} value={fmtDeg(e.pitch)} />
+            <TelemRow label={tr("telemetry.icpsYaw")} value={fmtDeg(e.yaw)} />
           </>
         );
       })()}

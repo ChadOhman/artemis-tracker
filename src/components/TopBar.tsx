@@ -7,6 +7,7 @@ import type { TimelineState } from "@/hooks/useTimeline";
 import { CrewModal } from "./modals/CrewModal";
 import { SpacecraftModal } from "./modals/SpacecraftModal";
 import { useMetContext } from "@/context/MetContext";
+import { useLocale } from "@/context/LocaleContext";
 
 function formatNumber(n: number): string {
   return Math.round(n).toLocaleString();
@@ -92,6 +93,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const { speedUnit } = useMetContext();
+  const { t } = useLocale();
 
   const isStale =
     lastUpdate !== null && Date.now() - lastUpdate > STALE_THRESHOLD_MS;
@@ -241,14 +243,14 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         }}
       >
         <span style={{ fontSize: 10, letterSpacing: 1 }}>🇺🇸🇺🇸🇺🇸🇨🇦</span>
-        <span style={{ ...labelStyle, fontSize: 9 }}>CREW</span>
+        <span style={{ ...labelStyle, fontSize: 9 }}>{t("topbar.crew")}</span>
       </button>
 
       {/* Toilet Status */}
       <div className="topbar-pill" style={pillStyle} title="Waste tank level — ground reported, not live telemetry">
-        <span style={labelStyle}>TOILET</span>
+        <span style={labelStyle}>{t("topbar.toilet")}</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
-        <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>GO</span>
+        <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>{t("common.go")}</span>
         <span style={{ fontSize: 10, color: "var(--text-dim)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>64%</span>
       </div>
 
@@ -264,14 +266,14 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       {dsn && !dsn.signalActive && (
         <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(255,61,61,0.3)" }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block", animation: "pulse 1.5s infinite" }} />
-          <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>LOS</span>
+          <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>{t("common.los")}</span>
         </div>
       )}
 
       {/* Telemetry: VEL, ALT, EARTH */}
       <div className="topbar-pill" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={labelStyle}>VEL</span>
+          <span style={labelStyle}>{t("topbar.velocity")}</span>
           <span style={valueStyle}>
             {telemetry ? (speedUnit === "km/h" ? formatNumber(telemetry.speedKmH) : (telemetry.speedKmS * 1000).toFixed(1)) : "—"}
           </span>
@@ -279,7 +281,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         </div>
         <div style={{ width: 1, height: 14, background: "var(--border-subtle)" }} />
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-          <span style={labelStyle}>ALT</span>
+          <span style={labelStyle}>{t("topbar.altitude")}</span>
           <span style={valueStyle}>
             {telemetry ? formatNumber(telemetry.altitudeKm) : "—"}
           </span>
@@ -296,7 +298,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         const sleepIn = nextSleep.startMetMs - metMs;
         return (
           <div className="topbar-pill topbar-hide-mobile" style={{ ...pillStyle, gap: 6 }}>
-            <span style={labelStyle}>SLEEP</span>
+            <span style={labelStyle}>{t("topbar.sleep")}</span>
             <span style={{ fontSize: 10, color: "var(--accent-purple)", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
               {formatCountdown(sleepIn)}
             </span>
@@ -307,7 +309,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       {/* Lunar Approach Countdown */}
       {telemetry && telemetry.moonDistKm < 100000 && (
         <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(180,185,190,0.3)" }}>
-          <span style={labelStyle}>MOON</span>
+          <span style={labelStyle}>{t("topbar.moon")}</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
             {Math.round(telemetry.moonDistKm).toLocaleString()} km
           </span>
@@ -317,7 +319,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       {/* Signal Light-Time Delay */}
       {telemetry && telemetry.earthDistKm > 1000 && (
         <div className="topbar-pill topbar-hide-mobile" style={pillStyle} title="One-way signal travel time (speed of light)">
-          <span style={labelStyle}>DELAY</span>
+          <span style={labelStyle}>{t("topbar.delay")}</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
             {(telemetry.earthDistKm / 299792).toFixed(2)}s
           </span>

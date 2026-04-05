@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { LocaleProvider } from "@/context/LocaleContext";
 
 export const metadata: Metadata = {
   title: "Artemis II Tracker — Live Mission Control",
@@ -50,7 +51,7 @@ export default function RootLayout({
       </head>
       <body>
         <a href="#main-content" className="skip-nav">Skip to main content</a>
-        {children}
+        <LocaleProvider>{children}</LocaleProvider>
       </body>
     </html>
   );

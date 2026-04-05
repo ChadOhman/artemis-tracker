@@ -3,6 +3,7 @@ import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { SolarActivity } from "@/lib/types";
 import { estimateRadiation } from "@/lib/radiation";
 import { LAUNCH_TIME_MS } from "@/lib/constants";
+import { useLocale } from "@/context/LocaleContext";
 
 interface SolarPanelProps {
   solar: SolarActivity | null;
@@ -62,10 +63,11 @@ export function SolarPanel({ solar }: SolarPanelProps) {
 
   const metMs = Date.now() - LAUNCH_TIME_MS;
   const radiation = s ? estimateRadiation(metMs, s.protonFlux10MeV) : null;
+  const { t } = useLocale();
 
   return (
     <PanelFrame
-      title="Space Weather"
+      title={t("panels.spaceWeather")}
       icon="☀️"
       accentColor="var(--accent-orange)"
       headerRight={
@@ -84,25 +86,25 @@ export function SolarPanel({ solar }: SolarPanelProps) {
         ) : null
       }
     >
-      <Section label="Geomagnetic" />
+      <Section label={t("solar.geomagnetic")} />
       <Row
-        label="Kp Index"
+        label={t("solar.kpIndex")}
         value={s ? `${s.kpIndex.toFixed(1)} — ${s.kpLabel}` : "—"}
         color={s && s.kpIndex >= 5 ? "var(--accent-orange)" : undefined}
       />
 
-      <Section label="Solar X-Ray" />
+      <Section label={t("solar.solarXray")} />
       <Row
-        label="Flux"
+        label={t("solar.flux")}
         value={s ? formatFlux(s.xrayFlux) + " W/m²" : "—"}
       />
       <Row
-        label="Flare Class"
+        label={t("solar.flareClass")}
         value={s?.xrayClass ?? "—"}
         color={s && (s.xrayClass === "M" || s.xrayClass === "X") ? "var(--accent-red)" : undefined}
       />
 
-      <Section label="Proton Flux" />
+      <Section label={t("solar.protonFlux")} />
       <Row
         label="≥1 MeV"
         value={s ? `${s.protonFlux1MeV.toFixed(1)} pfu` : "—"}
@@ -118,13 +120,13 @@ export function SolarPanel({ solar }: SolarPanelProps) {
         color={s && s.protonFlux100MeV >= 1 ? "var(--accent-red)" : undefined}
       />
 
-      <Section label="Radiation Dose (Est.)" />
+      <Section label={t("solar.radiationDose")} />
       <Row
-        label="Daily Rate"
+        label={t("solar.dailyRate")}
         value={radiation ? `${radiation.dailyRate} mSv/day` : "—"}
       />
       <Row
-        label="Mission Total"
+        label={t("solar.missionTotal")}
         value={radiation ? `${radiation.totalDose} mSv` : "—"}
         color={
           radiation && radiation.totalDose > 50
@@ -135,21 +137,21 @@ export function SolarPanel({ solar }: SolarPanelProps) {
         }
       />
       <Row
-        label="GCR"
+        label={t("solar.gcr")}
         value={radiation ? `${radiation.missionDoseGcr} mSv` : "—"}
       />
       <Row
-        label="Belt Transit"
+        label={t("solar.beltTransit")}
         value={radiation ? `${radiation.missionDoseBelt} mSv` : "—"}
       />
       <Row
-        label="Solar Events"
+        label={t("solar.solarEvents")}
         value={radiation ? `${radiation.missionDoseSep} mSv` : "—"}
       />
       {radiation && (
         <div style={{ paddingTop: 4, paddingBottom: 2 }}>
           <div className="telem-row">
-            <span className="telem-label">Annual Limit</span>
+            <span className="telem-label">{t("solar.annualLimit")}</span>
             <span className="telem-value">{radiation.annualLimitPercent}% of 500 mSv</span>
           </div>
           <div style={{ background: "#1a2332", borderRadius: 3, height: 6, marginTop: 4 }}>
@@ -170,7 +172,7 @@ export function SolarPanel({ solar }: SolarPanelProps) {
         </div>
       )}
       <Row
-        label="Status"
+        label={t("telemetry.status")}
         value={radiation ? radiation.riskDescription : "—"}
         color={radiation ? RADIATION_RISK_COLORS[radiation.riskLevel] : undefined}
       />

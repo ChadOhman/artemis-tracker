@@ -3,6 +3,7 @@ import { PanelFrame } from "@/components/shared/PanelFrame";
 import { computeThermal } from "@/lib/thermal";
 import type { StateVector, ArowTelemetry } from "@/lib/types";
 import { LAUNCH_TIME_MS } from "@/lib/constants";
+import { useLocale } from "@/context/LocaleContext";
 
 interface ThermalPanelProps {
   stateVector: StateVector | null;
@@ -11,9 +12,11 @@ interface ThermalPanelProps {
 }
 
 export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
+  const { t } = useLocale();
+
   if (!stateVector) {
     return (
-      <PanelFrame title="Thermal" icon="🌡️" accentColor="var(--accent-orange)">
+      <PanelFrame title={t("panels.thermal")} icon="🌡️" accentColor="var(--accent-orange)">
         <div style={{ padding: 12, color: "var(--text-dim)", fontSize: 11 }}>
           Waiting for telemetry...
         </div>
@@ -35,7 +38,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
 
   return (
     <PanelFrame
-      title="Thermal"
+      title={t("panels.thermal")}
       icon="🌡️"
       accentColor="var(--accent-orange)"
       headerRight={
@@ -46,7 +49,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
           letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}>
-          {thermal.dataSource === "modeled" ? "live" : "est."}
+          {thermal.dataSource === "modeled" ? t("thermal.live") : t("thermal.est")}
         </span>
       }
     >
@@ -61,7 +64,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
               color: "var(--text-dim)",
               textTransform: "uppercase",
               marginBottom: 4,
-            }}>☀ Hot Side</div>
+            }}>{t("thermal.hotSide")}</div>
             <div style={{
               fontSize: 22,
               fontWeight: 700,
@@ -80,7 +83,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
               color: "var(--text-dim)",
               textTransform: "uppercase",
               marginBottom: 4,
-            }}>❄ Cold Side</div>
+            }}>{t("thermal.coldSide")}</div>
             <div style={{
               fontSize: 22,
               fontWeight: 700,
@@ -94,15 +97,15 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
         </div>
 
         <div className="telem-row">
-          <span className="telem-label">Sun Angle</span>
+          <span className="telem-label">{t("thermal.sunAngle")}</span>
           <span className="telem-value">{thermal.sunAngleDeg}°</span>
         </div>
         <div className="telem-row">
-          <span className="telem-label">Status</span>
+          <span className="telem-label">{t("telemetry.status")}</span>
           <span className="telem-value" style={{
             color: thermal.inShadow ? "var(--accent-cyan)" : "var(--accent-orange)"
           }}>
-            {thermal.inShadow ? "In Earth shadow" : "Sunlit"}
+            {thermal.inShadow ? t("thermal.inEarthShadow") : t("thermal.sunlit")}
           </span>
         </div>
 
@@ -115,7 +118,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
             borderTop: "1px solid var(--border-panel)",
             lineHeight: 1.5,
           }}>
-            Estimated — attitude telemetry unavailable. Values shown assume side-on solar exposure.
+            {t("thermal.estimatedNote")}
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { getApollo8Context, formatApollo8Met } from "@/lib/apollo8";
+import { useLocale } from "@/context/LocaleContext";
 
 interface Apollo8PanelProps {
   metMs: number;
@@ -8,10 +9,11 @@ interface Apollo8PanelProps {
 
 export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
   const { current, next, hoursElapsed } = getApollo8Context(metMs);
+  const { t } = useLocale();
 
   return (
     <PanelFrame
-      title="Apollo 8 · 1968"
+      title={t("apollo8.title")}
       icon="📜"
       accentColor="var(--accent-yellow)"
       headerRight={
@@ -35,8 +37,7 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
           lineHeight: 1.5,
           fontStyle: "italic",
         }}>
-          57 years ago, Borman, Lovell, and Anders were on the first crewed mission to the Moon.
-          At this point in their mission...
+          {t("apollo8.subtitle")}
         </div>
 
         {current ? (
@@ -55,7 +56,7 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
               textTransform: "uppercase",
               marginBottom: 4,
             }}>
-              Last Event · MET {formatApollo8Met(current.metHours)}
+              {t("apollo8.lastEvent")} · MET {formatApollo8Met(current.metHours)}
             </div>
             <div style={{
               fontSize: 13,
@@ -79,7 +80,7 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
             color: "var(--text-dim)",
             fontSize: 11,
           }}>
-            Pre-launch phase. Apollo 8 has not yet launched at this mission elapsed time.
+            {t("apollo8.prelaunch")}
           </div>
         )}
 
@@ -98,7 +99,7 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
               textTransform: "uppercase",
               marginBottom: 4,
             }}>
-              Next · MET {formatApollo8Met(next.metHours)} · in {(next.metHours - hoursElapsed).toFixed(1)}h
+              {t("apollo8.next")} · MET {formatApollo8Met(next.metHours)} · in {(next.metHours - hoursElapsed).toFixed(1)}h
             </div>
             <div style={{
               fontSize: 12,
@@ -118,8 +119,7 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
           borderTop: "1px solid var(--border-panel)",
           lineHeight: 1.4,
         }}>
-          Apollo 8 launched December 21, 1968 — first crewed mission to orbit the Moon.
-          Artemis II is the first crewed lunar flyby since Apollo 17 in 1972.
+          {t("apollo8.footer")}
         </div>
       </div>
     </PanelFrame>

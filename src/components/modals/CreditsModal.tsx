@@ -1,5 +1,6 @@
 "use client";
 import { Modal } from "@/components/shared/Modal";
+import { useLocale } from "@/context/LocaleContext";
 
 interface CreditsModalProps {
   isOpen: boolean;
@@ -39,9 +40,30 @@ function Source({
   );
 }
 
-export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
+function SectionHeader({ label }: { label: string }) {
   return (
-    <Modal title="Data Sources & Credits" isOpen={isOpen} onClose={onClose} maxWidth="540px">
+    <div
+      style={{
+        fontSize: 9,
+        fontWeight: 700,
+        letterSpacing: "0.14em",
+        color: "var(--text-dim)",
+        textTransform: "uppercase",
+        paddingBottom: 4,
+        borderBottom: "1px solid var(--border-panel)",
+        marginBottom: 12,
+      }}
+    >
+      {label}
+    </div>
+  );
+}
+
+export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
+  const { t } = useLocale();
+
+  return (
+    <Modal title={t("credits.title")} isOpen={isOpen} onClose={onClose} maxWidth="540px">
       <div style={{ padding: "16px 20px 20px" }}>
         <div
           style={{
@@ -51,24 +73,10 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
             lineHeight: 1.6,
           }}
         >
-          This tracker aggregates publicly available data from NASA and JPL.
-          It is not affiliated with or endorsed by NASA, JPL, or the Canadian Space Agency.
+          {t("credits.intro")}
         </div>
 
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "var(--text-dim)",
-            textTransform: "uppercase",
-            paddingBottom: 4,
-            borderBottom: "1px solid var(--border-panel)",
-            marginBottom: 12,
-          }}
-        >
-          Orbital Data
-        </div>
+        <SectionHeader label={t("credits.orbitalData")} />
 
         <Source
           name="JPL Horizons System"
@@ -76,20 +84,7 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Spacecraft ephemeris (position, velocity) for Orion and the Moon. Polled every 5 minutes. Operated by NASA's Jet Propulsion Laboratory."
         />
 
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "var(--text-dim)",
-            textTransform: "uppercase",
-            paddingBottom: 4,
-            borderBottom: "1px solid var(--border-panel)",
-            marginBottom: 12,
-          }}
-        >
-          Spacecraft Telemetry
-        </div>
+        <SectionHeader label={t("credits.spacecraftTelemetry")} />
 
         <Source
           name="NASA AROW (Artemis Real-time Orbit Website)"
@@ -97,20 +92,7 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Real-time attitude (quaternion, Euler angles, angular rates), solar array wing angles, antenna gimbal angles, ICPS upper stage tracking, and spacecraft mode. Polled every 1 second from AROW ground control telemetry. Parameter mappings confirmed via IL2CPP metadata reverse-engineering."
         />
 
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "var(--text-dim)",
-            textTransform: "uppercase",
-            paddingBottom: 4,
-            borderBottom: "1px solid var(--border-panel)",
-            marginBottom: 12,
-          }}
-        >
-          Communications
-        </div>
+        <SectionHeader label={t("credits.communications")} />
 
         <Source
           name="DSN Now"
@@ -118,20 +100,7 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Deep Space Network dish status — active contacts, signal bands, data rates, range, and round-trip light time. Polled every 10 seconds."
         />
 
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "var(--text-dim)",
-            textTransform: "uppercase",
-            paddingBottom: 4,
-            borderBottom: "1px solid var(--border-panel)",
-            marginBottom: 12,
-          }}
-        >
-          Mission Timeline
-        </div>
+        <SectionHeader label={t("credits.missionTimeline")} />
 
         <Source
           name="NASA Artemis II Press Kit & Flight Plan"
@@ -145,20 +114,7 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Community-maintained Artemis II mission timeline data — provides the crew schedule and milestone MET times used throughout this tracker. Huge thanks to Jakob Rosin for maintaining this open dataset."
         />
 
-        <div
-          style={{
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "var(--text-dim)",
-            textTransform: "uppercase",
-            paddingBottom: 4,
-            borderBottom: "1px solid var(--border-panel)",
-            marginBottom: 12,
-          }}
-        >
-          Built With
-        </div>
+        <SectionHeader label={t("credits.builtWith")} />
 
         <Source
           name="Next.js, Three.js, TypeScript"
