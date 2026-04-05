@@ -110,7 +110,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               letterSpacing: "-0.01em",
             }}
           >
-            {remaining.toFixed(1)} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
+            {remaining.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
           </div>
         </div>
       </div>
