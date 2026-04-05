@@ -64,10 +64,13 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
   const eulerDeg = (pitchRad != null && yawRad != null && rollRad != null)
     ? { roll: rollRad * RAD2DEG, pitch: pitchRad * RAD2DEG, yaw: yawRad * RAD2DEG } : null;
 
-  // Angular rates — each independently nullable
-  const rollRateRad = getParamFloat(data, "2091");
-  const pitchRateRad = getParamFloat(data, "2092");
-  const yawRateRad = getParamFloat(data, "2093");
+  // Angular rates — each independently nullable.
+  // Params 2091/2092/2093 are delivered in DEGREES per second, not radians.
+  // (Verified against live values: applying * RAD2DEG produced implausible
+  // ~14 °/s tumble rates; raw values ~0.25 °/s match normal dead-band drift.)
+  const rollRateDegS = getParamFloat(data, "2091");
+  const pitchRateDegS = getParamFloat(data, "2092");
+  const yawRateDegS = getParamFloat(data, "2093");
 
   // Antenna gimbal — all four required, or null
   const az1 = getParamFloat(data, "5002");
@@ -100,9 +103,9 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
     timestamp,
     quaternion,
     eulerDeg,
-    rollRate: rollRateRad != null ? rollRateRad * RAD2DEG : null,
-    pitchRate: pitchRateRad != null ? pitchRateRad * RAD2DEG : null,
-    yawRate: yawRateRad != null ? yawRateRad * RAD2DEG : null,
+    rollRate: rollRateDegS ?? null,
+    pitchRate: pitchRateDegS ?? null,
+    yawRate: yawRateDegS ?? null,
     antennaGimbal,
     sawAngles,
     icps: { quaternion: { w: icpsQw, x: icpsQx, y: icpsQy, z: icpsQz }, active: icpsActive },
