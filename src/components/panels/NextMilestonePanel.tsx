@@ -2,6 +2,8 @@
 import { formatMet, formatUtcShort } from "@/lib/met";
 import { useMetContext } from "@/context/MetContext";
 import type { TimelineState } from "@/hooks/useTimeline";
+import { useLocale } from "@/context/LocaleContext";
+import { translateMilestoneName } from "@/lib/activity-translations";
 
 interface NextMilestonePanelProps {
   timeline: TimelineState;
@@ -22,6 +24,7 @@ function formatCountdown(diffMs: number): string {
 
 export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps) {
   const { timeFormat } = useMetContext();
+  const { t, locale } = useLocale();
   const useUtc = timeFormat === "UTC";
   const milestone = timeline.nextMilestone;
   if (!milestone) return null;
@@ -41,7 +44,7 @@ export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps)
       <div className="panel-header">
         <div className="panel-header-title" style={{ color: "var(--accent-orange)" }}>
           <span>🎯</span>
-          Next Milestone
+          {t("nextMilestone.title")}
         </div>
         <div className="panel-header-right">
           <span
@@ -67,7 +70,7 @@ export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps)
             letterSpacing: "0.02em",
           }}
         >
-          {milestone.name}
+          {translateMilestoneName(milestone.name, locale)}
         </div>
         {milestone.description && (
           <div

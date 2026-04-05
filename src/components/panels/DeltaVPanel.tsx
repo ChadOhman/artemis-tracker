@@ -1,5 +1,6 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
+import { useLocale } from "@/context/LocaleContext";
 
 interface DeltaVPanelProps {
   metMs: number;
@@ -33,6 +34,7 @@ const STATUS_BG: Record<string, string> = {
 };
 
 export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
+  const { t } = useLocale();
   const usedDv = BURNS.filter(
     (b) =>
       b.metHours > 25.3 &&
@@ -45,7 +47,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
   const isOverBudget = remaining < 0;
 
   return (
-    <PanelFrame title="Δ-V Budget" icon="🚀" accentColor="var(--accent-cyan)">
+    <PanelFrame title={t("deltaV.title")} icon="🚀" accentColor="var(--accent-cyan)">
       {/* Big numbers */}
       <div
         style={{
@@ -66,7 +68,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            Used (post-TLI)
+            {t("deltaV.used")} (post-TLI)
           </div>
           <div
             style={{
@@ -90,7 +92,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            Remaining
+            {t("deltaV.remaining")}
           </div>
           <div
             style={{
@@ -222,7 +224,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
                   textAlign: "center",
                 }}
               >
-                {burn.status}
+                {t(`deltaV.${burn.status}`)}
               </span>
             </div>
           );
@@ -238,7 +240,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
           letterSpacing: "0.04em",
         }}
       >
-        TLI provided by ICPS — budget covers ESM post-TLI burns only
+        {t("deltaV.note")}
       </div>
     </PanelFrame>
   );

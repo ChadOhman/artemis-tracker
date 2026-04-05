@@ -2,6 +2,8 @@
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { ActivityType } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
+import { translateActivityName, translateMissionPhase } from "@/lib/activity-translations";
 
 interface CurrentActivitiesPanelProps {
   timeline: TimelineState;
@@ -20,12 +22,13 @@ const TYPE_COLORS: Record<ActivityType, string> = {
 };
 
 export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps) {
+  const { t, locale } = useLocale();
   const activity = timeline.currentActivity;
   const attitude = timeline.currentAttitude;
   const phase = timeline.currentPhase;
 
   return (
-    <PanelFrame title="Current Activity" icon="⚡" accentColor="var(--accent-cyan)">
+    <PanelFrame title={t("activityDetail.title")} icon="⚡" accentColor="var(--accent-cyan)">
       <div aria-live="polite" aria-atomic="true">
       {!activity ? (
         <div
@@ -37,7 +40,7 @@ export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps
             letterSpacing: "0.06em",
           }}
         >
-          No active activity
+          {t("activityDetail.noCurrent")}
         </div>
       ) : (
         <>
@@ -63,16 +66,16 @@ export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps
                   marginBottom: 2,
                 }}
               >
-                {activity.name}
+                {translateActivityName(activity.name, locale)}
               </div>
-              <span className={`activity-badge ${activity.type}`}>{activity.type}</span>
+              <span className={`activity-badge ${activity.type}`}>{t(`activityTypes.${activity.type}`)}</span>
             </div>
           </div>
 
           {/* Attitude */}
           {attitude && (
             <div className="telem-row">
-              <span className="telem-label">Attitude</span>
+              <span className="telem-label">{t("activityDetail.attitudeMode")}</span>
               <span className="telem-value" style={{ fontSize: 10 }}>
                 {attitude.mode}
               </span>
@@ -82,12 +85,12 @@ export function CurrentActivitiesPanel({ timeline }: CurrentActivitiesPanelProps
           {/* Phase */}
           {phase && (
             <div className="telem-row">
-              <span className="telem-label">Phase</span>
+              <span className="telem-label">{t("activityDetail.missionPhase")}</span>
               <span
                 className="telem-value"
                 style={{ fontSize: 10, color: "var(--accent-green)" }}
               >
-                {phase.phase}
+                {translateMissionPhase(phase.phase, locale)}
               </span>
             </div>
           )}

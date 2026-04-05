@@ -1,6 +1,7 @@
 "use client";
 import { useMemo } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
+import { useLocale } from "@/context/LocaleContext";
 
 interface Co2PanelProps {
   metMs: number;
@@ -28,6 +29,7 @@ const SPARKLINE_SAMPLES = 60;
 const SPARKLINE_WINDOW_MS = 12 * 3600000; // 12 hours
 
 export function Co2Panel({ metMs }: Co2PanelProps) {
+  const { t } = useLocale();
   const current = computeCo2(metMs);
   const color = getCo2Color(current.mmHg);
 
@@ -58,7 +60,7 @@ export function Co2Panel({ metMs }: Co2PanelProps) {
 
   return (
     <PanelFrame
-      title="Cabin CO₂ (Est.)"
+      title={t("co2.title")}
       icon="🫁"
       accentColor="var(--accent-green)"
       headerRight={
@@ -71,7 +73,7 @@ export function Co2Panel({ metMs }: Co2PanelProps) {
             color: current.scrubberActive ? "var(--accent-green)" : "var(--accent-cyan)",
           }}
         >
-          {current.scrubberActive ? "REGEN ACTIVE" : "SCRUBBING"}
+          {current.scrubberActive ? t("co2.regenActive") : t("co2.scrubbing")}
         </span>
       }
     >
@@ -102,24 +104,24 @@ export function Co2Panel({ metMs }: Co2PanelProps) {
         className="telem-row"
         style={{ marginBottom: 8 }}
       >
-        <span className="telem-label">Scrubber Status</span>
+        <span className="telem-label">{t("co2.scrubberStatus")}</span>
         <span
           className="telem-value"
           style={{ color: current.scrubberActive ? "var(--accent-green)" : "var(--accent-cyan)" }}
         >
-          {current.scrubberActive ? "REGEN ACTIVE" : "SCRUBBING"}
+          {current.scrubberActive ? t("co2.regenActive") : t("co2.scrubbing")}
         </span>
       </div>
 
       {/* Safe range reference */}
       <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
         {[
-          { label: "Normal", range: "<4 mmHg", color: "var(--accent-green)" },
-          { label: "Warning", range: "4–6 mmHg", color: "var(--accent-yellow)" },
-          { label: "Critical", range: ">6 mmHg", color: "var(--accent-red)" },
+          { labelKey: "co2.normal", range: "<4 mmHg", color: "var(--accent-green)" },
+          { labelKey: "co2.warning", range: "4–6 mmHg", color: "var(--accent-yellow)" },
+          { labelKey: "co2.critical", range: ">6 mmHg", color: "var(--accent-red)" },
         ].map((r) => (
-          <div key={r.label} style={{ flex: 1, textAlign: "center" }}>
-            <div style={{ fontSize: 8, color: r.color, fontWeight: 700, letterSpacing: "0.06em" }}>{r.label}</div>
+          <div key={r.labelKey} style={{ flex: 1, textAlign: "center" }}>
+            <div style={{ fontSize: 8, color: r.color, fontWeight: 700, letterSpacing: "0.06em" }}>{t(r.labelKey)}</div>
             <div style={{ fontSize: 8, color: "var(--text-dim)" }}>{r.range}</div>
           </div>
         ))}
@@ -128,7 +130,7 @@ export function Co2Panel({ metMs }: Co2PanelProps) {
       {/* Sparkline */}
       <div style={{ marginBottom: 4 }}>
         <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.08em", marginBottom: 3, textTransform: "uppercase" }}>
-          Last 12 hours
+          {t("co2.last12h")}
         </div>
         <svg
           width="100%"
@@ -182,7 +184,7 @@ export function Co2Panel({ metMs }: Co2PanelProps) {
           borderTop: "1px solid var(--border-panel)",
         }}
       >
-        Estimated model — not live telemetry
+        {t("co2.estimatedNote")}
       </div>
     </PanelFrame>
   );

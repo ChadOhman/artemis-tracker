@@ -3,6 +3,7 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { StateVector, Telemetry } from "@/lib/types";
 import { getGroundTrackLabel } from "@/lib/ground-track";
+import { useLocale } from "@/context/LocaleContext";
 
 interface OrbitMapPanelProps {
   stateVector: StateVector | null;
@@ -143,11 +144,19 @@ function fmtKm(km: number): string {
 }
 
 export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: OrbitMapPanelProps) {
+  const { t } = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const insetRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [showInset, setShowInset] = useState(false);
+
+  // Store translated inset labels in a ref for use inside the draw callback
+  const insetLabelsRef = useRef({ moonDetail: "MOON DETAIL", kmView: "km view" });
+  insetLabelsRef.current = {
+    moonDetail: t("orbitMap.moonDetail").toUpperCase(),
+    kmView: t("orbitMap.kmView"),
+  };
 
   // Auto-enable inset during lunar approach (within 100,000 km of Moon)
   useEffect(() => {
@@ -808,10 +817,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           ictx.font = "bold 8px monospace";
           ictx.fillStyle = "rgba(0,229,255,0.7)";
           ictx.textAlign = "left";
-          ictx.fillText("MOON DETAIL", 8, 12);
+          ictx.fillText(insetLabelsRef.current.moonDetail, 8, 12);
           ictx.font = "7px monospace";
           ictx.fillStyle = "rgba(160,184,207,0.6)";
-          ictx.fillText(`${viewKm.toLocaleString()} km view`, 8, 22);
+          ictx.fillText(`${viewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`, 8, 22);
           ictx.restore();
         }
       }
@@ -866,7 +875,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   ].filter(Boolean).join(" ");
 
   return (
-    <PanelFrame title="Figure-8 Lunar Flyby Trajectory" accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>2D TOP-DOWN VIEW</span>}>
+    <PanelFrame title={t("orbitMap.title")} accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>{t("orbitMap.topDown").toUpperCase()}</span>}>
       <div
         ref={containerRef}
         style={{ width: "100%", height: "min(320px, 50vw)", position: "relative", overflow: "hidden", borderRadius: 4 }}
@@ -899,7 +908,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }}
           aria-label={showInset ? "Hide Moon detail" : "Show Moon detail"}
         >
-          🌙 {showInset ? "✕" : "Zoom"}
+          🌙 {showInset ? "✕" : t("orbitMap.zoom")}
         </button>
 
         {/* Moon detail inset canvas — always mounted so dimensions are valid */}

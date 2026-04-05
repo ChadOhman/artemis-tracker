@@ -2,6 +2,8 @@
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { ActivityType, TimelineActivity } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
+import { translateActivityName } from "@/lib/activity-translations";
 
 interface UpcomingPanelProps {
   timeline: TimelineState;
@@ -31,7 +33,17 @@ function formatCountdown(diffMs: number): string {
   return `${minutes}m`;
 }
 
-function UpcomingRow({ activity, diffMs }: { activity: TimelineActivity; diffMs: number }) {
+function UpcomingRow({
+  activity,
+  diffMs,
+  badgeLabel,
+  activityLabel,
+}: {
+  activity: TimelineActivity;
+  diffMs: number;
+  badgeLabel: string;
+  activityLabel: string;
+}) {
   const color = TYPE_COLORS[activity.type] ?? "var(--color-other)";
 
   return (
@@ -66,9 +78,9 @@ function UpcomingRow({ activity, diffMs }: { activity: TimelineActivity; diffMs:
             textOverflow: "ellipsis",
           }}
         >
-          {activity.name}
+          {activityLabel}
         </div>
-        <span className={`activity-badge ${activity.type}`}>{activity.type}</span>
+        <span className={`activity-badge ${activity.type}`}>{badgeLabel}</span>
       </div>
       <div
         style={{
@@ -88,16 +100,17 @@ function UpcomingRow({ activity, diffMs }: { activity: TimelineActivity; diffMs:
 }
 
 export function UpcomingPanel({ timeline, metMs }: UpcomingPanelProps) {
+  const { t, locale } = useLocale();
   const upcoming = timeline.upcomingActivities;
 
   return (
     <PanelFrame
-      title="Upcoming"
+      title={t("upcoming.title")}
       icon="⏭"
       accentColor="var(--accent-yellow)"
       headerRight={
         <span style={{ fontSize: 9, color: "var(--text-dim)" }}>
-          next {upcoming.length}
+          {t("upcoming.next")} {upcoming.length}
         </span>
       }
     >
@@ -111,7 +124,7 @@ export function UpcomingPanel({ timeline, metMs }: UpcomingPanelProps) {
             letterSpacing: "0.06em",
           }}
         >
-          No upcoming activities
+          {t("activityDetail.noCurrent")}
         </div>
       ) : (
         <ul style={{ margin: 0, padding: 0 }}>
@@ -120,6 +133,8 @@ export function UpcomingPanel({ timeline, metMs }: UpcomingPanelProps) {
               key={`${activity.name}-${activity.startMetMs}`}
               activity={activity}
               diffMs={activity.startMetMs - metMs}
+              badgeLabel={t(`activityTypes.${activity.type}`)}
+              activityLabel={translateActivityName(activity.name, locale)}
             />
           ))}
         </ul>

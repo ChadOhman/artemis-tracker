@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { computeTopocentric } from "@/lib/topocentric";
 import type { StateVector } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
 
 interface StationSchedulePanelProps {
   stateVector: StateVector | null;
@@ -43,6 +44,7 @@ function computeElevations(stateVector: StateVector | null): StationElevation[] 
 }
 
 export function StationSchedulePanel({ stateVector }: StationSchedulePanelProps) {
+  const { t } = useLocale();
   const [stations, setStations] = useState<StationElevation[]>(() =>
     computeElevations(stateVector)
   );
@@ -63,7 +65,7 @@ export function StationSchedulePanel({ stateVector }: StationSchedulePanelProps)
 
   return (
     <PanelFrame
-      title="Ground Station Handoff"
+      title={t("stationSchedule.title")}
       icon="📡"
       accentColor="var(--accent-cyan)"
       headerRight={
@@ -139,7 +141,7 @@ export function StationSchedulePanel({ stateVector }: StationSchedulePanelProps)
                       textTransform: "uppercase",
                     }}
                   >
-                    PRIME
+                    {t("stationSchedule.prime")}
                   </span>
                 )}
                 <span
@@ -152,7 +154,7 @@ export function StationSchedulePanel({ stateVector }: StationSchedulePanelProps)
                     textAlign: "right",
                   }}
                 >
-                  {isVisible ? `${elevDeg.toFixed(1)}°` : "Below horizon"}
+                  {isVisible ? `${elevDeg.toFixed(1)}°` : t("stationSchedule.belowHorizon")}
                 </span>
               </div>
 

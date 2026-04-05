@@ -3,6 +3,7 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { ActivityType, MissionPhase } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
 
 /* ── colour maps ─────────────────────────────────────────────── */
 
@@ -86,9 +87,13 @@ interface TimelinePanelProps {
 }
 
 export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
+  const { t } = useLocale();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number>(0);
+
+  // Store translated row labels in a ref so the draw loop can access them without re-creating the callback
+  const rowLabelsRef = useRef({ crew: "CREW", att: "ATT", phase: "PHASE", sleep: "SLEEP" });
 
   const [autoTrack, setAutoTrack] = useState(true);
   const [tooltip, setTooltip] = useState<{ x: number; y: number; name: string; description: string; met: string; isPast: boolean } | null>(null);
@@ -106,6 +111,14 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     startX: 0,
     startViewStart: 0,
   });
+
+  // Keep translated row labels in sync
+  rowLabelsRef.current = {
+    crew: t("timeline.crew"),
+    att: t("timeline.att"),
+    phase: t("timeline.phase"),
+    sleep: t("timeline.sleep"),
+  };
 
   // Keep autoTrack ref in sync
   const autoTrackRef = useRef(autoTrack);
@@ -294,7 +307,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.fillStyle = "#8a9db0";
     ctx.font = `bold 8px ${FONT}`;
     ctx.textAlign = "right";
-    ctx.fillText("SLEEP", LABEL_GUTTER - 4, sleepY + sleepH / 2 + 3);
+    ctx.fillText(rowLabelsRef.current.sleep, LABEL_GUTTER - 4, sleepY + sleepH / 2 + 3);
     ctx.restore();
 
     for (const act of raw.activities) {
@@ -484,9 +497,9 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
     ctx.fillStyle = "#a0b8cf";
     ctx.font = `bold 8px ${FONT}`;
     ctx.textAlign = "center";
-    ctx.fillText("CREW", LABEL_GUTTER / 2, crewY + crewH / 2 + 3);
-    ctx.fillText("ATT", LABEL_GUTTER / 2, attY + attH / 2 + 3);
-    ctx.fillText("PHASE", LABEL_GUTTER / 2, phaseY + phaseH / 2 + 3);
+    ctx.fillText(rowLabelsRef.current.crew, LABEL_GUTTER / 2, crewY + crewH / 2 + 3);
+    ctx.fillText(rowLabelsRef.current.att, LABEL_GUTTER / 2, attY + attH / 2 + 3);
+    ctx.fillText(rowLabelsRef.current.phase, LABEL_GUTTER / 2, phaseY + phaseH / 2 + 3);
     ctx.textAlign = "left";
 
     /* ── separator lines ─────────────────────────────────────── */
@@ -636,7 +649,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
         lineHeight: "1.4",
       }}
     >
-      {autoTrack ? "TRACKING" : "TRACK"}
+      {autoTrack ? t("timeline.tracking") : t("timeline.track")}
     </button>
   );
 
@@ -653,7 +666,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
 
   return (
     <PanelFrame
-      title="Mission Timeline"
+      title={t("timeline.title")}
       icon="📅"
       accentColor="var(--accent-cyan)"
       headerRight={trackButton}
@@ -695,7 +708,7 @@ export function TimelinePanel({ metMs, timeline }: TimelinePanelProps) {
               {tooltip.name}
             </div>
             <div style={{ fontSize: "9px", color: "var(--text-secondary)", marginBottom: "4px" }}>
-              {tooltip.met} — {tooltip.isPast ? "Completed" : "Upcoming"}
+              {tooltip.met} — {tooltip.isPast ? t("milestones.completed") : t("milestones.upcoming")}
             </div>
             <div style={{ fontSize: "10px", color: "var(--text-primary)", lineHeight: "1.4" }}>
               {tooltip.description}

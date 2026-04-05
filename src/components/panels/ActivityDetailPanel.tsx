@@ -3,6 +3,8 @@ import { PanelFrame } from "@/components/shared/PanelFrame";
 import { formatMet } from "@/lib/met";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { ActivityType } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
+import { translateActivityName, translateMissionPhase } from "@/lib/activity-translations";
 
 interface ActivityDetailPanelProps {
   timeline: TimelineState;
@@ -73,13 +75,14 @@ function ProgressBar({ pct, color, label }: { pct: number; color: string; label?
 }
 
 export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProps) {
+  const { t, locale } = useLocale();
   const activity = timeline.currentActivity;
   const attitude = timeline.currentAttitude;
   const phase = timeline.currentPhase;
 
   if (!activity) {
     return (
-      <PanelFrame title="Current Activity" icon="⚡" accentColor="var(--accent-cyan)">
+      <PanelFrame title={t("activityDetail.title")} icon="⚡" accentColor="var(--accent-cyan)">
         <div
           style={{
             color: "var(--text-dim)",
@@ -89,7 +92,7 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
             letterSpacing: "0.06em",
           }}
         >
-          No active activity
+          {t("activityDetail.noCurrent")}
         </div>
       </PanelFrame>
     );
@@ -113,11 +116,11 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
 
   return (
     <PanelFrame
-      title="Current Activity"
+      title={t("activityDetail.title")}
       icon="⚡"
       accentColor={typeColor}
       headerRight={
-        <span className={`activity-badge ${activity.type}`}>{activity.type}</span>
+        <span className={`activity-badge ${activity.type}`}>{t(`activityTypes.${activity.type}`)}</span>
       }
     >
       {/* Activity name with colored bar */}
@@ -146,7 +149,7 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
               marginBottom: 2,
             }}
           >
-            {activity.name}
+            {translateActivityName(activity.name, locale)}
           </div>
           {activity.notes && (
             <div style={{ fontSize: 10, color: "var(--text-secondary)" }}>
@@ -159,16 +162,16 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
       {/* Activity progress bar */}
       <ProgressBar pct={activityPct} color={typeColor} label={`Activity progress: ${Math.min(100, Math.max(0, activityPct)).toFixed(1)}%`} />
 
-      <InfoRow label="Start (MET)" value={formatMet(activity.startMetMs)} />
-      <InfoRow label="End (MET)" value={formatMet(activity.endMetMs)} />
-      <InfoRow label="Duration" value={durationStr} />
-      <InfoRow label="Progress" value={`${Math.min(100, Math.max(0, activityPct)).toFixed(1)}%`} />
+      <InfoRow label={t("activityDetail.start")} value={formatMet(activity.startMetMs)} />
+      <InfoRow label={t("activityDetail.end")} value={formatMet(activity.endMetMs)} />
+      <InfoRow label={t("activityDetail.duration")} value={durationStr} />
+      <InfoRow label={t("activityDetail.progress")} value={`${Math.min(100, Math.max(0, activityPct)).toFixed(1)}%`} />
 
       {/* Attitude */}
       {attitude && (
         <>
           <div style={{ marginTop: 8 }}>
-            <InfoRow label="Attitude Mode" value={attitude.mode} />
+            <InfoRow label={t("activityDetail.attitudeMode")} value={attitude.mode} />
           </div>
         </>
       )}
@@ -185,11 +188,11 @@ export function ActivityDetailPanel({ timeline, metMs }: ActivityDetailPanelProp
               marginBottom: 2,
             }}
           >
-            Mission Phase — {phase.phase}
+            {t("activityDetail.missionPhase")} — {translateMissionPhase(phase.phase, locale)}
           </div>
           <ProgressBar pct={phasePct} color="var(--accent-green)" label={`Mission phase progress: ${phasePct.toFixed(1)}%`} />
           <div style={{ fontSize: 9, color: "var(--text-dim)", textAlign: "right" }}>
-            {phasePct.toFixed(1)}% complete
+            {phasePct.toFixed(1)}% {t("activityDetail.complete")}
           </div>
         </div>
       )}

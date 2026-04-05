@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { DsnStatus } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
 
 interface HistoryPoint {
   ts: number;
@@ -19,6 +20,7 @@ function fmtKbps(kbps: number): string {
 }
 
 export function DsnBandwidthPanel({ dsn }: DsnBandwidthPanelProps) {
+  const { t } = useLocale();
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -148,7 +150,7 @@ export function DsnBandwidthPanel({ dsn }: DsnBandwidthPanelProps) {
 
   return (
     <PanelFrame
-      title="DSN Bandwidth"
+      title={t("dsnBandwidth.title")}
       icon="📊"
       accentColor="var(--accent-cyan)"
     >

@@ -1,15 +1,17 @@
 "use client";
 import { useState } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
+import { useLocale } from "@/context/LocaleContext";
 
 const STREAMS = [
-  { id: "official", label: "Official Broadcast", videoId: "m3kR2KK8TEs" },
-  { id: "orion", label: "Orion Views", videoId: "6RwfNBtepa4" },
+  { id: "official", labelKey: "liveStream.officialBroadcast", videoId: "m3kR2KK8TEs" },
+  { id: "orion", labelKey: "liveStream.orionViews", videoId: "6RwfNBtepa4" },
 ] as const;
 
 type StreamId = (typeof STREAMS)[number]["id"];
 
 export function LiveStreamPanel() {
+  const { t } = useLocale();
   const [activeStream, setActiveStream] = useState<StreamId>("official");
 
   const stream = STREAMS.find((s) => s.id === activeStream) ?? STREAMS[0];
@@ -20,7 +22,7 @@ export function LiveStreamPanel() {
         <button
           key={s.id}
           onClick={() => setActiveStream(s.id)}
-          aria-label={`Switch to ${s.label} stream`}
+          aria-label={`Switch to ${t(s.labelKey)} stream`}
           aria-pressed={activeStream === s.id}
           style={{
             padding: "2px 8px",
@@ -38,7 +40,7 @@ export function LiveStreamPanel() {
             transition: "all 0.15s ease",
           }}
         >
-          {s.label}
+          {t(s.labelKey)}
         </button>
       ))}
     </div>
@@ -46,7 +48,7 @@ export function LiveStreamPanel() {
 
   return (
     <PanelFrame
-      title="Live Stream"
+      title={t("liveStream.title")}
       icon="📺"
       accentColor="var(--accent-red)"
       collapsible
@@ -67,7 +69,7 @@ export function LiveStreamPanel() {
         <iframe
           key={stream.videoId}
           src={`https://www.youtube.com/embed/${stream.videoId}?autoplay=0&rel=0&modestbranding=1`}
-          title={`NASA Artemis II Live Stream — ${stream.label}`}
+          title={`NASA Artemis II Live Stream — ${t(stream.labelKey)}`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
           style={{

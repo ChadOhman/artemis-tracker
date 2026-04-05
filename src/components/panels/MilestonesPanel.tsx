@@ -5,6 +5,8 @@ import { formatMet, formatUtcShort } from "@/lib/met";
 import { useMetContext } from "@/context/MetContext";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { Milestone } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
+import { translateMilestoneName } from "@/lib/activity-translations";
 
 interface MilestonesPanelProps {
   timeline: TimelineState;
@@ -16,11 +18,13 @@ function MilestoneRow({
   status,
   isNext,
   useUtc,
+  displayName,
 }: {
   milestone: Milestone;
   status: "completed" | "next" | "upcoming";
   isNext: boolean;
   useUtc: boolean;
+  displayName: string;
 }) {
   const dotClass = `milestone-dot ${status}`;
 
@@ -57,7 +61,7 @@ function MilestoneRow({
             marginBottom: 1,
           }}
         >
-          {milestone.name}
+          {displayName}
         </div>
         {milestone.description && status !== "upcoming" && (
           <div
@@ -81,6 +85,7 @@ function MilestoneRow({
 
 export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
   const { timeFormat } = useMetContext();
+  const { t, locale } = useLocale();
   const useUtc = timeFormat === "UTC";
   const milestones = timeline.raw?.milestones ?? [];
   const nextMilestone = timeline.nextMilestone;
@@ -107,7 +112,7 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
 
   return (
     <PanelFrame
-      title="Milestones"
+      title={t("milestones.title")}
       icon="🎯"
       accentColor="var(--accent-purple)"
       headerRight={
@@ -133,7 +138,7 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
               letterSpacing: "0.06em",
             }}
           >
-            Loading milestones...
+            {t("common.loading")}
           </div>
         ) : (
           milestones.map((milestone) => {
@@ -155,6 +160,7 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
                   status={status}
                   isNext={isNext}
                   useUtc={useUtc}
+                  displayName={translateMilestoneName(milestone.name, locale)}
                 />
               </div>
             );

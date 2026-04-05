@@ -1,6 +1,7 @@
 "use client";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { DsnStatus, DsnDish } from "@/lib/types";
+import { useLocale } from "@/context/LocaleContext";
 
 interface DsnPanelProps {
   dsn: DsnStatus | null;
@@ -24,6 +25,7 @@ function fmtRtlt(s: number): string {
 }
 
 function DishCard({ dish }: { dish: DsnDish }) {
+  const { t } = useLocale();
   const hasSignal = dish.downlinkActive || dish.uplinkActive;
 
   return (
@@ -126,7 +128,7 @@ function DishCard({ dish }: { dish: DsnDish }) {
       <div style={{ display: "flex", gap: 12 }}>
         <div style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
           <span style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.08em" }}>
-            RANGE
+            {t("dsnPanel.range").toUpperCase()}
           </span>
           <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-primary)" }}>
             {fmtRange(dish.rangeKm)}
@@ -134,7 +136,7 @@ function DishCard({ dish }: { dish: DsnDish }) {
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "baseline" }}>
           <span style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.08em" }}>
-            RTLT
+            {t("dsnPanel.rtlt")}
           </span>
           <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-primary)" }}>
             {fmtRtlt(dish.rtltSeconds)}
@@ -146,13 +148,14 @@ function DishCard({ dish }: { dish: DsnDish }) {
 }
 
 export function DsnPanel({ dsn }: DsnPanelProps) {
+  const { t } = useLocale();
   const activeDishes = dsn?.dishes.filter((d) => d.downlinkActive || d.uplinkActive) ?? [];
   const allDishes = dsn?.dishes ?? [];
   const signalActive = dsn?.signalActive ?? false;
 
   return (
     <PanelFrame
-      title="DSN Comms"
+      title={t("dsnPanel.title")}
       icon="📶"
       accentColor="var(--accent-green)"
       headerRight={
@@ -179,7 +182,7 @@ export function DsnPanel({ dsn }: DsnPanelProps) {
             letterSpacing: "0.06em",
           }}
         >
-          No active DSN contact
+          {t("dsnPanel.noContacts")}
         </div>
       ) : (
         allDishes.map((dish) => <DishCard key={dish.dish} dish={dish} />)
