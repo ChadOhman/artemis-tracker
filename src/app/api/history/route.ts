@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 const STATE_METRICS = new Set([
   "speed_km_h",
   "speed_km_s",
+  "moon_rel_speed_km_h",
   "earth_dist_km",
   "moon_dist_km",
   "altitude_km",

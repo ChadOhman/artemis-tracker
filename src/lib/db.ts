@@ -136,6 +136,17 @@ function runMigrations(db: Database.Database): void {
     db.pragma("user_version = 1");
     console.log("[db] migration 1 applied: normalized AROW angular rates to °/s");
   }
+
+  // Migration 2: Add moon_rel_speed_km_h column to state_vectors.
+  if (currentVersion < 2) {
+    try {
+      db.exec("ALTER TABLE state_vectors ADD COLUMN moon_rel_speed_km_h REAL");
+    } catch {
+      // Column may already exist if the table was created after this code shipped
+    }
+    db.pragma("user_version = 2");
+    console.log("[db] migration 2 applied: added moon_rel_speed_km_h column");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -145,14 +156,14 @@ function runMigrations(db: Database.Database): void {
 export function archiveStateVector(
   sv: { timestamp: string; metMs: number; position: { x: number; y: number; z: number }; velocity: { x: number; y: number; z: number } },
   moon: { x: number; y: number; z: number } | null,
-  telemetry: { speedKmS: number; speedKmH: number; altitudeKm: number; earthDistKm: number; moonDistKm: number; periapsisKm: number; apoapsisKm: number; gForce: number } | null
+  telemetry: { speedKmS: number; speedKmH: number; moonRelSpeedKmH: number; altitudeKm: number; earthDistKm: number; moonDistKm: number; periapsisKm: number; apoapsisKm: number; gForce: number } | null
 ): void {
   const db = getDb();
   const stmt = db.prepare(`
     INSERT INTO state_vectors (timestamp, met_ms, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
-      moon_x, moon_y, moon_z, speed_km_s, speed_km_h, altitude_km, earth_dist_km,
+      moon_x, moon_y, moon_z, speed_km_s, speed_km_h, moon_rel_speed_km_h, altitude_km, earth_dist_km,
       moon_dist_km, periapsis_km, apoapsis_km, g_force)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     sv.timestamp, sv.metMs,
@@ -160,6 +171,7 @@ export function archiveStateVector(
     sv.velocity.x, sv.velocity.y, sv.velocity.z,
     moon?.x ?? null, moon?.y ?? null, moon?.z ?? null,
     telemetry?.speedKmS ?? null, telemetry?.speedKmH ?? null,
+    telemetry?.moonRelSpeedKmH ?? null,
     telemetry?.altitudeKm ?? null, telemetry?.earthDistKm ?? null,
     telemetry?.moonDistKm ?? null, telemetry?.periapsisKm ?? null,
     telemetry?.apoapsisKm ?? null, telemetry?.gForce ?? null
@@ -300,7 +312,7 @@ export function getDsnBandwidthHistory(minutes: number): {
  * Used for sparklines — returns ~N evenly-spaced points from the last `hours`.
  */
 export function getMetricHistory(
-  column: "speed_km_s" | "speed_km_h" | "altitude_km" | "earth_dist_km" | "moon_dist_km" | "g_force",
+  column: "speed_km_s" | "speed_km_h" | "moon_rel_speed_km_h" | "altitude_km" | "earth_dist_km" | "moon_dist_km" | "g_force",
   hours: number,
   maxPoints = 60
 ): { ts: number; value: number }[] {
