@@ -114,11 +114,11 @@ function DashboardInner() {
         <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
         <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
         <MemoDsn dsn={dsn} />
+        <MemoStationSchedule stateVector={stateVector} />
         <MemoDsnBandwidth dsn={dsn} />
         <MemoSolar solar={solar} />
         <MemoDeltaV metMs={metMs} />
         <MemoCo2 metMs={metMs} />
-        <MemoStationSchedule stateVector={stateVector} />
         <MemoThermal stateVector={stateVector} arow={mode === "LIVE" ? arow : null} metMs={metMs} />
       </div>
       <div className="dashboard-timeline">
