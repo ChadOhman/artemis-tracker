@@ -114,6 +114,20 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Community-maintained Artemis II mission timeline data — provides the crew schedule and milestone MET times used throughout this tracker. Huge thanks to Jakob Rosin for maintaining this open dataset."
         />
 
+        <SectionHeader label={t("credits.historicalContext")} />
+
+        <Source
+          name="NASA Apollo 8 Mission Report & Press Kit"
+          url="https://www.nasa.gov/mission/apollo-8/"
+          description="Mission elapsed times, burn durations, and event descriptions for the Apollo 8 historical comparison panel."
+        />
+
+        <Source
+          name="Apollo Flight Journal — Apollo 8"
+          url="https://history.nasa.gov/afj/ap08fj/"
+          description="Detailed annotated flight transcripts maintained by David Woods and the NASA History Division. Primary source for Apollo 8 event timing and descriptions."
+        />
+
         <SectionHeader label={t("credits.builtWith")} />
 
         <Source

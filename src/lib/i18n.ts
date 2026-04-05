@@ -115,6 +115,7 @@ export const TRANSLATIONS = {
       spacecraftTelemetry: "Spacecraft Telemetry",
       communications: "Communications",
       missionTimeline: "Mission Timeline",
+      historicalContext: "Historical Context",
       builtWith: "Built With",
     },
     track: {
@@ -167,6 +168,7 @@ export const TRANSLATIONS = {
       next: "Next",
       footer: "Apollo 8 launched December 21, 1968 — first crewed mission to orbit the Moon. Artemis II is the first crewed lunar flyby since Apollo 17 in 1972.",
       prelaunch: "Pre-launch phase. Apollo 8 has not yet launched at this mission elapsed time.",
+      source: "Event data:",
     },
     thermal: {
       hotSide: "☀ Hot Side",
@@ -389,6 +391,7 @@ export const TRANSLATIONS = {
       spacecraftTelemetry: "Télémétrie spacecraft",
       communications: "Communications",
       missionTimeline: "Chronologie de mission",
+      historicalContext: "Contexte historique",
       builtWith: "Construit avec",
     },
     track: {
@@ -441,6 +444,7 @@ export const TRANSLATIONS = {
       next: "Prochain",
       footer: "Apollo 8 a été lancée le 21 décembre 1968 — première mission habitée à orbiter autour de la Lune. Artemis II est le premier survol lunaire habité depuis Apollo 17 en 1972.",
       prelaunch: "Phase de pré-lancement. Apollo 8 n'a pas encore été lancée à ce temps de mission.",
+      source: "Données des événements :",
     },
     thermal: {
       hotSide: "☀ Côté chaud",

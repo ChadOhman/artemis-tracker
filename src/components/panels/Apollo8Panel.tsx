@@ -120,6 +120,36 @@ export function Apollo8Panel({ metMs }: Apollo8PanelProps) {
           lineHeight: 1.4,
         }}>
           {t("apollo8.footer")}
+          <div style={{ marginTop: 4, fontStyle: "italic", opacity: 0.8 }}>
+            {t("apollo8.source")}{" "}
+            <a
+              href="https://history.nasa.gov/afj/ap08fj/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--accent-yellow)",
+                textDecoration: "underline",
+                textDecorationColor: "rgba(255,214,0,0.4)",
+                textUnderlineOffset: 2,
+              }}
+            >
+              Apollo Flight Journal
+            </a>
+            {" · "}
+            <a
+              href="https://www.nasa.gov/mission/apollo-8/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "var(--accent-yellow)",
+                textDecoration: "underline",
+                textDecorationColor: "rgba(255,214,0,0.4)",
+                textUnderlineOffset: 2,
+              }}
+            >
+              NASA Apollo 8
+            </a>
+          </div>
         </div>
       </div>
     </PanelFrame>
