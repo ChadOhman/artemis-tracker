@@ -150,6 +150,9 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [showInset, setShowInset] = useState(false);
+  // Trail of recent Orion-relative-to-Moon positions, for the zoom inset.
+  // Only grows when new JPL data arrives (deduped by metMs).
+  const insetTrailRef = useRef<Array<{ relX: number; relY: number; metMs: number }>>([]);
 
   // Store translated inset labels in a ref for use inside the draw callback
   const insetLabelsRef = useRef({ moonDetail: "MOON DETAIL", kmView: "km view" });
@@ -673,12 +676,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     }
 
     // --- Moon detail inset ---
+    // Uses REAL spacecraft position relative to Moon (stateVector - moonPosition),
+    // projected onto a 2D frame aligned with the Earth-Moon axis so the inset
+    // reads the same orientation as the main view (Earth left, far side right).
     const inset = insetRef.current;
-    if (showInset && inset && telemetry) {
+    if (showInset && inset && stateVector && moonPosition && telemetry) {
       const iw = inset.clientWidth;
       const ih = inset.clientHeight;
       if (iw > 0 && ih > 0) {
-        // Only resize the backing buffer. Leave inline CSS alone (clamp sizing).
         if (inset.width !== iw * dpr || inset.height !== ih * dpr) {
           inset.width = iw * dpr;
           inset.height = ih * dpr;
@@ -698,64 +703,92 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           const moonCy = ih / 2;
           const insetPxPerKm = Math.min(iw, ih) / viewKm;
 
-          // Gravity rings (Moon-centered, reusing LUNAR_HILL_SPHERE_KM)
-          const innerRings = [2000, 5000, 8000];
+          // --- Real position projection ---
+          // Earth is at J2000 origin, so moonPosition IS the Earth→Moon vector.
+          // Build an orthonormal 2D frame in the orbital plane:
+          //   u_hat = unit vector along Earth→Moon (so +X points away from Earth)
+          //   v_hat = perpendicular in the ecliptic XY plane
+          const mx = moonPosition.x;
+          const my = moonPosition.y;
+          const moonMag = Math.hypot(mx, my);
+          const ux = moonMag > 0 ? mx / moonMag : 1;
+          const uy = moonMag > 0 ? my / moonMag : 0;
+          // 90° rotation in the ecliptic plane (right-handed, Z up)
+          const vx = -uy;
+          const vy = ux;
+
+          // Orion relative to Moon in J2000 km
+          const drx = stateVector.position.x - mx;
+          const dry = stateVector.position.y - my;
+          // Project onto (u_hat, v_hat). relX = "along Earth-Moon axis",
+          // relY = "perpendicular in orbital plane".
+          const relX = drx * ux + dry * uy;
+          const relY = drx * vx + dry * vy;
+
+          // Append to trail when we've moved enough or metMs advanced.
+          const trail = insetTrailRef.current;
+          const last = trail[trail.length - 1];
+          if (!last || Math.hypot(relX - last.relX, relY - last.relY) > 200 || metMs - last.metMs > 60000) {
+            trail.push({ relX, relY, metMs });
+            // Trim to the last 120 points (keeps the trail short and relevant)
+            if (trail.length > 120) trail.shift();
+          }
+
+          // Gravity rings at various Moon-centered distances
+          const innerRings = [5000, 10000, 20000];
           for (const rKm of innerRings) {
             const rPx = rKm * insetPxPerKm;
             if (rPx < 2 || rPx > Math.max(iw, ih)) continue;
             ictx.save();
             ictx.beginPath();
             ictx.arc(moonCx, moonCy, rPx, 0, Math.PI * 2);
-            ictx.strokeStyle = "rgba(180, 190, 210, 0.15)";
+            ictx.strokeStyle = "rgba(180, 190, 210, 0.13)";
             ictx.lineWidth = 0.5;
+            ictx.setLineDash([3, 4]);
             ictx.stroke();
             ictx.restore();
           }
 
-          // Orion position in inset-local frame
-          // Real Moon-to-Orion vector = Orion position - Moon position
-          // moonDistKm is the magnitude. For the inset, we project the 2D
-          // displacement onto the viewport. We use X as "along Earth-Moon line"
-          // and Y as perpendicular, matching the main view orientation.
-          const moonDistKm = telemetry.moonDistKm;
-          // Estimate Orion's X offset from Moon using Earth distance fraction
-          // At closest approach, Orion is "behind" the Moon from Earth's view.
-          // Simple projection: Orion's X relative to Moon = -(moonDistKm * cos(angle))
-          // where angle ~= time since/until closest approach.
-          // For simplicity, place Orion on a circle at moonDistKm around Moon,
-          // with angle based on MET relative to closest approach (MET ~5d 00:31).
-          const CLOSEST_APPROACH_MS = (5 * 24 * 3600 + 0 * 3600 + 31 * 60) * 1000;
-          const hoursToCa = (metMs - CLOSEST_APPROACH_MS) / 3600000;
-          // Angle sweeps from ~-135° (approaching) through 0° (closest) to ~+135° (departing)
-          const approachAngle = Math.max(-2.5, Math.min(2.5, hoursToCa * 0.15));
-          const orionRelX = moonDistKm * Math.cos(approachAngle);
-          const orionRelY = moonDistKm * Math.sin(approachAngle);
-          const orionIx = moonCx + orionRelX * insetPxPerKm;
-          const orionIy = moonCy + orionRelY * insetPxPerKm;
-
-          // Flyby trajectory curve (parametric arc across approach phase)
+          // Direction indicator: arrow pointing toward Earth (negative u_hat)
           ictx.save();
-          ictx.setLineDash([]);
-          ictx.strokeStyle = "rgba(0,220,255,0.35)";
-          ictx.lineWidth = 1.2;
+          ictx.strokeStyle = "rgba(100,160,255,0.4)";
+          ictx.fillStyle = "rgba(100,160,255,0.4)";
+          ictx.lineWidth = 1;
           ictx.beginPath();
-          const steps = 60;
-          // Assume roughly constant distance on the flyby (hyperbolic arc)
-          const caDistKm = 6513; // closest approach from NASA
-          for (let i = 0; i <= steps; i++) {
-            const ang = -2.5 + (5.0 * i / steps);
-            // Hyperbolic-ish: distance increases as we move away from CA
-            const d = caDistKm + Math.abs(ang) * 2500;
-            const px = moonCx + d * Math.cos(ang) * insetPxPerKm;
-            const py = moonCy + d * Math.sin(ang) * insetPxPerKm;
-            if (i === 0) ictx.moveTo(px, py);
-            else ictx.lineTo(px, py);
-          }
+          ictx.moveTo(14, ih - 14);
+          ictx.lineTo(30, ih - 14);
           ictx.stroke();
+          ictx.beginPath();
+          ictx.moveTo(14, ih - 14);
+          ictx.lineTo(18, ih - 17);
+          ictx.lineTo(18, ih - 11);
+          ictx.closePath();
+          ictx.fill();
+          ictx.font = "7px monospace";
+          ictx.fillStyle = "rgba(100,160,255,0.55)";
+          ictx.textAlign = "left";
+          ictx.fillText("to Earth", 33, ih - 11);
           ictx.restore();
 
+          // Real trail — actual JPL positions transformed to Moon-relative frame
+          if (trail.length >= 2) {
+            ictx.save();
+            ictx.setLineDash([]);
+            ictx.lineWidth = 1.3;
+            ictx.strokeStyle = "rgba(0,220,255,0.55)";
+            ictx.beginPath();
+            for (let i = 0; i < trail.length; i++) {
+              const px = moonCx + trail[i].relX * insetPxPerKm;
+              const py = moonCy - trail[i].relY * insetPxPerKm; // canvas Y flipped
+              if (i === 0) ictx.moveTo(px, py);
+              else ictx.lineTo(px, py);
+            }
+            ictx.stroke();
+            ictx.restore();
+          }
+
           // Moon
-          const moonR = Math.max(12, Math.min(iw, ih) * 0.14);
+          const moonR = Math.max(14, Math.min(iw, ih) * 0.11);
           const mGrad = ictx.createRadialGradient(
             moonCx - moonR * 0.3, moonCy - moonR * 0.3, 0,
             moonCx, moonCy, moonR
@@ -768,7 +801,6 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           ictx.arc(moonCx, moonCy, moonR, 0, Math.PI * 2);
           ictx.fillStyle = mGrad;
           ictx.fill();
-          // Surface craters for texture
           ictx.fillStyle = "rgba(0,0,0,0.2)";
           ictx.beginPath();
           ictx.arc(moonCx - moonR * 0.3, moonCy - moonR * 0.2, moonR * 0.12, 0, Math.PI * 2);
@@ -778,48 +810,77 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           ictx.fill();
           ictx.restore();
 
-          // Moon label
           ictx.save();
-          ictx.font = "bold 9px monospace";
+          ictx.font = "bold 10px monospace";
           ictx.fillStyle = "rgba(180,185,190,0.9)";
           ictx.textAlign = "center";
-          ictx.fillText("Moon", moonCx, moonCy + moonR + 11);
+          ictx.fillText("Moon", moonCx, moonCy + moonR + 12);
           ictx.restore();
 
-          // Orion dot in inset
-          if (orionIx > 0 && orionIx < iw && orionIy > 0 && orionIy < ih) {
+          // Orion at its real relative position
+          const orionIx = moonCx + relX * insetPxPerKm;
+          const orionIy = moonCy - relY * insetPxPerKm; // canvas Y flipped
+
+          if (orionIx > -10 && orionIx < iw + 10 && orionIy > -10 && orionIy < ih + 10) {
             ictx.save();
-            const glow = ictx.createRadialGradient(orionIx, orionIy, 0, orionIx, orionIy, 10);
-            glow.addColorStop(0, "rgba(0,255,136,0.55)");
+            const glow = ictx.createRadialGradient(orionIx, orionIy, 0, orionIx, orionIy, 12);
+            glow.addColorStop(0, "rgba(0,255,136,0.6)");
             glow.addColorStop(1, "rgba(0,255,136,0)");
             ictx.beginPath();
-            ictx.arc(orionIx, orionIy, 10, 0, Math.PI * 2);
+            ictx.arc(orionIx, orionIy, 12, 0, Math.PI * 2);
             ictx.fillStyle = glow;
             ictx.fill();
             ictx.beginPath();
-            ictx.arc(orionIx, orionIy, 3.5, 0, Math.PI * 2);
+            ictx.arc(orionIx, orionIy, 4, 0, Math.PI * 2);
             ictx.fillStyle = "#00ff88";
             ictx.fill();
-            // Label + distance
-            ictx.font = "bold 8px monospace";
+            ictx.font = "bold 10px monospace";
             ictx.fillStyle = "#00ff88";
             ictx.textAlign = "left";
-            ictx.fillText("Orion", orionIx + 6, orionIy - 6);
-            ictx.font = "7px monospace";
+            ictx.fillText("Orion", orionIx + 7, orionIy - 7);
+            ictx.font = "9px monospace";
+            ictx.fillStyle = "rgba(0,255,136,0.75)";
+            ictx.fillText(`${Math.round(telemetry.moonDistKm).toLocaleString()} km`, orionIx + 7, orionIy + 6);
+            ictx.restore();
+          } else {
+            // Orion is outside the viewport — draw an off-screen indicator
+            // pointing toward it from the center.
+            const ang = Math.atan2(orionIy - moonCy, orionIx - moonCx);
+            const edgeR = Math.min(iw, ih) / 2 - 18;
+            const ex = moonCx + Math.cos(ang) * edgeR;
+            const ey = moonCy + Math.sin(ang) * edgeR;
+            ictx.save();
+            ictx.translate(ex, ey);
+            ictx.rotate(ang);
+            ictx.fillStyle = "rgba(0,255,136,0.85)";
+            ictx.beginPath();
+            ictx.moveTo(0, 0);
+            ictx.lineTo(-10, -5);
+            ictx.lineTo(-10, 5);
+            ictx.closePath();
+            ictx.fill();
+            ictx.restore();
+            ictx.save();
+            ictx.font = "8px monospace";
             ictx.fillStyle = "rgba(0,255,136,0.7)";
-            ictx.fillText(`${Math.round(moonDistKm).toLocaleString()} km`, orionIx + 6, orionIy + 5);
+            ictx.textAlign = "center";
+            ictx.fillText(
+              `Orion · ${Math.round(telemetry.moonDistKm).toLocaleString()} km`,
+              moonCx,
+              moonCy + Math.min(iw, ih) / 2 - 4,
+            );
             ictx.restore();
           }
 
           // Inset title
           ictx.save();
-          ictx.font = "bold 8px monospace";
-          ictx.fillStyle = "rgba(0,229,255,0.7)";
+          ictx.font = "bold 9px monospace";
+          ictx.fillStyle = "rgba(0,229,255,0.75)";
           ictx.textAlign = "left";
-          ictx.fillText(insetLabelsRef.current.moonDetail, 8, 12);
-          ictx.font = "7px monospace";
-          ictx.fillStyle = "rgba(160,184,207,0.6)";
-          ictx.fillText(`${viewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`, 8, 22);
+          ictx.fillText(insetLabelsRef.current.moonDetail, 10, 14);
+          ictx.font = "8px monospace";
+          ictx.fillStyle = "rgba(160,184,207,0.65)";
+          ictx.fillText(`${viewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`, 10, 25);
           ictx.restore();
         }
       }
@@ -914,14 +975,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         <canvas
           ref={insetRef}
           aria-hidden="true"
-          width={360}
-          height={360}
+          width={520}
+          height={520}
           style={{
             position: "absolute",
             bottom: 8,
             right: 8,
-            width: 180,
-            height: 180,
+            width: 260,
+            height: 260,
             border: "2px solid rgba(0,229,255,0.5)",
             borderRadius: 6,
             boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
