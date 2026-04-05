@@ -24,14 +24,37 @@ export function DsnBandwidthPanel({ dsn }: DsnBandwidthPanelProps) {
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Hydrate from server-side history on mount
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/dsn/history?minutes=30")
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !Array.isArray(data?.history)) return;
+        const cutoff = Date.now() - 30 * 60 * 1000;
+        const filtered = (data.history as HistoryPoint[]).filter((p) => p.ts > cutoff);
+        setHistory(filtered);
+      })
+      .catch(() => {
+        // History unavailable — will build up from live stream
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Append from live DSN updates
   useEffect(() => {
     if (!dsn) return;
     const activeDish = dsn.dishes.find((d) => d.downlinkActive);
     const downKbps = activeDish ? activeDish.downlinkRate / 1000 : 0;
     const upDish = dsn.dishes.find((d) => d.uplinkActive);
     const upKbps = upDish ? upDish.uplinkRate / 1000 : 0;
+    const newPoint = { ts: Date.now(), downKbps, upKbps };
     setHistory((prev) => {
-      const next = [...prev, { ts: Date.now(), downKbps, upKbps }];
+      // Avoid duplicate timestamps (history fetch + first live event)
+      const lastTs = prev[prev.length - 1]?.ts ?? 0;
+      const next = newPoint.ts > lastTs + 500 ? [...prev, newPoint] : prev;
       const cutoff = Date.now() - 30 * 60 * 1000;
       return next.filter((p) => p.ts > cutoff);
     });

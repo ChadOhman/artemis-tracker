@@ -249,6 +249,24 @@ export function getSolarHistory(hours: number): {
   `).all(-hours) as any[];
 }
 
+/**
+ * Get DSN bandwidth history over the last N minutes.
+ * Returns rows with aggregated downlink/uplink rates.
+ */
+export function getDsnBandwidthHistory(minutes: number): {
+  timestamp: string;
+  signal_active: number;
+  dishes_json: string;
+}[] {
+  const db = getDb();
+  return db.prepare(`
+    SELECT timestamp, signal_active, dishes_json
+    FROM dsn_contacts
+    WHERE created_at >= datetime('now', ? || ' minutes')
+    ORDER BY created_at
+  `).all(-minutes) as any[];
+}
+
 /** Delete data older than the given number of days. */
 export function pruneOldData(retentionDays = 14): void {
   const db = getDb();
