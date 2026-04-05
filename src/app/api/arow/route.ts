@@ -1,17 +1,19 @@
 // src/app/api/arow/route.ts
-import { ensurePollers, latestArow } from "@/app/api/telemetry/stream/route";
+import { arowHub } from "@/lib/telemetry/arow-hub";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  ensurePollers();
+  // Start the shared AROW poller if nothing else has yet.
+  arowHub.ensurePolling();
 
-  if (!latestArow) {
+  const latest = arowHub.latest;
+  if (!latest) {
     return Response.json(
       { error: "No data available" },
       { status: 503 }
     );
   }
 
-  return Response.json(latestArow);
+  return Response.json(latest);
 }

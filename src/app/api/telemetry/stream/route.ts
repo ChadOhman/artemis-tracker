@@ -4,12 +4,11 @@ import { SseManager } from "@/lib/telemetry/sse-manager";
 import { transformStateVector } from "@/lib/telemetry/transformer";
 import { pollJplHorizons } from "@/lib/pollers/jpl-horizons";
 import { pollDsnNow } from "@/lib/pollers/dsn-now";
-import { pollArow } from "@/lib/pollers/arow";
 import { pollSolarActivity } from "@/lib/pollers/solar";
+import { arowHub } from "@/lib/telemetry/arow-hub";
 import {
   JPL_POLL_INTERVAL_MS,
   DSN_POLL_INTERVAL_MS,
-  AROW_POLL_INTERVAL_MS,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData } from "@/lib/db";
@@ -20,9 +19,8 @@ let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
 let visitorTimer: ReturnType<typeof setInterval> | null = null;
 export let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
-let arowTimer: ReturnType<typeof setInterval> | null = null;
 let solarTimer: ReturnType<typeof setInterval> | null = null;
-/** Latest AROW telemetry — exported so the REST endpoint can read it. */
+/** Latest AROW telemetry — mirrored from arowHub so REST endpoints can read it. */
 export let latestArow: ArowTelemetry | null = null;
 export let latestSolar: SolarActivity | null = null;
 let initialized = false;
@@ -49,16 +47,6 @@ async function pollDsn(): Promise<void> {
   try { archiveDsn(latestDsn); } catch { /* db error — non-fatal */ }
 }
 
-async function pollArowData(): Promise<void> {
-  const arow = await pollArow();
-  if (!arow) return;
-  latestArow = arow;
-  sseManager.broadcast("arow", arow);
-  if (++arowArchiveCounter % 10 === 0) {
-    try { archiveArow(arow); } catch { /* db error — non-fatal */ }
-  }
-}
-
 async function pollSolar(): Promise<void> {
   const solar = await pollSolarActivity();
   if (!solar) return;
@@ -76,8 +64,14 @@ export function ensurePollers(): void {
   pollDsn();
   jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);
   dsnTimer = setInterval(pollDsn, DSN_POLL_INTERVAL_MS);
-  pollArowData();
-  arowTimer = setInterval(pollArowData, AROW_POLL_INTERVAL_MS);
+  // AROW is handled by the shared hub — subscribe once for broadcast + archive.
+  arowHub.subscribe((arow) => {
+    latestArow = arow;
+    sseManager.broadcast("arow", arow);
+    if (++arowArchiveCounter % 10 === 0) {
+      try { archiveArow(arow); } catch { /* db error — non-fatal */ }
+    }
+  });
   pollSolar();
   solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
   visitorTimer = setInterval(broadcastVisitors, 5000);

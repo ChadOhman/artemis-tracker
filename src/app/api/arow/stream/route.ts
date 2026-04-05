@@ -1,42 +1,36 @@
 // src/app/api/arow/stream/route.ts
+// Public SSE endpoint dedicated to AROW telemetry. Subscribes to the shared
+// arowHub so NASA's AROW bucket is polled only once per process no matter
+// how many SSE endpoints are served.
+
 import { SseManager } from "@/lib/telemetry/sse-manager";
-import { pollArow } from "@/lib/pollers/arow";
-import { AROW_POLL_INTERVAL_MS } from "@/lib/constants";
-import type { ArowTelemetry } from "@/lib/types";
+import { arowHub } from "@/lib/telemetry/arow-hub";
 
 const arowSseManager = new SseManager();
-let arowTimer: ReturnType<typeof setInterval> | null = null;
-let latestArow: ArowTelemetry | null = null;
-let initialized = false;
+let subscribed = false;
 
-async function pollArowData(): Promise<void> {
-  const arow = await pollArow();
-  if (!arow) return;
-  latestArow = arow;
-  arowSseManager.broadcast("arow", arow);
-}
-
-function ensureArowPoller(): void {
-  if (initialized) return;
-  initialized = true;
-  pollArowData();
-  arowTimer = setInterval(pollArowData, AROW_POLL_INTERVAL_MS);
+function ensureSubscribed(): void {
+  if (subscribed) return;
+  subscribed = true;
+  arowHub.subscribe((arow) => {
+    arowSseManager.broadcast("arow", arow);
+  });
 }
 
 export const dynamic = "force-dynamic";
 
 export async function GET(): Promise<Response> {
-  ensureArowPoller();
+  ensureSubscribed();
 
   const stream = new ReadableStream({
     start(controller) {
       const encoder = new TextEncoder();
-      const cleanup = arowSseManager.addClient(controller);
+      arowSseManager.addClient(controller);
 
-      // Send latest data immediately if available
-      if (latestArow) {
-        const message = SseManager.encodeEvent("arow", latestArow);
-        controller.enqueue(encoder.encode(message));
+      // Send latest cached data immediately if available
+      const latest = arowHub.latest;
+      if (latest) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("arow", latest)));
       }
     },
   });
