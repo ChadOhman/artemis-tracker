@@ -83,6 +83,7 @@ export function parseHorizonsResponse(result: string): StateVector[] {
 export async function pollJplHorizons(): Promise<{
   orion: StateVector | null;
   moonPosition: { x: number; y: number; z: number } | null;
+  moonVelocity: { x: number; y: number; z: number } | null;
 }> {
   const now = new Date();
   try {
@@ -96,9 +97,10 @@ export async function pollJplHorizons(): Promise<{
     return {
       orion: orionVectors.length > 0 ? orionVectors[0] : null,
       moonPosition: moonVectors.length > 0 ? moonVectors[0].position : null,
+      moonVelocity: moonVectors.length > 0 ? moonVectors[0].velocity : null,
     };
   } catch (error) {
     console.error("JPL Horizons poll failed:", error);
-    return { orion: null, moonPosition: null };
+    return { orion: null, moonPosition: null, moonVelocity: null };
   }
 }

@@ -11,6 +11,7 @@ export interface Telemetry {
   metMs: number;
   speedKmS: number;
   speedKmH: number;
+  moonRelSpeedKmH: number;
   altitudeKm: number;
   earthDistKm: number;
   moonDistKm: number;

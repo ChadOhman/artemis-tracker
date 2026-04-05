@@ -23,6 +23,7 @@ function telemetryFromStateVector(sv: StateVector): Telemetry {
     metMs: sv.metMs,
     speedKmS,
     speedKmH: speedKmS * 3600,
+    moonRelSpeedKmH: 0,
     altitudeKm,
     earthDistKm,
     // Moon position not available here — leave as 0 approximation

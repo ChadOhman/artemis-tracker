@@ -31,10 +31,10 @@ function broadcastVisitors(): void {
 }
 
 async function pollJpl(): Promise<void> {
-  const { orion, moonPosition } = await pollJplHorizons();
+  const { orion, moonPosition, moonVelocity } = await pollJplHorizons();
   if (!orion || !moonPosition) return;
   const latest = cache.getLatest();
-  const telemetry = transformStateVector(orion, moonPosition, latest?.stateVector);
+  const telemetry = transformStateVector(orion, moonPosition, latest?.stateVector, moonVelocity);
   cache.push(orion, telemetry, moonPosition);
   const payload: SsePayload = { telemetry, stateVector: orion, moonPosition, dsn: latestDsn };
   sseManager.broadcast("telemetry", payload);

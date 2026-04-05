@@ -114,6 +114,11 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         sparkline={<Sparkline metric="speed_km_h" hours={24} color="#00e5ff" />}
       />
       <TelemRow
+        label={tr("telemetry.moonRelSpeed")}
+        value={t?.moonRelSpeedKmH ? Math.round(t.moonRelSpeedKmH).toLocaleString() : "—"}
+        unit="km/h"
+      />
+      <TelemRow
         label={tr("telemetry.gForce")}
         value={fmt(t?.gForce, 4)}
         unit="g"

@@ -77,7 +77,8 @@ function computeOrbitalElements(
 export function transformStateVector(
   sv: StateVector,
   moonPosition: { x: number; y: number; z: number },
-  previousSv?: StateVector
+  previousSv?: StateVector,
+  moonVelocity?: { x: number; y: number; z: number } | null,
 ): Telemetry {
   const speedKmS = magnitude(sv.velocity);
   const earthDistKm = magnitude(sv.position);
@@ -89,6 +90,17 @@ export function transformStateVector(
     z: sv.position.z - moonPosition.z,
   };
   const moonDistKm = magnitude(moonDelta);
+
+  // Speed relative to the Moon (Orion velocity minus Moon velocity)
+  let moonRelSpeedKmH = 0;
+  if (moonVelocity) {
+    const relVel = {
+      x: sv.velocity.x - moonVelocity.x,
+      y: sv.velocity.y - moonVelocity.y,
+      z: sv.velocity.z - moonVelocity.z,
+    };
+    moonRelSpeedKmH = magnitude(relVel) * 3600;
+  }
 
   const { periapsisKm, apoapsisKm } = computeOrbitalElements(sv.position, sv.velocity);
 
@@ -111,6 +123,7 @@ export function transformStateVector(
     metMs: sv.metMs,
     speedKmS,
     speedKmH: speedKmS * 3600,
+    moonRelSpeedKmH,
     altitudeKm,
     earthDistKm,
     moonDistKm,

@@ -72,7 +72,7 @@ export class TelemetryCache {
           stateVector: sv,
           telemetry: {
             metMs: sv.metMs,
-            speedKmS: 0, speedKmH: 0, altitudeKm: 0, earthDistKm: 0,
+            speedKmS: 0, speedKmH: 0, moonRelSpeedKmH: 0, altitudeKm: 0, earthDistKm: 0,
             moonDistKm: 0, periapsisKm: 0, apoapsisKm: 0, gForce: 0,
           },
           moonPosition: { x: 0, y: 0, z: 0 },
