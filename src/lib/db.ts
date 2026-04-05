@@ -107,7 +107,35 @@ function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_solar_timestamp ON solar_activity(timestamp);
   `);
 
+  runMigrations(_db);
+
   return _db;
+}
+
+// ---------------------------------------------------------------------------
+// Migrations — tracked via SQLite's PRAGMA user_version so each runs once.
+// ---------------------------------------------------------------------------
+function runMigrations(db: Database.Database): void {
+  const currentVersion = (db.pragma("user_version", { simple: true }) as number) || 0;
+
+  // Migration 1: AROW angular rates were archived in rad/s × 57.3 (doubly
+  // scaled) because the parser treated param 2091/2092/2093 as radians and
+  // multiplied by RAD2DEG. The raw feed is already in °/s, so every archived
+  // row has rate values 57.3× too large. Divide them back.
+  if (currentVersion < 1) {
+    const RAD2DEG = 180 / Math.PI;
+    db.prepare(`
+      UPDATE arow_telemetry
+      SET roll_rate  = roll_rate  / ?,
+          pitch_rate = pitch_rate / ?,
+          yaw_rate   = yaw_rate   / ?
+      WHERE roll_rate IS NOT NULL
+         OR pitch_rate IS NOT NULL
+         OR yaw_rate IS NOT NULL
+    `).run(RAD2DEG, RAD2DEG, RAD2DEG);
+    db.pragma("user_version = 1");
+    console.log("[db] migration 1 applied: normalized AROW angular rates to °/s");
+  }
 }
 
 // ---------------------------------------------------------------------------
