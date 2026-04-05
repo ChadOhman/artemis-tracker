@@ -13,6 +13,10 @@ import { CurrentActivitiesPanel } from "./panels/CurrentActivitiesPanel";
 import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
 import { SolarPanel } from "./panels/SolarPanel";
+import { DeltaVPanel } from "./panels/DeltaVPanel";
+import { Co2Panel } from "./panels/Co2Panel";
+import { StationSchedulePanel } from "./panels/StationSchedulePanel";
+import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
@@ -24,6 +28,10 @@ const MemoTimeline = memo(TimelinePanel);
 const MemoTelemetry = memo(TelemetryPanel);
 const MemoDsn = memo(DsnPanel);
 const MemoSolar = memo(SolarPanel);
+const MemoDeltaV = memo(DeltaVPanel);
+const MemoCo2 = memo(Co2Panel);
+const MemoStationSchedule = memo(StationSchedulePanel);
+const MemoDsnBandwidth = memo(DsnBandwidthPanel);
 const MemoActivity = memo(ActivityDetailPanel);
 const MemoNextMilestone = memo(NextMilestonePanel);
 const MemoCurrentActivities = memo(CurrentActivitiesPanel);
@@ -66,6 +74,7 @@ function DashboardInner() {
     connected,
     reconnecting,
     lastUpdate,
+    visitorCount,
   } = useTelemetryStream();
 
   // SIM-mode historical fetch — returns non-null values only in SIM mode
@@ -93,13 +102,18 @@ function DashboardInner() {
           connected={connected}
           reconnecting={reconnecting}
           lastUpdate={lastUpdate}
+          visitorCount={visitorCount}
         />
       </div>
       <div className="dashboard-left">
         <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
         <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
         <MemoDsn dsn={dsn} />
+        <MemoDsnBandwidth dsn={dsn} />
         <MemoSolar solar={solar} />
+        <MemoDeltaV metMs={metMs} />
+        <MemoCo2 metMs={metMs} />
+        <MemoStationSchedule stateVector={stateVector} />
       </div>
       <div className="dashboard-timeline">
         <MemoTimeline metMs={metMs} timeline={timeline} />

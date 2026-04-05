@@ -34,6 +34,7 @@ interface TopBarProps {
   connected: boolean;
   reconnecting: boolean;
   lastUpdate: number | null;
+  visitorCount: number;
 }
 
 const pillStyle: React.CSSProperties = {
@@ -87,7 +88,7 @@ const infoButtonStyle: React.CSSProperties = {
   transition: "color 0.15s, border-color 0.15s",
 };
 
-export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate }: TopBarProps) {
+export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount }: TopBarProps) {
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const { speedUnit } = useMetContext();
@@ -244,11 +245,20 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </button>
 
       {/* Toilet Status */}
-      <div className="topbar-pill" style={pillStyle}>
+      <div className="topbar-pill" style={pillStyle} title="Waste tank level — ground reported, not live telemetry">
         <span style={labelStyle}>TOILET</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
         <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>GO</span>
+        <span style={{ fontSize: 10, color: "var(--text-dim)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>64%</span>
       </div>
+
+      {/* Visitor counter */}
+      {visitorCount > 0 && (
+        <div className="topbar-pill topbar-hide-mobile" style={pillStyle} title={`${visitorCount} people watching`}>
+          <span style={{ fontSize: 11 }}>👀</span>
+          <span style={{ fontSize: 11, color: "var(--accent-cyan)", fontWeight: 700 }}>{visitorCount}</span>
+        </div>
+      )}
 
       {/* Comm Status */}
       {dsn && !dsn.signalActive && (
@@ -300,6 +310,16 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           <span style={labelStyle}>MOON</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
             {Math.round(telemetry.moonDistKm).toLocaleString()} km
+          </span>
+        </div>
+      )}
+
+      {/* Signal Light-Time Delay */}
+      {telemetry && telemetry.earthDistKm > 1000 && (
+        <div className="topbar-pill topbar-hide-mobile" style={pillStyle} title="One-way signal travel time (speed of light)">
+          <span style={labelStyle}>DELAY</span>
+          <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
+            {(telemetry.earthDistKm / 299792).toFixed(2)}s
           </span>
         </div>
       )}

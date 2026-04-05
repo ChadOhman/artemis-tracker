@@ -18,6 +18,7 @@ export const cache = new TelemetryCache();
 const sseManager = new SseManager();
 let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
+let visitorTimer: ReturnType<typeof setInterval> | null = null;
 export let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
 let arowTimer: ReturnType<typeof setInterval> | null = null;
 let solarTimer: ReturnType<typeof setInterval> | null = null;
@@ -26,6 +27,10 @@ export let latestArow: ArowTelemetry | null = null;
 export let latestSolar: SolarActivity | null = null;
 let initialized = false;
 let arowArchiveCounter = 0;
+
+function broadcastVisitors(): void {
+  sseManager.broadcast("visitors", { count: sseManager.clientCount });
+}
 
 async function pollJpl(): Promise<void> {
   const { orion, moonPosition } = await pollJplHorizons();
@@ -75,6 +80,7 @@ export function ensurePollers(): void {
   arowTimer = setInterval(pollArowData, AROW_POLL_INTERVAL_MS);
   pollSolar();
   solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
+  visitorTimer = setInterval(broadcastVisitors, 5000);
 }
 
 export const dynamic = "force-dynamic";
@@ -85,6 +91,8 @@ export async function GET(): Promise<Response> {
     start(controller) {
       const encoder = new TextEncoder();
       const cleanup = sseManager.addClient(controller);
+      // Notify everyone a new viewer joined (includes the new client)
+      setTimeout(broadcastVisitors, 100);
       const latest = cache.getLatest();
       if (latest) {
         const payload: SsePayload = {

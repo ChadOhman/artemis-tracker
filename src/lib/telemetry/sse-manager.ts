@@ -46,6 +46,10 @@ export class SseManager {
     return this.clients.size;
   }
 
+  public get clientCount(): number {
+    return this.clients.size;
+  }
+
   private ensureKeepalive(): void {
     if (this.keepaliveTimer) return;
     this.keepaliveTimer = setInterval(() => {

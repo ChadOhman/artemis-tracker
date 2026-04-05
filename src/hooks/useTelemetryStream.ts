@@ -12,6 +12,7 @@ interface TelemetryStreamState {
   connected: boolean;
   reconnecting: boolean;
   lastUpdate: number | null;
+  visitorCount: number;
 }
 
 const INITIAL_STATE: TelemetryStreamState = {
@@ -24,6 +25,7 @@ const INITIAL_STATE: TelemetryStreamState = {
   connected: false,
   reconnecting: false,
   lastUpdate: null,
+  visitorCount: 0,
 };
 
 /**
@@ -102,6 +104,16 @@ export function useTelemetryStream(): TelemetryStreamState {
           setState((prev) => ({ ...prev, solar }));
         } catch {
           // malformed payload — ignore
+        }
+      });
+
+      es.addEventListener("visitors", (event: MessageEvent) => {
+        if (unmounted) return;
+        try {
+          const { count } = JSON.parse(event.data);
+          setState((prev) => ({ ...prev, visitorCount: count }));
+        } catch {
+          // ignore
         }
       });
 
