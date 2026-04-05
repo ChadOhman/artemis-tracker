@@ -36,16 +36,12 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_CHANGELOG: changelogData,
   },
   headers: async () => [
+    // Force no-cache on all API routes — live telemetry, SSE, and the build
+    // endpoint that drives the client auto-refresh. The root HTML shell is
+    // deliberately excluded so it can be cached by Cloudflare via ISR
+    // (see src/app/page.tsx, `revalidate = 60`).
     {
-      source: "/",
-      headers: [
-        { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
-        { key: "Pragma", value: "no-cache" },
-        { key: "Expires", value: "0" },
-      ],
-    },
-    {
-      source: "/:path((?!_next/static|_next/image|icon\\.svg).*)",
+      source: "/api/:path*",
       headers: [
         { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
         { key: "Pragma", value: "no-cache" },
