@@ -7,6 +7,10 @@ import { AttitudeIndicator } from "@/components/AttitudeIndicator";
 import { useLocale } from "@/context/LocaleContext";
 import { Sparkline } from "@/components/shared/Sparkline";
 
+// NOTE: ICPS upper stage deorbited after TLI — no longer tracked on the
+// dashboard. AROW parser and archive still accept ICPS fields for historical
+// completeness but nothing renders them.
+
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
   timeline: TimelineState;
@@ -29,26 +33,6 @@ function fmtKm(n: number | undefined, decimals = 1): string {
 function fmtDeg(n: number | undefined, decimals = 1): string {
   if (n === undefined || n === null) return "—";
   return n.toFixed(decimals) + "°";
-}
-
-/** Convert quaternion to euler angles (roll, pitch, yaw) in degrees for ICPS display. */
-function quaternionToEulerDeg(q: { w: number; x: number; y: number; z: number }): {
-  roll: number;
-  pitch: number;
-  yaw: number;
-} {
-  const { w, x, y, z } = q;
-  const sinr_cosp = 2 * (w * x + y * z);
-  const cosr_cosp = 1 - 2 * (x * x + y * y);
-  const roll = Math.atan2(sinr_cosp, cosr_cosp) * (180 / Math.PI);
-  const sinp = 2 * (w * y - z * x);
-  const pitch = Math.abs(sinp) >= 1
-    ? (Math.sign(sinp) * 90)
-    : Math.asin(sinp) * (180 / Math.PI);
-  const siny_cosp = 2 * (w * z + x * y);
-  const cosy_cosp = 1 - 2 * (y * y + z * z);
-  const yaw = Math.atan2(siny_cosp, cosy_cosp) * (180 / Math.PI);
-  return { roll, pitch, yaw };
 }
 
 function TelemSection({ label }: { label: string }) {
@@ -200,33 +184,6 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         value={arow ? `0x${arow.spacecraftMode.toUpperCase()}` : "—"}
       />
 
-      <TelemSection label={tr("panels.icpsUpperStage")} />
-      {arow ? (
-        <div className="telem-row">
-          <span className="telem-label">{tr("telemetry.status")}</span>
-          <span
-            className="telem-value"
-            style={{
-              color: arow.icps.active ? "var(--accent-green)" : "var(--text-dim)",
-              fontWeight: 700,
-            }}
-          >
-            {arow.icps.active ? tr("telemetry.active") : tr("telemetry.lost")}
-          </span>
-        </div>
-      ) : (
-        <TelemRow label={tr("telemetry.status")} value={"—"} />
-      )}
-      {arow && arow.icps.active && (() => {
-        const e = quaternionToEulerDeg(arow.icps.quaternion);
-        return (
-          <>
-            <TelemRow label={tr("telemetry.icpsRoll")} value={fmtDeg(e.roll)} />
-            <TelemRow label={tr("telemetry.icpsPitch")} value={fmtDeg(e.pitch)} />
-            <TelemRow label={tr("telemetry.icpsYaw")} value={fmtDeg(e.yaw)} />
-          </>
-        );
-      })()}
       </div>
     </PanelFrame>
   );
