@@ -20,6 +20,7 @@ import { StationSchedulePanel } from "./panels/StationSchedulePanel";
 import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
 import { ThermalPanel } from "./panels/ThermalPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
+import { ChangelogModal } from "./modals/ChangelogModal";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
@@ -138,6 +139,7 @@ function DashboardInner() {
         <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />
       </div>
       <BuyMeACoffee />
+      <ChangelogModal />
     </div>
   );
 }
