@@ -1,5 +1,6 @@
 "use client";
-import { formatMet } from "@/lib/met";
+import { formatMet, formatUtcShort } from "@/lib/met";
+import { useMetContext } from "@/context/MetContext";
 import type { TimelineState } from "@/hooks/useTimeline";
 
 interface NextMilestonePanelProps {
@@ -20,6 +21,8 @@ function formatCountdown(diffMs: number): string {
 }
 
 export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps) {
+  const { timeFormat } = useMetContext();
+  const useUtc = timeFormat === "UTC";
   const milestone = timeline.nextMilestone;
   if (!milestone) return null;
 
@@ -79,7 +82,7 @@ export function NextMilestonePanel({ timeline, metMs }: NextMilestonePanelProps)
           </div>
         )}
         <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.08em" }}>
-          MET {formatMet(milestone.metMs)}
+          {useUtc ? formatUtcShort(milestone.metMs) : `MET ${formatMet(milestone.metMs)}`}
         </div>
       </div>
     </div>

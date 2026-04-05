@@ -13,6 +13,7 @@ import { LAUNCH_TIME_MS, MISSION_DURATION_MS } from "@/lib/constants";
 export type MetMode = "LIVE" | "SIM";
 export type PlaybackSpeed = 0 | 1 | 10 | 100 | 1000;
 export type SpeedUnit = "km/h" | "m/s";
+export type TimeFormat = "MET" | "UTC";
 
 interface MetContextValue {
   metMs: number;
@@ -25,6 +26,8 @@ interface MetContextValue {
   jumpTo: (metMs: number) => void;
   speedUnit: SpeedUnit;
   setSpeedUnit: (unit: SpeedUnit) => void;
+  timeFormat: TimeFormat;
+  setTimeFormat: (fmt: TimeFormat) => void;
 }
 
 const MetContext = createContext<MetContextValue | null>(null);
@@ -38,6 +41,7 @@ export function MetProvider({ children }: { children: ReactNode }) {
   const [simMetMs, setSimMetMsRaw] = useState<number>(0);
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(0);
   const [speedUnit, setSpeedUnit] = useState<SpeedUnit>("km/h");
+  const [timeFormat, setTimeFormat] = useState<TimeFormat>("MET");
   const [liveMetMs, setLiveMetMs] = useState<number>(
     () => Date.now() - LAUNCH_TIME_MS
   );
@@ -102,6 +106,8 @@ export function MetProvider({ children }: { children: ReactNode }) {
         jumpTo,
         speedUnit,
         setSpeedUnit,
+        timeFormat,
+        setTimeFormat,
       }}
     >
       {children}

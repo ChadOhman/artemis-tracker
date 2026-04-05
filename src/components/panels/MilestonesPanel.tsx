@@ -1,7 +1,8 @@
 "use client";
 import { useRef, useEffect } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
-import { formatMet } from "@/lib/met";
+import { formatMet, formatUtcShort } from "@/lib/met";
+import { useMetContext } from "@/context/MetContext";
 import type { TimelineState } from "@/hooks/useTimeline";
 import type { Milestone } from "@/lib/types";
 
@@ -14,10 +15,12 @@ function MilestoneRow({
   milestone,
   status,
   isNext,
+  useUtc,
 }: {
   milestone: Milestone;
   status: "completed" | "next" | "upcoming";
   isNext: boolean;
+  useUtc: boolean;
 }) {
   const dotClass = `milestone-dot ${status}`;
 
@@ -69,7 +72,7 @@ function MilestoneRow({
           </div>
         )}
         <div style={{ fontSize: 9, color: "var(--text-dim)", letterSpacing: "0.06em" }}>
-          MET {formatMet(milestone.metMs)}
+          {useUtc ? formatUtcShort(milestone.metMs) : `MET ${formatMet(milestone.metMs)}`}
         </div>
       </div>
     </div>
@@ -77,6 +80,8 @@ function MilestoneRow({
 }
 
 export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
+  const { timeFormat } = useMetContext();
+  const useUtc = timeFormat === "UTC";
   const milestones = timeline.raw?.milestones ?? [];
   const nextMilestone = timeline.nextMilestone;
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -149,6 +154,7 @@ export function MilestonesPanel({ timeline, metMs }: MilestonesPanelProps) {
                   milestone={milestone}
                   status={status}
                   isNext={isNext}
+                  useUtc={useUtc}
                 />
               </div>
             );

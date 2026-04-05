@@ -282,7 +282,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
-          href="mailto:cdnspace@ohman.ca?subject=Artemis%20II%20Tracker%20Feedback"
+          href="mailto:cdnspace@chadohman.ca?subject=Artemis%20II%20Tracker%20Feedback"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
           Feedback

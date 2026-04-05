@@ -32,3 +32,26 @@ export function formatMet(metMs: number): string {
 export function getCurrentMetMs(): number {
   return Date.now() - LAUNCH_TIME_MS;
 }
+
+/** Format a MET in milliseconds as a UTC wall-clock string (YYYY-MM-DD HH:MM:SSZ). */
+export function formatUtcFromMet(metMs: number): string {
+  const date = new Date(LAUNCH_TIME_MS + metMs);
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  const h = String(date.getUTCHours()).padStart(2, "0");
+  const min = String(date.getUTCMinutes()).padStart(2, "0");
+  const s = String(date.getUTCSeconds()).padStart(2, "0");
+  return `${y}-${m}-${d} ${h}:${min}:${s}Z`;
+}
+
+/** Short form: MMM DD HH:MM UTC */
+export function formatUtcShort(metMs: number): string {
+  const date = new Date(LAUNCH_TIME_MS + metMs);
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const m = months[date.getUTCMonth()];
+  const d = String(date.getUTCDate()).padStart(2, "0");
+  const h = String(date.getUTCHours()).padStart(2, "0");
+  const min = String(date.getUTCMinutes()).padStart(2, "0");
+  return `${m} ${d} ${h}:${min}Z`;
+}

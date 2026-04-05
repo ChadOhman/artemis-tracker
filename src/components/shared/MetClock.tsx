@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
-import { formatMet } from "@/lib/met";
+import { formatMet, formatUtcFromMet } from "@/lib/met";
+import { useMetContext } from "@/context/MetContext";
 
 type MetClockSize = "large" | "medium" | "small";
 
@@ -49,8 +50,13 @@ export function MetClock({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const formatted = mounted ? formatMet(metMs) : "---:--:--:--";
-  const prefix = showTPlus ? "T+" : "MET ";
+  const { timeFormat, setTimeFormat } = useMetContext();
+  const isUtc = timeFormat === "UTC";
+
+  const formatted = mounted
+    ? (isUtc ? formatUtcFromMet(metMs) : formatMet(metMs))
+    : (isUtc ? "----------" : "---:--:--:--");
+  const prefix = isUtc ? "UTC" : (showTPlus ? "T+" : "MET ");
   const isNegative = metMs < 0;
 
   return (
@@ -63,6 +69,17 @@ export function MetClock({
         display: "inline-flex",
         alignItems: "baseline",
         gap: "0.25em",
+        cursor: "pointer",
+      }}
+      onClick={() => setTimeFormat(isUtc ? "MET" : "UTC")}
+      title="Click to toggle MET/UTC"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          setTimeFormat(isUtc ? "MET" : "UTC");
+        }
       }}
     >
       <span style={{ ...LABEL_STYLES[size], color: "var(--text-dim)", fontWeight: 400 }}>
