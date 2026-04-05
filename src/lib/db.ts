@@ -267,6 +267,200 @@ export function getDsnBandwidthHistory(minutes: number): {
   `).all(-minutes) as any[];
 }
 
+/**
+ * Get a downsampled time series for a state_vectors column.
+ * Used for sparklines — returns ~N evenly-spaced points from the last `hours`.
+ */
+export function getMetricHistory(
+  column: "speed_km_s" | "speed_km_h" | "altitude_km" | "earth_dist_km" | "moon_dist_km" | "g_force",
+  hours: number,
+  maxPoints = 60
+): { ts: number; value: number }[] {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT timestamp, ${column} as value
+    FROM state_vectors
+    WHERE created_at >= datetime('now', ? || ' hours')
+    AND ${column} IS NOT NULL
+    ORDER BY created_at
+  `).all(-hours) as { timestamp: string; value: number }[];
+
+  if (rows.length <= maxPoints) {
+    return rows.map((r) => ({ ts: new Date(r.timestamp).getTime(), value: r.value }));
+  }
+
+  // Downsample
+  const step = rows.length / maxPoints;
+  const out: { ts: number; value: number }[] = [];
+  for (let i = 0; i < maxPoints; i++) {
+    const idx = Math.floor(i * step);
+    const row = rows[idx];
+    out.push({ ts: new Date(row.timestamp).getTime(), value: row.value });
+  }
+  return out;
+}
+
+/** Get solar activity metric history for sparklines. */
+export function getSolarMetricHistory(
+  column: "kp_index" | "xray_flux" | "proton_10mev",
+  hours: number,
+  maxPoints = 60
+): { ts: number; value: number }[] {
+  const db = getDb();
+  const rows = db.prepare(`
+    SELECT timestamp, ${column} as value
+    FROM solar_activity
+    WHERE created_at >= datetime('now', ? || ' hours')
+    AND ${column} IS NOT NULL
+    ORDER BY created_at
+  `).all(-hours) as { timestamp: string; value: number }[];
+
+  if (rows.length <= maxPoints) {
+    return rows.map((r) => ({ ts: new Date(r.timestamp).getTime(), value: r.value }));
+  }
+  const step = rows.length / maxPoints;
+  const out: { ts: number; value: number }[] = [];
+  for (let i = 0; i < maxPoints; i++) {
+    const idx = Math.floor(i * step);
+    const row = rows[idx];
+    out.push({ ts: new Date(row.timestamp).getTime(), value: row.value });
+  }
+  return out;
+}
+
+/** Get the closest state_vector snapshot at or before a given MET time. */
+export function getStateSnapshotAt(metMs: number): {
+  timestamp: string;
+  met_ms: number;
+  pos_x: number; pos_y: number; pos_z: number;
+  vel_x: number; vel_y: number; vel_z: number;
+  moon_x: number | null; moon_y: number | null; moon_z: number | null;
+  earth_dist_km: number; moon_dist_km: number;
+  speed_km_s: number; speed_km_h: number; altitude_km: number;
+  periapsis_km: number; apoapsis_km: number; g_force: number;
+} | null {
+  const db = getDb();
+  return db.prepare(`
+    SELECT timestamp, met_ms, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
+           moon_x, moon_y, moon_z, earth_dist_km, moon_dist_km,
+           speed_km_s, speed_km_h, altitude_km, periapsis_km, apoapsis_km, g_force
+    FROM state_vectors
+    WHERE met_ms <= ?
+    ORDER BY met_ms DESC
+    LIMIT 1
+  `).get(metMs) as any;
+}
+
+/** Get the closest DSN snapshot at or before a given UTC timestamp. */
+export function getDsnSnapshotAt(utcMs: number): {
+  timestamp: string;
+  signal_active: number;
+  dishes_json: string;
+} | null {
+  const db = getDb();
+  const iso = new Date(utcMs).toISOString();
+  return db.prepare(`
+    SELECT timestamp, signal_active, dishes_json
+    FROM dsn_contacts
+    WHERE timestamp <= ?
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get(iso) as any;
+}
+
+/** Get the closest solar snapshot at or before a given UTC timestamp. */
+export function getSolarSnapshotAt(utcMs: number): {
+  timestamp: string;
+  kp_index: number;
+  kp_label: string;
+  xray_flux: number;
+  xray_class: string;
+  proton_1mev: number;
+  proton_10mev: number;
+  proton_100mev: number;
+  radiation_risk: string;
+} | null {
+  const db = getDb();
+  const iso = new Date(utcMs).toISOString();
+  return db.prepare(`
+    SELECT * FROM solar_activity
+    WHERE timestamp <= ?
+    ORDER BY timestamp DESC
+    LIMIT 1
+  `).get(iso) as any;
+}
+
+/** Mission totals for the /stats page. */
+export function getMissionStats(): {
+  maxSpeedKmH: number;
+  maxEarthDistKm: number;
+  minMoonDistKm: number;
+  totalDistanceKm: number;
+  totalDsnDownlinkBytes: number;
+  maxKpIndex: number;
+  solarEventCount: number;
+  dsnHandoffCount: number;
+  stateVectorSamples: number;
+  dsnSamples: number;
+  solarSamples: number;
+  firstSampleTs: string | null;
+  latestSampleTs: string | null;
+} {
+  const db = getDb();
+
+  const svStats = db.prepare(`
+    SELECT
+      MAX(speed_km_h) as maxSpeedKmH,
+      MAX(earth_dist_km) as maxEarthDistKm,
+      MIN(moon_dist_km) as minMoonDistKm,
+      COUNT(*) as stateVectorSamples,
+      MIN(timestamp) as firstSampleTs,
+      MAX(timestamp) as latestSampleTs
+    FROM state_vectors
+  `).get() as any;
+
+  // Approximate total distance: integrate speed * delta_t over adjacent rows
+  // For efficiency, use: avg_speed_km_s * total_duration_s
+  const avgDuration = db.prepare(`
+    SELECT
+      AVG(speed_km_s) as avgSpeedKmS,
+      (JULIANDAY(MAX(timestamp)) - JULIANDAY(MIN(timestamp))) * 86400 as durationSec
+    FROM state_vectors
+  `).get() as any;
+  const totalDistanceKm = (avgDuration?.avgSpeedKmS ?? 0) * (avgDuration?.durationSec ?? 0);
+
+  const solarStats = db.prepare(`
+    SELECT
+      MAX(kp_index) as maxKpIndex,
+      SUM(CASE WHEN kp_index >= 4 THEN 1 ELSE 0 END) as solarEventCount,
+      COUNT(*) as solarSamples
+    FROM solar_activity
+  `).get() as any;
+
+  // DSN handoff count: count rows where the prime dish changes
+  // Cheap approximation: count rows with active signal
+  const dsnStats = db.prepare(`
+    SELECT COUNT(*) as dsnSamples
+    FROM dsn_contacts
+  `).get() as any;
+
+  return {
+    maxSpeedKmH: svStats?.maxSpeedKmH ?? 0,
+    maxEarthDistKm: svStats?.maxEarthDistKm ?? 0,
+    minMoonDistKm: svStats?.minMoonDistKm ?? 0,
+    totalDistanceKm,
+    totalDsnDownlinkBytes: 0, // TODO: integrate over dsn_contacts when we have rate data
+    maxKpIndex: solarStats?.maxKpIndex ?? 0,
+    solarEventCount: solarStats?.solarEventCount ?? 0,
+    dsnHandoffCount: 0, // TODO: detect changes in prime station
+    stateVectorSamples: svStats?.stateVectorSamples ?? 0,
+    dsnSamples: dsnStats?.dsnSamples ?? 0,
+    solarSamples: solarStats?.solarSamples ?? 0,
+    firstSampleTs: svStats?.firstSampleTs ?? null,
+    latestSampleTs: svStats?.latestSampleTs ?? null,
+  };
+}
+
 /** Delete data older than the given number of days. */
 export function pruneOldData(retentionDays = 14): void {
   const db = getDb();

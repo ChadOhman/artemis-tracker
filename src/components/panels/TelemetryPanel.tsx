@@ -5,6 +5,7 @@ import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { AttitudeIndicator } from "@/components/AttitudeIndicator";
 import { useLocale } from "@/context/LocaleContext";
+import { Sparkline } from "@/components/shared/Sparkline";
 
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
@@ -74,17 +75,22 @@ function TelemRow({
   label,
   value,
   unit,
+  sparkline,
 }: {
   label: string;
   value: string;
   unit?: string;
+  sparkline?: React.ReactNode;
 }) {
   return (
     <div className="telem-row">
       <span className="telem-label">{label}</span>
-      <span className="telem-value">
-        {value}
-        {unit && <span className="telem-unit">{unit}</span>}
+      <span className="telem-value" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        {sparkline}
+        <span>
+          {value}
+          {unit && <span className="telem-unit">{unit}</span>}
+        </span>
       </span>
     </div>
   );
@@ -121,6 +127,7 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         label={tr("telemetry.speed")}
         value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : (t.speedKmS * 1000).toFixed(1)) : "—"}
         unit={speedUnit}
+        sparkline={<Sparkline metric="speed_km_h" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.gForce")}
@@ -133,16 +140,19 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         label={tr("topbar.altitude")}
         value={fmtKm(t?.altitudeKm)}
         unit="km"
+        sparkline={<Sparkline metric="altitude_km" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.earthDist")}
         value={fmtKm(t?.earthDistKm)}
         unit="km"
+        sparkline={<Sparkline metric="earth_dist_km" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.moonDist")}
         value={fmtKm(t?.moonDistKm)}
         unit="km"
+        sparkline={<Sparkline metric="moon_dist_km" hours={24} color="#b388ff" />}
       />
 
       <TelemSection label={tr("panels.orbit")} />

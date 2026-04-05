@@ -35,15 +35,22 @@ const STATUS_BG: Record<string, string> = {
 
 export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
   const { t } = useLocale();
-  const usedDv = BURNS.filter(
+
+  // Cumulative Δ-v since PRM — includes ICPS burns (PRM, ARB, TLI) for context
+  const totalUsed = BURNS.filter(
+    (b) => b.status === "executed" && metMs >= b.metHours * 3600000
+  ).reduce((sum, b) => sum + b.dv, 0);
+
+  // Orion ESM budget only applies to post-TLI maneuvers
+  const esmUsed = BURNS.filter(
     (b) =>
       b.metHours > 25.3 &&
       b.status === "executed" &&
       metMs >= b.metHours * 3600000
   ).reduce((sum, b) => sum + b.dv, 0);
 
-  const remaining = TOTAL_BUDGET - usedDv;
-  const usedPercent = Math.min(100, Math.max(0, (usedDv / TOTAL_BUDGET) * 100));
+  const remaining = TOTAL_BUDGET - esmUsed;
+  const usedPercent = Math.min(100, Math.max(0, (esmUsed / TOTAL_BUDGET) * 100));
   const isOverBudget = remaining < 0;
 
   return (
@@ -68,7 +75,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            {t("deltaV.used")} (post-TLI)
+            {t("deltaV.used")} (since PRM)
           </div>
           <div
             style={{
@@ -79,7 +86,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               letterSpacing: "-0.01em",
             }}
           >
-            {usedDv.toFixed(1)} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
+            {totalUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
           </div>
         </div>
         <div>
@@ -92,7 +99,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            {t("deltaV.remaining")}
+            {t("deltaV.remaining")} (ESM)
           </div>
           <div
             style={{
