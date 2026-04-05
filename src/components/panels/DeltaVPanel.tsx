@@ -12,7 +12,7 @@ const BURNS = [
   { name: "TLI", metHours: 25.23, dv: 3180, status: "executed" },
   { name: "OTC-1", metHours: 49, dv: 0, status: "cancelled" },
   { name: "OTC-2", metHours: 73, dv: 0, status: "cancelled" },
-  { name: "OTC-3", metHours: 100, dv: 2, status: "planned" },
+  { name: "OTC-3", metHours: 100, dv: 3, status: "planned" },
   { name: "RTC-1", metHours: 147, dv: 10, status: "planned" },
   { name: "RTC-2", metHours: 196, dv: 2, status: "planned" },
   { name: "CM Raise", metHours: 217, dv: 5, status: "planned" },
@@ -55,7 +55,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
 
   return (
     <PanelFrame title={t("deltaV.title")} icon="🚀" accentColor="var(--accent-cyan)">
-      {/* Big numbers */}
+      {/* Big numbers — ESM-only so they tell the same story as the bar below */}
       <div
         style={{
           display: "flex",
@@ -75,7 +75,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            {t("deltaV.used")} (since PRM)
+            {t("deltaV.used")} (ESM)
           </div>
           <div
             style={{
@@ -86,7 +86,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               letterSpacing: "-0.01em",
             }}
           >
-            {totalUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
+            {esmUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
           </div>
         </div>
         <div>
@@ -112,6 +112,30 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
           >
             {remaining.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 11, fontWeight: 400, color: "var(--text-secondary)" }}>m/s</span>
           </div>
+        </div>
+        <div style={{ marginLeft: "auto", textAlign: "right" }}>
+          <div
+            style={{
+              fontSize: 9,
+              color: "var(--text-dim)",
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              marginBottom: 2,
+            }}
+          >
+            Since PRM
+          </div>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 600,
+              color: "var(--text-secondary)",
+              fontFamily: "var(--font-mono)",
+            }}
+          >
+            {totalUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--text-dim)" }}>m/s</span>
+          </div>
+          <div style={{ fontSize: 8, color: "var(--text-dim)", marginTop: 1 }}>incl. ICPS</div>
         </div>
       </div>
 
