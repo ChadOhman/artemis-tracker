@@ -104,6 +104,11 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
 
 const REFERENCE_TRAJECTORY = generateReferenceTrajectory();
 
+// Phase boundaries within REFERENCE_TRAJECTORY. Keep in sync with
+// generateReferenceTrajectory(): spiral=61, outbound=50, flyby=40, return=50.
+const OUTBOUND_END_IDX = 61 + 50 - 1;   // 110 — last point of outbound Bezier
+const RETURN_START_IDX = 61 + 50 + 40;  // 151 — first point of return arc
+
 const WAYPOINTS = [
   { label: "TLI", metMs: (25 * 3600 + 8 * 60 + 42) * 1000, align: "center" as const, offsetY: -10 },
   { label: "Closest Approach", metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -14 },
@@ -549,10 +554,38 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     }
 
     // Place Orion on the reference trajectory curve at the distance-matched position.
-    // Find the two reference points that bracket the actual distance fraction,
-    // then interpolate Y to keep Orion exactly on the drawn curve.
+    // Two regimes:
+    //   1. Near the Moon (within ~50,000 km): distance-fraction along the figure-8
+    //      curve breaks down because the trajectory loops and x is non-monotonic.
+    //      Use the REAL Moon-relative position projected onto the Earth-Moon axis
+    //      so Orion sits beside the Moon at its actual offset.
+    //   2. Outbound/return cruise: match Earth-distance fraction against the
+    //      reference curve, interpolating Y to stay on the drawn arc.
     let orionPx: { x: number; y: number };
-    if (telemetry?.earthDistKm != null) {
+    const nearMoon =
+      telemetry?.moonDistKm != null && telemetry.moonDistKm < 50000 &&
+      stateVector && moonPosition;
+
+    if (nearMoon && stateVector && moonPosition) {
+      // Build a 2D frame aligned with the Earth→Moon axis in J2000 ecliptic.
+      const mx = moonPosition.x;
+      const my = moonPosition.y;
+      const moonMag = Math.hypot(mx, my);
+      const ux = moonMag > 0 ? mx / moonMag : 1;
+      const uy = moonMag > 0 ? my / moonMag : 0;
+      const vx = -uy;
+      const vy = ux;
+      // Real Orion→Moon offset in km
+      const drx = stateVector.position.x - mx;
+      const dry = stateVector.position.y - my;
+      // Project onto (u_hat, v_hat): relX along Earth-Moon line, relY perpendicular
+      const relX = drx * ux + dry * uy;
+      const relY = drx * vx + dry * vy;
+      orionPx = {
+        x: moonPx.x + relX * pixelsPerKm,
+        y: moonPx.y - relY * pixelsPerKm, // canvas Y flipped
+      };
+    } else if (telemetry?.earthDistKm != null) {
       const frac = telemetry.earthDistKm / MOON_DIST_KM;
 
       // Find the segment on the OUTBOUND arc where x brackets frac
@@ -562,9 +595,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       const isOutbound = metMs < 5 * 24 * 3600 * 1000; // before closest approach
 
       if (isOutbound) {
-        // Search outbound half (first ~60% of trajectory points)
-        const midIdx = Math.floor(REFERENCE_TRAJECTORY.length * 0.55);
-        for (let i = 0; i < midIdx - 1; i++) {
+        // Search outbound arc only — x is monotonic on this segment. Stopping
+        // at OUTBOUND_END_IDX avoids matching any flyby-loop points where x
+        // wraps past 1.0 and can bracket the target fraction incorrectly.
+        for (let i = 0; i < OUTBOUND_END_IDX; i++) {
           if (REFERENCE_TRAJECTORY[i].x <= frac && REFERENCE_TRAJECTORY[i + 1].x >= frac) {
             matchA = REFERENCE_TRAJECTORY[i];
             matchB = REFERENCE_TRAJECTORY[i + 1];
@@ -572,14 +606,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }
         }
       } else {
-        // Search return half (last ~45% of trajectory points, x decreases)
-        const midIdx = Math.floor(REFERENCE_TRAJECTORY.length * 0.55);
-        for (let i = REFERENCE_TRAJECTORY.length - 2; i >= midIdx; i--) {
-          if (REFERENCE_TRAJECTORY[i].x <= frac && REFERENCE_TRAJECTORY[i + 1].x >= frac) {
-            matchA = REFERENCE_TRAJECTORY[i + 1];
-            matchB = REFERENCE_TRAJECTORY[i];
-            break;
-          }
+        // Search return arc only (x decreases from ~1 back to 0).
+        for (let i = RETURN_START_IDX; i < REFERENCE_TRAJECTORY.length - 1; i++) {
           if (REFERENCE_TRAJECTORY[i].x >= frac && REFERENCE_TRAJECTORY[i + 1].x <= frac) {
             matchA = REFERENCE_TRAJECTORY[i];
             matchB = REFERENCE_TRAJECTORY[i + 1];
