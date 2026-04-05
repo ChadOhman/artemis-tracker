@@ -247,11 +247,10 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </button>
 
       {/* Toilet Status */}
-      <div className="topbar-pill" style={pillStyle} title="Waste tank level — ground reported, not live telemetry">
+      <div className="topbar-pill" style={pillStyle} title="Toilet status — ground reported, not live telemetry">
         <span style={labelStyle}>{t("topbar.toilet")}</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
         <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>{t("common.go")}</span>
-        <span style={{ fontSize: 10, color: "var(--text-dim)", fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>64%</span>
       </div>
 
       {/* Visitor counter */}
