@@ -24,8 +24,8 @@ describe("timeline data", () => {
   test("last milestone is Splashdown", () => {
     const last = data.milestones[data.milestones.length - 1];
     expect(last.name).toBe("Splashdown");
-    // Press kit: 09/01:46
-    expect(last.metMs).toBe((9 * 24 * 3600 + 1 * 3600 + 46 * 60) * 1000);
+    // schedule.json events: id=splashdown, metHours=217.51 → ~9d 01h 31m
+    expect(last.metMs).toBe(Math.round(217.51 * 3600 * 1000));
   });
 
   test("has all milestones", () => {
@@ -44,15 +44,15 @@ describe("timeline data", () => {
     expect(maxMet).toBeGreaterThan(8 * 24 * 3600 * 1000);
   });
 
-  test("TLI milestone matches press kit (01/01:37)", () => {
+  test("TLI milestone matches schedule.json (metHours=25.23)", () => {
     const tli = data.milestones.find((m) => m.name === "Trans-Lunar Injection");
     expect(tli).toBeDefined();
-    expect(tli!.metMs).toBe((1 * 24 * 3600 + 1 * 3600 + 37 * 60) * 1000);
+    expect(tli!.metMs).toBe(Math.round(25.23 * 3600 * 1000));
   });
 
-  test("Lunar Close Approach milestone matches press kit (05/01:23)", () => {
+  test("Lunar Close Approach milestone matches schedule.json (metHours=120.52)", () => {
     const lca = data.milestones.find((m) => m.name === "Lunar Close Approach");
     expect(lca).toBeDefined();
-    expect(lca!.metMs).toBe((5 * 24 * 3600 + 1 * 3600 + 23 * 60) * 1000);
+    expect(lca!.metMs).toBe(Math.round(120.52 * 3600 * 1000));
   });
 });

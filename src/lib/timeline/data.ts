@@ -13,119 +13,110 @@ function met(days: number, hours: number, minutes: number, seconds: number): num
 }
 
 // ---------------------------------------------------------------------------
-// Milestones — 20 key events from the Artemis II flight plan
-// Sorted by metMs (OTC-3 occurs before Lunar SOI Entry)
+// Milestones — key events from jakobrosin/artemis-data schedule.json
+// metMs values derived from events[].metHours * 3600 * 1000
+// Sorted by metMs ascending
 // ---------------------------------------------------------------------------
 const RAW_MILESTONES: Milestone[] = [
   {
     name: "Launch",
     description: "Artemis II lifts off from LC-39B at Kennedy Space Center",
-    metMs: met(0, 0, 0, 0),
+    metMs: 0, // metHours=0
   },
   {
-    name: "Perigee Raise Maneuver",
-    description: "ICPS perigee raise burn raises low point of orbit",
-    metMs: met(0, 0, 50, 0),
+    name: "ICPS Perigee Raise 1",
+    description: "ICPS perigee raise burn 1 raises the low point of the parking orbit",
+    metMs: Math.round(0.82 * 3600 * 1000), // metHours=0.82 → ~0d 00h 49m
   },
   {
-    name: "Apogee Raise Burn",
-    description: "ICPS apogee raise burn puts Orion into high elliptical orbit",
-    metMs: met(0, 1, 47, 0),
+    name: "ICPS Perigee Raise 2",
+    description: "ICPS perigee raise burn 2 inserts Orion into high-Earth orbit",
+    metMs: Math.round(1.82 * 3600 * 1000), // metHours=1.82 → ~0d 01h 49m
   },
   {
-    name: "Orion/ICPS Separation",
-    description: "Orion spacecraft separates from the ICPS upper stage",
-    metMs: met(0, 3, 23, 0),
+    name: "Proximity Operations Demo",
+    description: "ICPS becomes docking target; crew practices manual flying",
+    metMs: Math.round(3.405 * 3600 * 1000), // metHours=3.405 → ~0d 03h 24m
   },
   {
-    name: "Orion USS",
-    description: "Orion upper stage separation complete",
-    metMs: met(0, 4, 51, 0),
+    name: "Orion Upper Stage Separation",
+    description: "Orion upper stage separation burn",
+    metMs: Math.round(4.833 * 3600 * 1000), // metHours=4.833 → ~0d 04h 50m
   },
   {
-    name: "Solar Panel Deploy",
-    description: "Orion solar array wings deployed",
-    metMs: met(0, 5, 27, 0),
-  },
-  {
-    name: "OpComm Activation",
-    description: "Operational communications system activated",
-    metMs: met(0, 10, 6, 0),
-  },
-  {
-    name: "Perigee Raise Burn",
-    description: "Orion performs perigee raise burn to adjust orbit before TLI",
-    metMs: met(0, 13, 30, 0),
+    name: "Orbit Geometry Burn",
+    description: "Engine firing to correct orbital geometry for TLI",
+    metMs: Math.round(12.5 * 3600 * 1000), // metHours=12.5 → ~0d 12h 30m
   },
   {
     name: "Trans-Lunar Injection",
-    description: "TLI burn sends Orion toward the Moon at ~39,000 km/h",
-    metMs: met(1, 1, 37, 0),
+    description: "TLI burn sends Orion toward the Moon at ~40,000 km/h",
+    metMs: Math.round(25.23 * 3600 * 1000), // metHours=25.23 → ~1d 01h 14m
   },
   {
     name: "OTC-1",
-    description: "Outbound trajectory correction maneuver 1",
-    metMs: met(2, 0, 7, 0),
+    description: "Outbound trajectory correction burn 1 (cancelled — trajectory was nominal)",
+    metMs: Math.round(48.23 * 3600 * 1000), // metHours=48.23 → ~2d 00h 14m
   },
   {
     name: "OTC-2",
-    description: "Outbound trajectory correction maneuver 2",
-    metMs: met(3, 0, 12, 0),
+    description: "Outbound trajectory correction burn 2 (cancelled — trajectory was nominal)",
+    metMs: Math.round(73.13 * 3600 * 1000), // metHours=73.13 → ~3d 01h 08m
   },
   {
     name: "OTC-3",
-    description: "Outbound trajectory correction maneuver 3",
-    metMs: met(4, 5, 23, 0),
+    description: "Final outbound mid-course correction; Orion enters lunar sphere of influence",
+    metMs: Math.round(100.48 * 3600 * 1000), // metHours=100.48 → ~4d 04h 29m
   },
   {
     name: "Lunar SOI Entry",
     description: "Orion enters the lunar sphere of influence",
-    metMs: met(4, 6, 59, 0),
+    metMs: Math.round(102.13 * 3600 * 1000), // metHours=102.13 → ~4d 06h 08m
   },
   {
     name: "Lunar Close Approach",
-    description: "Closest approach to the lunar surface (~6,513 km)",
-    metMs: met(5, 1, 23, 0),
+    description: "Closest approach to the Moon — ~8,900 km above the lunar surface",
+    metMs: Math.round(120.52 * 3600 * 1000), // metHours=120.52 → ~5d 00h 31m
   },
   {
     name: "Max Earth Distance",
-    description: "Maximum distance from Earth (~380,000 km)",
-    metMs: met(5, 1, 26, 0),
+    description: "Maximum distance from Earth — ~4,600 miles beyond the lunar far side",
+    metMs: Math.round(115.16 * 3600 * 1000), // metHours=115.16 → ~4d 19h 10m
+  },
+  {
+    name: "Far-Side Blackout",
+    description: "Orion passes behind the Moon — communications blackout 30–50 min",
+    metMs: Math.round(122 * 3600 * 1000), // metHours=122 → ~5d 02h 00m
   },
   {
     name: "Lunar SOI Exit",
     description: "Orion exits the lunar sphere of influence on return trajectory",
-    metMs: met(5, 19, 47, 0),
+    metMs: Math.round(138.87 * 3600 * 1000), // metHours=138.87 → ~5d 18h 52m
   },
   {
     name: "RTC-1",
-    description: "Return trajectory correction maneuver 1",
-    metMs: met(6, 4, 23, 0),
+    description: "First return trajectory correction burn",
+    metMs: Math.round(145.48 * 3600 * 1000), // metHours=145.48 → ~6d 01h 29m
   },
   {
     name: "RTC-2",
-    description: "Return trajectory correction maneuver 2",
-    metMs: met(8, 4, 33, 0),
-  },
-  {
-    name: "RTC-3",
-    description: "Return trajectory correction maneuver 3",
-    metMs: met(8, 20, 33, 0),
+    description: "Second return trajectory correction burn",
+    metMs: Math.round(196.48 * 3600 * 1000), // metHours=196.48 → ~8d 04h 29m
   },
   {
     name: "CM/SM Separation",
-    description: "Command Module separates from Service Module before re-entry",
-    metMs: met(9, 1, 13, 0),
+    description: "Crew module separates from European Service Module before re-entry",
+    metMs: Math.round(216.5 * 3600 * 1000), // metHours=216.5 → ~9d 00h 30m
   },
   {
     name: "Entry Interface",
-    description: "Orion enters Earth's atmosphere at 400,000 ft",
-    metMs: met(9, 1, 33, 0),
+    description: "Orion hits Earth's atmosphere at ~40,000 km/h",
+    metMs: Math.round(217 * 3600 * 1000), // metHours=217 → ~9d 01h 00m
   },
   {
     name: "Splashdown",
     description: "Orion crew module splashes down in the Pacific Ocean",
-    metMs: met(9, 1, 46, 0),
+    metMs: Math.round(217.51 * 3600 * 1000), // metHours=217.51 → ~9d 01h 31m
   },
 ];
 
@@ -289,244 +280,110 @@ function act(
   };
 }
 
+// Activities sourced from jakobrosin/artemis-data crewSchedule (82 entries).
+// startMET/endMET are decimal hours; converted to d/h/m via Math.floor.
 const ACTIVITIES: TimelineActivity[] = [
-  // ── FD01: Launch Day (MET 0/00:00 to ~0/19:30) ──────────────────────────
-  // Anchors: PRM 0/00:50, ARB 0/01:47, ICPS Sep 0/03:23, USS 0/04:51,
-  //          SPL Deploys 0/05:27, OpComm 0/10:06, PRB 0/13:30, OpNav C/O 0/14:15
-  //          Sleep1: 0/08:30–0/12:30 (4 hrs), Sleep2: 0/15:00–0/19:30 (4.5 hrs)
-  act("Launch / Ascent", "maneuver", 0, 0, 0, 0, 0, 8, "Liftoff from LC-39B"),
-  act("Pre-ARB Checkouts", "config", 0, 0, 8, 0, 0, 50),
-  act("PRM Burn", "maneuver", 0, 0, 50, 0, 0, 55, "Perigee Raise Maneuver TIG 0/00:50"),
-  act("T-Roll Maneuvers", "maneuver", 0, 0, 55, 0, 1, 47),
-  act("ARB", "maneuver", 0, 1, 47, 0, 2, 0, "Apogee Raise Burn TIG 0/01:47"),
-  act("Doff OCSS", "config", 0, 2, 0, 0, 2, 30, "Remove Orion Crew Survival System suits"),
-  act("DCAM Ops", "science", 0, 2, 30, 0, 3, 23, "Dock camera operations"),
-  act("Orion/ICPS Separation", "maneuver", 0, 3, 23, 0, 3, 30, "Spring separation at 0/03:23"),
-  act("Proximity Ops Demo", "science", 0, 3, 30, 0, 4, 51),
-  act("Orion USS", "maneuver", 0, 4, 51, 0, 5, 0, "Upper stage separation 0/04:51"),
-  act("Solar Panel Deploy / Cab Config", "config", 0, 5, 0, 0, 5, 30, "SPL deploys ~0/05:27"),
-  act("Cabin Configuration", "config", 0, 5, 30, 0, 6, 0),
-  act("4K Encoder Setup", "config", 0, 6, 0, 0, 6, 30),
-  act("N2/O2 Operations", "config", 0, 6, 30, 0, 7, 0),
-  act("PAO Event", "pao", 0, 7, 0, 0, 8, 0),
-  act("PMC", "config", 0, 8, 0, 0, 8, 15, "Private Medical Conference"),
-  act("FD Conference", "config", 0, 8, 15, 0, 8, 30),
+  // ── Day 1: Launch Day ───────────────────────────────────────────────────
+  act("Launch & ascent", "maneuver", 0, 0, 0, 0, 0, 9, "SLS liftoff, main-engine cutoff ~8 min after launch."),
+  act("Orbital insertion burns", "maneuver", 0, 0, 9, 0, 1, 0, "ICPS perigee-raise burn (~49 min), then high-Earth orbit insertion (~1 hr)."),
+  act("Post-insertion checks", "config", 0, 1, 0, 0, 3, 0, "Remove launch suits, reconfigure cabin for living and work."),
+  act("Proximity operations demo", "science", 0, 3, 0, 0, 5, 0, "ICPS becomes docking target; crew practices manual flying toward and around it."),
+  act("Orion systems checkout", "config", 0, 5, 0, 0, 8, 0, "Test potable water dispenser, toilet, CO2 removal system."),
+  act("Crew meal", "meal", 0, 7, 0, 0, 7, 30, "First meal in orbit — test food rehydration system."),
+  act("Sleep period", "sleep", 0, 7, 30, 0, 12, 30, "Brief rest period (~4 hours) after first day in space."),
+  act("Orbital manoeuvre & DSN checkout", "config", 0, 12, 30, 0, 14, 0, "Engine firing for correct TLI orbital geometry; emergency comms test on Deep Space Network."),
+  act("Sleep period", "sleep", 0, 13, 0, 0, 20, 0, "After perigee raise burn, crew returns to sleep for ~4.5 hours before first full day in space."),
 
-  act("Sleep Period 1", "sleep", 0, 8, 30, 0, 12, 30, "4-hour rest period"),
+  // ── Day 2: TLI Day ──────────────────────────────────────────────────────
+  act("Wake & meal", "meal", 0, 20, 0, 0, 21, 0, "Morning routine and breakfast."),
+  act("TLI burn conference — GO for TLI", "config", 0, 21, 0, 0, 22, 0, "Mission management team gave go for translunar injection."),
+  act("Crew exercise", "exercise", 0, 22, 0, 0, 23, 30, "Flywheel resistive exercise. Crew rotates on the single device."),
+  act("TLI burn preparation", "config", 0, 23, 30, 1, 0, 30, "Final systems checkout, crew dons pressure suits."),
+  act("Translunar injection burn", "maneuver", 1, 0, 30, 1, 1, 30, "ESM main engine fires for ~6 minutes. Commits Orion to the Moon."),
+  act("Post-TLI checks", "config", 1, 1, 30, 1, 3, 0, "Systems verification. Earth shadow transit."),
+  act("Video downlink & crew meal", "pao", 1, 3, 0, 1, 5, 0, "First video call home after TLI."),
+  act("Personal time", "off-duty", 1, 5, 0, 1, 8, 0, "Off-duty after a historic day."),
+  act("Crew meal & pre-sleep", "meal", 1, 8, 0, 1, 10, 0, "Evening meal before transit sleep."),
+  act("Sleep period", "sleep", 1, 10, 0, 1, 18, 0, "Full rest period after TLI day."),
 
-  act("Perigee Raise Burn", "maneuver", 0, 13, 15, 0, 13, 45, "Orion PRB TIG ~0/13:30"),
-  act("DSN Ops", "config", 0, 13, 45, 0, 14, 15, "DSN comm checkout"),
-  act("OpNav Checkout", "science", 0, 14, 15, 0, 14, 45, "Optical Navigation C/O ~0/14:15"),
-  act("PMC", "config", 0, 14, 45, 0, 15, 0, "Private Medical Conference"),
+  // ── Day 3: Outbound Cruise 1 ─────────────────────────────────────────────
+  act("Wake & meal", "meal", 1, 18, 0, 1, 20, 0, "Morning routine and breakfast."),
+  act("Trajectory correction burn #1 prep", "config", 1, 20, 0, 1, 22, 0, "Hansen prepares for first of three outbound course-correction burns."),
+  act("Outbound trajectory correction burn #1", "maneuver", 1, 22, 0, 1, 22, 12, "First mid-course correction ensures Orion stays on target for the Moon."),
+  act("CPR & medical kit demo", "science", 1, 22, 12, 2, 2, 0, "Glover, Koch, and Hansen demonstrate CPR procedures in microgravity; medical kit checkout."),
+  act("DSN emergency comms test", "science", 2, 2, 0, 2, 4, 0, "Koch tests Orion's emergency communications system on the Deep Space Network."),
+  act("Lunar flyby rehearsal", "science", 2, 4, 0, 2, 7, 0, "Entire crew rehearses choreography for Day 6 lunar flyby scientific observations."),
+  act("Exercise & personal time", "exercise", 2, 7, 0, 2, 9, 0, "Crew exercise and downtime."),
+  act("Video downlink", "pao", 2, 9, 0, 2, 10, 0, "Scheduled space-to-ground video session."),
+  act("Sleep period", "sleep", 2, 10, 0, 2, 18, 0, "Full rest period."),
 
-  act("Sleep Period 2", "sleep", 0, 15, 0, 0, 19, 30, "4.5-hour rest period"),
+  // ── Day 4: Outbound Cruise 2 ─────────────────────────────────────────────
+  act("Wake & meal", "meal", 2, 18, 0, 2, 20, 0, "Morning routine and breakfast."),
+  act("Trajectory correction burn #2 prep", "config", 2, 20, 0, 2, 22, 0, "Preparation for second outbound course correction."),
+  act("Outbound trajectory correction burn #2", "maneuver", 2, 22, 0, 2, 22, 12, "Second mid-course correction refines lunar approach path."),
+  act("Lunar target study", "science", 2, 22, 12, 3, 2, 0, "Each astronaut reviews geographic targets for Day 6 imagery."),
+  act("Celestial photography", "science", 3, 2, 0, 3, 4, 0, "Crew photographs celestial bodies from Orion's windows."),
+  act("Exercise", "exercise", 3, 4, 0, 3, 6, 0, "Flywheel workout session."),
+  act("Video downlink & personal time", "pao", 3, 6, 0, 3, 8, 0, "Video call with ground and free time."),
+  act("Crew meal", "meal", 3, 8, 0, 3, 10, 0, "Evening meal."),
+  act("Sleep period", "sleep", 3, 10, 0, 3, 18, 0, "Full rest period."),
 
-  // ── FD02: TLI Day (MET ~0/19:30 to ~1/16:45) ───────────────────────────
-  // Anchors: TLI 1/01:08:42, Sleep: 1/08:15–1/16:45 (8.5 hrs)
-  act("DPC", "config", 0, 19, 30, 0, 20, 0, "Daily Planning Conference"),
-  act("Meal", "meal", 0, 20, 0, 0, 20, 30),
-  act("Exercise Test M-42 EXT", "exercise", 0, 20, 30, 0, 22, 0, "M-42 EXT exercise test"),
-  act("NatGeo Setup", "science", 0, 22, 0, 0, 22, 30, "National Geographic equipment setup"),
-  act("ECLSS CO2 Monitor DFTO", "science", 0, 22, 30, 0, 23, 30),
-  act("TLI Conference", "config", 0, 23, 30, 1, 1, 0, "Pre-burn briefing"),
-  act("TLI Burn", "maneuver", 1, 1, 37, 1, 1, 57, "Trans-Lunar Injection TIG 01/01:37"),
-  act("Meal", "meal", 1, 1, 30, 1, 2, 0),
-  act("Pulse Oximetry", "science", 1, 2, 30, 1, 3, 0),
-  act("PAO Event", "pao", 1, 3, 30, 1, 4, 30),
-  act("Window Inspection", "science", 1, 4, 30, 1, 5, 0),
-  act("Dock Cam Config Transit", "config", 1, 5, 0, 1, 5, 30),
-  act("PMC", "config", 1, 6, 30, 1, 7, 0, "Private Medical Conference"),
-  act("FD Conference", "config", 1, 7, 0, 1, 7, 30),
-  act("TLI Confirmation", "config", 1, 7, 30, 1, 8, 15),
+  // ── Day 5: Lunar Approach ────────────────────────────────────────────────
+  act("Wake & meal", "meal", 3, 18, 0, 3, 20, 0, "Morning routine and breakfast."),
+  act("Spacesuit pressure testing", "science", 3, 20, 0, 4, 1, 0, "Test donning suits quickly, pressurizing them, installing seats, eating/drinking through helmet port."),
+  act("Crew meal & rest", "meal", 4, 1, 0, 4, 3, 0, "Midday break."),
+  act("Trajectory correction burn #3 prep", "config", 4, 3, 0, 4, 4, 0, "Preparation for final outbound course correction before lunar flyby."),
+  act("Outbound trajectory correction burn #3", "maneuver", 4, 4, 0, 4, 4, 12, "Final outbound mid-course correction. Orion enters the lunar sphere of influence today."),
+  act("Exercise", "exercise", 4, 4, 12, 4, 6, 0, "Flywheel workout session."),
+  act("Video downlink & personal time", "pao", 4, 6, 0, 4, 8, 0, "Video call with ground and free time."),
+  act("Crew meal", "meal", 4, 8, 0, 4, 10, 0, "Evening meal."),
+  act("Sleep period", "sleep", 4, 10, 0, 4, 18, 0, "Full rest period before lunar flyby day."),
 
-  act("Sleep", "sleep", 1, 8, 15, 1, 16, 45, "8.5-hour rest period"),
+  // ── Day 6: Lunar Flyby Day ───────────────────────────────────────────────
+  act("Wake early — lunar flyby day", "other", 4, 18, 0, 4, 20, 0, "Early wake-up for the historic lunar flyby."),
+  act("Crew meal & flyby prep", "meal", 4, 20, 0, 4, 22, 0, "Breakfast and final preparation for close lunar approach."),
+  act("Lunar flyby — photography & observations", "science", 4, 22, 0, 5, 4, 0, "Closest approach ~8,900 km above lunar surface. Crew photographs and observes the Moon up close."),
+  act("Solar eclipse observation", "science", 5, 3, 0, 5, 4, 0, "Sun hidden behind Moon. Crew observes corona, meteoroid flashes, lunar dust."),
+  act("Far-side transit — loss of signal", "other", 5, 4, 0, 5, 5, 0, "Orion passes behind the Moon. Communications blackout lasting 30-50 minutes."),
+  act("Post-flyby science & observation", "science", 5, 5, 0, 5, 10, 0, "Continued photography and recordings after reacquiring signal."),
+  act("Exercise & crew meal", "exercise", 5, 10, 0, 5, 12, 0, "Post-flyby meal and exercise."),
+  act("Video downlink", "pao", 5, 12, 0, 5, 14, 0, "Share lunar flyby experience with Mission Control and the world."),
+  act("Sleep period", "sleep", 5, 14, 0, 5, 22, 0, "Rest period after the historic flyby."),
 
-  // ── FD03: Outbound Cruise 1 (MET ~1/16:45 to ~2/09:30) ────────────────
-  // Anchors: Toilet Noise at 1/22:15 (user confirmed), OTC-1 ~2/01:08:42,
-  //          Sleep: 2/09:30–2/18:00 (8.5 hrs)
-  act("DPC", "config", 1, 16, 45, 1, 17, 15, "Daily Planning Conference"),
-  act("Meal", "meal", 1, 17, 15, 1, 17, 45),
-  act("CM/SM Survey", "science", 1, 17, 45, 1, 18, 15, "Camera survey of Service Module at ~01/14:00 annotation"),
-  act("Pulse Oximetry", "science", 1, 18, 15, 1, 18, 45),
-  act("PFC", "other", 1, 18, 45, 1, 19, 15, "Private Family Conference"),
-  act("NatGeo", "science", 1, 19, 15, 1, 20, 15),
-  act("Exercise", "exercise", 1, 20, 0, 1, 21, 0),
-  act("Off Duty", "off-duty", 1, 21, 0, 1, 22, 15),
-  act("Toilet Noise Measurement", "science", 1, 22, 15, 1, 22, 45, "Acoustic measurement"),
-  act("Dual Cam Bracket Uninstall", "config", 1, 22, 45, 1, 23, 15),
-  act("PAO Event", "pao", 1, 23, 15, 2, 0, 15),
-  act("OTC-1 Burn", "maneuver", 2, 0, 7, 2, 0, 17, "Outbound trajectory correction 1 TIG 02/00:07"),
-  act("Meal", "meal", 2, 0, 30, 2, 1, 30),
-  act("CPR Demo", "science", 2, 2, 0, 2, 3, 0, "Medical procedure demonstration"),
-  act("PAO Event", "pao", 2, 3, 0, 2, 4, 0),
-  act("SAT Mode Test", "science", 2, 4, 0, 2, 5, 30, "DFTO-EM2-23"),
-  act("Med Kit Inventory", "config", 2, 5, 30, 2, 6, 0),
-  act("Lunar Cabin Config", "config", 2, 6, 0, 2, 6, 15),
-  act("D5 Cam Window", "science", 2, 6, 15, 2, 6, 30),
-  act("NatGeo", "science", 2, 6, 30, 2, 6, 45),
-  act("DSN Emergency Comm Test", "config", 2, 6, 45, 2, 7, 30, "DFTO-EM2-22"),
-  act("CSA PAO", "pao", 2, 7, 30, 2, 7, 45, "Canadian Space Agency event"),
-  act("PMC", "config", 2, 7, 45, 2, 8, 0, "Private Medical Conference"),
-  act("FD Conference", "config", 2, 8, 0, 2, 8, 15),
+  // ── Day 7: Return Cruise 1 ───────────────────────────────────────────────
+  act("Wake & meal", "meal", 5, 22, 0, 6, 0, 0, "Morning routine. Orion exits the lunar sphere of influence today."),
+  act("Crew lunar debrief", "science", 6, 0, 0, 6, 3, 0, "Ground scientists speak with crew while the lunar flyby experience is fresh."),
+  act("Return trajectory correction burn #1", "maneuver", 6, 3, 0, 6, 4, 0, "First of three return course corrections to adjust path home."),
+  act("Exercise", "exercise", 6, 4, 0, 6, 6, 0, "Flywheel workout session."),
+  act("Off-duty time", "off-duty", 6, 6, 0, 6, 10, 0, "Largely off-duty day for rest before final return phase tasks."),
+  act("Crew meal", "meal", 6, 10, 0, 6, 12, 0, "Evening meal."),
+  act("Sleep period", "sleep", 6, 12, 0, 6, 22, 0, "Extended rest period."),
 
-  act("Sleep", "sleep", 2, 9, 30, 2, 18, 0, "8.5-hour rest period"),
+  // ── Day 8: Return Cruise 2 ───────────────────────────────────────────────
+  act("Wake & meal", "meal", 6, 22, 0, 7, 0, 0, "Morning routine and breakfast."),
+  act("Radiation shelter demonstration", "science", 7, 0, 0, 7, 4, 0, "Crew builds a protective shelter using Orion supplies — demonstrating shielding from solar particle events."),
+  act("Manual piloting demonstration", "science", 7, 4, 0, 7, 8, 0, "Test Orion manual control: target centering, tail-to-Sun attitude, 6-DOF vs 3-DOF manoeuvres."),
+  act("Exercise", "exercise", 7, 8, 0, 7, 10, 0, "Flywheel workout session."),
+  act("Video downlink & crew meal", "pao", 7, 10, 0, 7, 12, 0, "Video call with ground and evening meal."),
+  act("Sleep period", "sleep", 7, 12, 0, 7, 22, 0, "Full rest period."),
 
-  // ── FD04: Outbound Cruise 2 (MET ~2/18:00 to ~3/18:15) ─────────────────
-  // Anchors: OTC-2 ~3/01:08:42, Sleep: 3/09:45–3/18:15 (8.5 hrs, 45 min shift earlier)
-  act("DPC", "config", 2, 18, 0, 2, 18, 30, "Daily Planning Conference"),
-  act("Meal", "meal", 2, 18, 30, 2, 19, 0),
-  act("Pulse Oximetry", "science", 2, 19, 0, 2, 19, 30),
-  act("PWD Operations", "config", 2, 19, 30, 2, 20, 0, "Portable Water Dispenser"),
-  act("NatGeo", "science", 2, 20, 0, 2, 21, 0),
-  act("P/TV Photo", "science", 2, 21, 0, 2, 21, 30),
-  act("PAO Event", "pao", 2, 21, 30, 2, 22, 30),
-  act("ESA Event", "pao", 2, 22, 30, 2, 23, 0, "European Space Agency"),
-  act("Off Duty", "off-duty", 2, 23, 0, 3, 1, 0),
-  act("OTC-2 Burn", "maneuver", 3, 0, 12, 3, 0, 22, "Outbound trajectory correction 2 TIG 03/00:12"),
-  act("Meal", "meal", 3, 1, 15, 3, 1, 45),
-  act("Manual Piloting Demo", "science", 3, 2, 0, 3, 3, 0, "Crew flies Orion manually"),
-  act("Cognitive Assessment", "science", 3, 3, 0, 3, 4, 0, "COGN"),
-  act("Lunar Imaging Review", "science", 3, 4, 0, 3, 5, 0),
-  act("Flywheel Experiment", "science", 3, 5, 0, 3, 6, 0),
-  act("NatGeo", "science", 3, 6, 0, 3, 6, 30),
-  act("CSA VIP Event", "pao", 3, 6, 30, 3, 7, 0),
-  act("Imaging", "science", 3, 7, 0, 3, 8, 0),
-  act("PAO Event", "pao", 3, 8, 0, 3, 8, 30),
-  act("PMC", "config", 3, 8, 30, 3, 9, 0, "Private Medical Conference"),
-  act("FD Conference", "config", 3, 9, 0, 3, 9, 45),
+  // ── Day 9: Pre-Entry Day ─────────────────────────────────────────────────
+  act("Wake & meal", "meal", 7, 22, 0, 8, 0, 0, "Morning routine and breakfast."),
+  act("Re-entry & splashdown procedure review", "config", 8, 0, 0, 8, 3, 0, "Crew studies re-entry procedures and talks with flight control team."),
+  act("Return trajectory correction burn #2", "maneuver", 8, 3, 0, 8, 4, 0, "Course correction to keep Orion on target for splashdown zone."),
+  act("Waste system & garment testing", "science", 8, 4, 0, 8, 6, 0, "Test backup waste collection systems; fit-check orthostatic intolerance compression garments."),
+  act("Exercise & personal time", "exercise", 8, 6, 0, 8, 8, 0, "Final workout session and personal time."),
+  act("Crew meal", "meal", 8, 8, 0, 8, 10, 0, "Evening meal — last full evening in space."),
+  act("Sleep period", "sleep", 8, 10, 0, 8, 14, 0, "Final rest period before re-entry day."),
 
-  act("Sleep", "sleep", 3, 9, 45, 3, 18, 15, "8.5-hour rest period, 45 min shift earlier"),
-
-  // ── FD05: Lunar Approach (MET ~3/18:15 to ~4/17:15) ─────────────────────
-  // Anchors: OTC-3 4/04:29:52, Lunar SOI 4/06:38, Sleep: 4/08:45–4/17:15 (8.5 hrs, 1 hr shift earlier)
-  act("DPC", "config", 3, 18, 15, 3, 18, 45, "Daily Planning Conference"),
-  act("Meal", "meal", 3, 18, 45, 3, 19, 15),
-  act("Pulse Oximetry", "science", 3, 19, 15, 3, 19, 45),
-  act("OCSS DFTO Ops", "science", 3, 19, 45, 3, 20, 45, "Crew survival system test"),
-  act("Cabin Depress Ops", "config", 3, 20, 45, 3, 21, 45, "Start cabin depress ~0/00:30 relative"),
-  act("NatGeo", "science", 3, 21, 45, 3, 22, 15),
-  act("ECLSS Wall Test", "science", 3, 22, 15, 3, 22, 45),
-  act("Off Duty", "off-duty", 3, 22, 45, 4, 0, 0),
-  act("OpNav", "science", 4, 0, 0, 4, 0, 30),
-  act("PAO Event", "pao", 4, 0, 30, 4, 1, 30),
-  act("Lunar Imaging Prep", "science", 4, 1, 30, 4, 2, 30),
-  act("Meal", "meal", 4, 2, 30, 4, 3, 0),
-  act("OTC-3 Burn", "maneuver", 4, 5, 23, 4, 5, 33, "Outbound trajectory correction 3 TIG 04/05:23"),
-  act("SAW Camera", "science", 4, 4, 45, 4, 5, 30),
-  act("Lunar SOI Entry Ops", "config", 4, 6, 30, 4, 7, 0, "Lunar SOI Entry ~4/06:38"),
-  act("PMC", "config", 4, 7, 0, 4, 7, 30, "Private Medical Conference"),
-  act("FD Conference", "config", 4, 7, 30, 4, 8, 0),
-  act("PFC", "other", 4, 8, 0, 4, 8, 30, "Private Family Conference"),
-  act("Pre-Flyby Prep", "config", 4, 8, 30, 4, 8, 45),
-
-  act("Sleep", "sleep", 4, 8, 45, 4, 17, 15, "8.5-hour rest period, 1 hr shift earlier"),
-
-  // ── FD06: Lunar Flyby Day (MET ~4/17:15 to ~5/19:30) ───────────────────
-  // Anchors: Lunar Close Approach 5/00:29:59, Max Earth Distance 5/00:35,
-  //          CM/SM Survey 5/12:30, Sleep: 5/10:00–5/19:30 (9.5 hrs, 1 hr shift later)
-  act("DPC", "config", 4, 17, 15, 4, 17, 45, "Daily Planning Conference"),
-  act("Meal", "meal", 4, 17, 45, 4, 18, 15),
-  act("Pulse Oximetry", "science", 4, 18, 15, 4, 18, 30),
-  act("Lunar Observation Prep", "science", 4, 18, 30, 4, 19, 30),
-  act("PAO Event", "pao", 4, 19, 30, 4, 20, 30),
-  act("Lunar Conference", "config", 4, 20, 30, 4, 21, 0, "Pre-flyby briefing"),
-  act("Lunar Configuration", "config", 4, 21, 0, 4, 22, 0),
-  act("NatGeo", "science", 4, 22, 0, 4, 22, 30),
-  act("Meal", "meal", 4, 22, 30, 4, 23, 0),
-  act("Lunar Observation 1", "science", 4, 23, 0, 5, 0, 0, "Approaching Moon"),
-  act("Lunar Close Approach Ops", "science", 5, 0, 0, 5, 2, 0, "Closest approach 5/01:23, Max Earth distance 5/01:26"),
-  act("Meal", "meal", 5, 1, 30, 5, 2, 0),
-  act("Lunar Observation 2", "science", 5, 2, 0, 5, 4, 0, "Departing Moon views"),
-  act("Apollo Distance Record", "science", 5, 4, 0, 5, 5, 0, "Exceeding Apollo 13 Earth distance record"),
-  act("PAO Event", "pao", 5, 5, 0, 5, 6, 0),
-  act("PMC", "config", 5, 6, 0, 5, 6, 30, "Private Medical Conference"),
-  act("FD Conference", "config", 5, 6, 30, 5, 7, 0),
-  act("Lunar Documentation & Transfer", "science", 5, 7, 0, 5, 8, 0),
-  act("Pre-Sleep", "config", 5, 8, 0, 5, 10, 0),
-
-  act("Sleep", "sleep", 5, 10, 0, 5, 19, 30, "9.5-hour rest period, 1 hr shift later"),
-
-  // ── FD07: Return Cruise 1 (MET ~5/19:30 to ~6/16:30) ───────────────────
-  // Anchors: Lunar SOI Exit 5/18:53, RTC-1 6/01:29:52, Sleep: 6/08:00–6/16:30 (8.5 hrs)
-  act("CM/SM Survey", "science", 5, 12, 30, 5, 13, 0, "Post-flyby Service Module survey (PDF annotation 05/12:30)"),
-  act("DPC", "config", 5, 19, 30, 5, 20, 0, "Daily Planning Conference"),
-  act("Meal", "meal", 5, 20, 0, 5, 20, 30),
-  act("Pulse Oximetry", "science", 5, 20, 30, 5, 21, 0),
-  act("Post-Lunar Debrief", "science", 5, 21, 0, 5, 22, 0),
-  act("Crew-to-Crew Call", "pao", 5, 22, 0, 5, 22, 30, "C2C"),
-  act("Off Duty", "off-duty", 5, 22, 30, 5, 23, 30),
-  act("Meal", "meal", 5, 23, 30, 6, 0, 0),
-  act("RTC-1 Burn", "maneuver", 6, 4, 23, 6, 4, 33, "Return trajectory correction 1 TIG 06/04:23"),
-  act("PFC", "other", 6, 1, 45, 6, 2, 15, "Private Family Conference"),
-  act("P/TV Exercise", "exercise", 6, 2, 15, 6, 3, 15),
-  act("Off Duty", "off-duty", 6, 3, 15, 6, 5, 0),
-  act("PAO Event", "pao", 6, 5, 0, 6, 6, 0),
-  act("PMC", "config", 6, 6, 0, 6, 6, 30, "Private Medical Conference"),
-  act("FD Conference", "config", 6, 6, 30, 6, 7, 0),
-  act("Pre-Sleep", "config", 6, 7, 0, 6, 8, 0),
-
-  act("Sleep", "sleep", 6, 8, 0, 6, 16, 30, "8.5-hour rest period"),
-
-  // ── FD08: Return Cruise 2 (MET ~6/16:30 to ~7/16:30) ───────────────────
-  // Anchors: Manual Piloting DFTO 7/01:00–7/02:00, Sleep: 7/08:00–7/16:30 (8.5 hrs)
-  act("DPC", "config", 6, 16, 30, 6, 17, 0, "Daily Planning Conference"),
-  act("Meal", "meal", 6, 17, 0, 6, 17, 30),
-  act("CCU", "config", 6, 17, 30, 6, 18, 0, "Crew Configuration Update"),
-  act("P/TV Exercise", "exercise", 6, 18, 0, 6, 19, 0),
-  act("RHC Questionnaire", "science", 6, 19, 0, 6, 19, 30, "Rotational Hand Controller"),
-  act("NatGeo", "science", 6, 19, 30, 6, 20, 0),
-  act("CSA PAO", "pao", 6, 20, 0, 6, 21, 0, "Canadian Space Agency event"),
-  act("Cognitive Assessment", "science", 6, 21, 0, 6, 22, 0, "COGN"),
-  act("Cabin Repress", "config", 6, 22, 0, 6, 22, 30, "Repress to 14.7 psi"),
-  act("Meal", "meal", 6, 22, 30, 6, 23, 30),
-  act("Radiation Shelter Demo", "science", 6, 23, 30, 7, 0, 30),
-  act("Dock Cam Ops", "science", 7, 0, 30, 7, 1, 0),
-  act("Manual Piloting DFTO", "science", 7, 1, 0, 7, 2, 0, "DFTO manual piloting"),
-  act("PAO Event", "pao", 7, 2, 0, 7, 3, 0),
-  act("PMC", "config", 7, 3, 0, 7, 3, 30, "Private Medical Conference"),
-  act("FD Conference", "config", 7, 3, 30, 7, 4, 0),
-  act("Pre-Sleep", "config", 7, 4, 0, 7, 8, 0),
-
-  act("Sleep", "sleep", 7, 8, 0, 7, 16, 30, "8.5-hour rest period"),
-
-  // ── FD09: Pre-Entry Day (MET ~7/16:30 to ~8/16:30) ─────────────────────
-  // Anchors: RTC-2 8/04:29:10, Sleep: 8/08:00–8/16:30 (8.5 hrs)
-  act("DPC", "config", 7, 16, 30, 7, 17, 0, "Daily Planning Conference"),
-  act("Meal", "meal", 7, 17, 0, 7, 17, 30),
-  act("Pulse Oximetry", "science", 7, 17, 30, 7, 18, 0),
-  act("OIG Donning DFTO", "config", 7, 18, 0, 7, 19, 0, "Suit donning operations"),
-  act("Entry Study", "config", 7, 19, 0, 7, 20, 0, "Review entry procedures"),
-  act("Entry Conference", "config", 7, 20, 0, 7, 21, 0, "Entry briefing"),
-  act("PAO Event", "pao", 7, 21, 0, 7, 22, 0),
-  act("NatGeo", "science", 7, 22, 0, 7, 22, 30),
-  act("Meal", "meal", 7, 22, 30, 7, 23, 30),
-  act("PAO Event", "pao", 7, 23, 30, 8, 0, 0),
-  act("OIG Donning DFTO", "config", 8, 0, 0, 8, 1, 0, "Suit donning second ops"),
-  act("Entry Stow", "config", 8, 1, 0, 8, 3, 0, "Stowing loose items"),
-  act("RTC-2 Burn", "maneuver", 8, 4, 33, 8, 4, 43, "Return trajectory correction 2 TIG 08/04:33"),
-  act("ONWM System Checkout", "config", 8, 4, 45, 8, 5, 30),
-  act("Entry Stow", "config", 8, 5, 30, 8, 7, 0),
-  act("PMC", "config", 8, 7, 0, 8, 7, 30, "Private Medical Conference"),
-  act("FD Conference", "config", 8, 7, 30, 8, 8, 0),
-
-  act("Sleep", "sleep", 8, 8, 0, 8, 16, 30, "8.5-hour rest period"),
-
-  // ── FD10: Entry & Recovery Day (MET ~8/16:30 to 9/03:00) ───────────────
-  // Anchors: RTC-3 8/20:29:10, CM/SM Sep 9/01:09, Entry Interface 9/01:29, Splashdown 9/01:42:48
-  act("DPC", "config", 8, 16, 30, 8, 17, 0, "Daily Planning Conference"),
-  act("Meal", "meal", 8, 17, 0, 8, 17, 30),
-  act("OpNav", "science", 8, 17, 30, 8, 18, 0),
-  act("PMC", "config", 8, 18, 0, 8, 18, 30, "Private Medical Conference"),
-  act("Cabin Configuration", "config", 8, 18, 30, 8, 20, 0),
-  act("RTC-3 Burn", "maneuver", 8, 20, 33, 8, 20, 43, "Return trajectory correction 3 TIG 08/20:33"),
-  act("Entry Checklist", "config", 8, 20, 45, 8, 23, 0),
-  act("Meal", "meal", 8, 23, 0, 8, 23, 30),
-  act("Entry Stow Final", "config", 8, 23, 30, 9, 0, 30),
-  act("Entry Prep", "config", 9, 0, 30, 9, 1, 5),
-  act("CM/SM Separation", "maneuver", 9, 1, 13, 9, 1, 16, "Service Module jettisoned at 9/01:13"),
-  act("Entry Interface", "maneuver", 9, 1, 29, 9, 1, 42, "Skip re-entry at 122 km altitude"),
-  act("Splashdown", "maneuver", 9, 1, 46, 9, 1, 47, "Pacific Ocean splashdown 09/01:46"),
-  act("Recovery Ops", "other", 9, 1, 43, 9, 3, 0, "Crew recovery operations"),
+  // ── Day 10: Entry & Recovery Day ─────────────────────────────────────────
+  act("Wake early — re-entry day", "other", 8, 18, 0, 8, 22, 0, "Early wake-up for the final day of the mission."),
+  act("Final stow & cabin prep", "config", 8, 22, 0, 9, 2, 0, "Return cabin to launch configuration: stow equipment, install seats."),
+  act("Don spacesuits for re-entry", "config", 9, 2, 0, 9, 6, 0, "Crew dons OCSS pressure suits, closes visors, and straps in for atmospheric entry."),
+  act("Service module separation", "maneuver", 9, 6, 0, 9, 9, 0, "Crew module separates from European Service Module prior to atmospheric entry."),
+  act("Atmospheric re-entry", "maneuver", 9, 9, 0, 9, 10, 0, "Heat shield faces ~2,760 C during re-entry at ~40,000 km/h."),
+  act("Parachute descent", "maneuver", 9, 10, 0, 9, 10, 30, "Drogue chutes slow to ~494 km/h, then three main chutes deploy for final descent at ~27 km/h."),
+  act("Splashdown & recovery", "maneuver", 9, 10, 30, 9, 12, 0, "Splashdown in the Pacific Ocean. NASA and U.S. Navy recovery teams retrieve crew and capsule."),
 ];
 
 // ---------------------------------------------------------------------------
