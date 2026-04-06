@@ -147,6 +147,24 @@ function runMigrations(db: Database.Database): void {
     db.pragma("user_version = 2");
     console.log("[db] migration 2 applied: added moon_rel_speed_km_h column");
   }
+
+  // Migration 3: Add RCS thruster and SAW gimbal columns to arow_telemetry.
+  if (currentVersion < 3) {
+    const cols = [
+      "rcs_thrusters_json TEXT",
+      "rcs_status1 TEXT",
+      "rcs_status2 TEXT",
+      "saw1_ig REAL", "saw1_og REAL",
+      "saw2_ig REAL", "saw2_og REAL",
+      "saw3_ig REAL", "saw3_og REAL",
+      "saw4_ig REAL", "saw4_og REAL",
+    ];
+    for (const col of cols) {
+      try { db.exec(`ALTER TABLE arow_telemetry ADD COLUMN ${col}`); } catch { /* may exist */ }
+    }
+    db.pragma("user_version = 3");
+    console.log("[db] migration 3 applied: added RCS thruster + SAW gimbal columns");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -187,6 +205,8 @@ export function archiveArow(arow: {
   yawRate: number | null;
   antennaGimbal: { az1: number; el1: number; az2: number; el2: number } | null;
   sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number } | null;
+  rcsThrusters: { thrusters: Record<string, boolean>; status1: string | null; status2: string | null } | null;
+  sawGimbals: { saw1: { ig: number; og: number }; saw2: { ig: number; og: number }; saw3: { ig: number; og: number }; saw4: { ig: number; og: number } } | null;
   icps: { quaternion: { w: number; x: number; y: number; z: number }; active: boolean };
   spacecraftMode: string;
 }): void {
@@ -195,8 +215,11 @@ export function archiveArow(arow: {
     INSERT INTO arow_telemetry (timestamp, quat_w, quat_x, quat_y, quat_z,
       euler_roll, euler_pitch, euler_yaw, roll_rate, pitch_rate, yaw_rate,
       ant_az1, ant_el1, ant_az2, ant_el2, saw1, saw2, saw3, saw4,
-      icps_qw, icps_qx, icps_qy, icps_qz, icps_active, spacecraft_mode)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      icps_qw, icps_qx, icps_qy, icps_qz, icps_active, spacecraft_mode,
+      rcs_thrusters_json, rcs_status1, rcs_status2,
+      saw1_ig, saw1_og, saw2_ig, saw2_og, saw3_ig, saw3_og, saw4_ig, saw4_og)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     arow.timestamp,
@@ -210,7 +233,14 @@ export function archiveArow(arow: {
     arow.sawAngles?.saw3 ?? null, arow.sawAngles?.saw4 ?? null,
     arow.icps.quaternion.w, arow.icps.quaternion.x,
     arow.icps.quaternion.y, arow.icps.quaternion.z,
-    arow.icps.active ? 1 : 0, arow.spacecraftMode
+    arow.icps.active ? 1 : 0, arow.spacecraftMode,
+    arow.rcsThrusters ? JSON.stringify(arow.rcsThrusters.thrusters) : null,
+    arow.rcsThrusters?.status1 ?? null,
+    arow.rcsThrusters?.status2 ?? null,
+    arow.sawGimbals?.saw1.ig ?? null, arow.sawGimbals?.saw1.og ?? null,
+    arow.sawGimbals?.saw2.ig ?? null, arow.sawGimbals?.saw2.og ?? null,
+    arow.sawGimbals?.saw3.ig ?? null, arow.sawGimbals?.saw3.og ?? null,
+    arow.sawGimbals?.saw4.ig ?? null, arow.sawGimbals?.saw4.og ?? null,
   );
 }
 

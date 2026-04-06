@@ -60,6 +60,19 @@ export interface SsePayload {
   arow?: ArowTelemetry;
 }
 
+export interface RcsThrusterState {
+  thrusters: Record<string, boolean>;
+  status1: string | null;
+  status2: string | null;
+}
+
+export interface SawGimbalAngles {
+  saw1: { ig: number; og: number };
+  saw2: { ig: number; og: number };
+  saw3: { ig: number; og: number };
+  saw4: { ig: number; og: number };
+}
+
 export interface ArowTelemetry {
   timestamp: string;
   quaternion: { w: number; x: number; y: number; z: number } | null;
@@ -69,6 +82,8 @@ export interface ArowTelemetry {
   yawRate: number | null;
   antennaGimbal: { az1: number; el1: number; az2: number; el2: number } | null;
   sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number } | null;
+  rcsThrusters: RcsThrusterState | null;
+  sawGimbals: SawGimbalAngles | null;
   icps: {
     quaternion: { w: number; x: number; y: number; z: number };
     active: boolean;

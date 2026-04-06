@@ -22,6 +22,7 @@ import { ThermalPanel } from "./panels/ThermalPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
 import { ChangelogModal } from "./modals/ChangelogModal";
 import { WakeupSongsPanel } from "./panels/WakeupSongsPanel";
+import { RcsThrusterPanel } from "./panels/RcsThrusterPanel";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
@@ -44,6 +45,7 @@ const MemoUpcoming = memo(UpcomingPanel);
 const MemoMilestones = memo(MilestonesPanel);
 const MemoApollo8 = memo(Apollo8Panel);
 const MemoWakeupSongs = memo(WakeupSongsPanel);
+const MemoRcsThrusters = memo(RcsThrusterPanel);
 
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
@@ -115,6 +117,7 @@ function DashboardInner() {
       <div className="dashboard-left">
         <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
         <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
+        <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />
         <MemoDsn dsn={dsn} />
         <MemoStationSchedule stateVector={stateVector} />
         <MemoDsnBandwidth dsn={dsn} />

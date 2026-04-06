@@ -1,8 +1,21 @@
 // src/lib/pollers/arow.ts
 import { AROW_OCTOBER_URL } from "../constants";
-import type { ArowTelemetry } from "../types";
+import type { ArowTelemetry, RcsThrusterState, SawGimbalAngles } from "../types";
 
 const RAD2DEG = 180 / Math.PI;
+
+// RCS thruster names mapped to their parameter and bit position.
+// Each param encodes multiple thrusters as a float whose integer bits
+// represent firing states. We extract the integer and check individual bits.
+const THRUSTER_PARAMS: Array<{ param: string; thrusters: string[] }> = [
+  { param: "2088", thrusters: ["SR1R", "SR2R"] },
+  { param: "2089", thrusters: ["SA3A", "SA4A"] },
+  { param: "2094", thrusters: ["SR1L", "SR2L"] },
+  { param: "2095", thrusters: ["SB5A", "SB6A"] },
+  { param: "2096", thrusters: ["SR4R", "SR3R"] },
+  { param: "2097", thrusters: ["SC2A", "SC1A"] },
+  { param: "2098", thrusters: ["SC2F", "SC1F"] },
+];
 
 /** Convert AROW DOY timestamp "YYYY:DDD:HH:MM:SS.mmm" to ISO-8601 UTC. */
 export function parseDoyTimestamp(doy: string): string {
@@ -88,6 +101,49 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
   const sawAngles = (saw1 != null && saw2 != null && saw3 != null && saw4 != null)
     ? { saw1, saw2, saw3, saw4 } : null;
 
+  // SAW inner/outer gimbal angles (radians → degrees)
+  const sawIG1 = getParamFloat(data, "2048");
+  const sawIG2 = getParamFloat(data, "2049");
+  const sawIG3 = getParamFloat(data, "2050");
+  const sawIG4 = getParamFloat(data, "2051");
+  const sawOG1 = getParamFloat(data, "2052");
+  const sawOG2 = getParamFloat(data, "2053");
+  const sawOG3 = getParamFloat(data, "2054");
+  const sawOG4 = getParamFloat(data, "2055");
+  const sawGimbals: SawGimbalAngles | null =
+    (sawIG1 != null && sawIG2 != null && sawIG3 != null && sawIG4 != null &&
+     sawOG1 != null && sawOG2 != null && sawOG3 != null && sawOG4 != null)
+    ? {
+        saw1: { ig: sawIG1 * RAD2DEG, og: sawOG1 * RAD2DEG },
+        saw2: { ig: sawIG2 * RAD2DEG, og: sawOG2 * RAD2DEG },
+        saw3: { ig: sawIG3 * RAD2DEG, og: sawOG3 * RAD2DEG },
+        saw4: { ig: sawIG4 * RAD2DEG, og: sawOG4 * RAD2DEG },
+      }
+    : null;
+
+  // RCS thruster firing states (bit-packed integers)
+  let rcsThrusters: RcsThrusterState | null = null;
+  {
+    const thrusters: Record<string, boolean> = {};
+    let anyFound = false;
+    for (const group of THRUSTER_PARAMS) {
+      const val = getParamFloat(data, group.param);
+      if (val == null) continue;
+      anyFound = true;
+      const bits = Math.round(Math.abs(val));
+      for (let i = 0; i < group.thrusters.length; i++) {
+        thrusters[group.thrusters[i]] = (bits & (1 << i)) !== 0;
+      }
+    }
+    if (anyFound) {
+      rcsThrusters = {
+        thrusters,
+        status1: getParam(data, "2090") ?? null,
+        status2: getParam(data, "2099") ?? null,
+      };
+    }
+  }
+
   // ICPS
   const icpsQw = getParamFloat(data, "2084") ?? 0;
   const icpsQx = getParamFloat(data, "2085") ?? 0;
@@ -108,6 +164,8 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
     yawRate: yawRateDegS ?? null,
     antennaGimbal,
     sawAngles,
+    rcsThrusters,
+    sawGimbals,
     icps: { quaternion: { w: icpsQw, x: icpsQx, y: icpsQy, z: icpsQz }, active: icpsActive },
     spacecraftMode: mode,
   };
