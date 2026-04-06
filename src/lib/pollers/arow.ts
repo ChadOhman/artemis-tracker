@@ -171,11 +171,28 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
   };
 }
 
+/** Compact param→value JSON from the last successful poll — for archival.
+ *  Strips metadata (Number, Length, Status, Time, Type) and keeps only Value
+ *  per parameter. ~2 KB vs ~16 KB for the full payload. */
+let _lastCompactJson: string | null = null;
+export function getLastCompactJson(): string | null { return _lastCompactJson; }
+
+function buildCompactJson(data: Record<string, any>): string {
+  const compact: Record<string, string> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (k.startsWith("Parameter_") && v?.Value !== undefined) {
+      compact[k.replace("Parameter_", "")] = v.Value;
+    }
+  }
+  return JSON.stringify(compact);
+}
+
 /** Fetch and parse the current AROW telemetry from GCS. */
 export async function pollArow(): Promise<ArowTelemetry | null> {
   try {
     const res = await fetch(AROW_OCTOBER_URL);
     const data = await res.json();
+    _lastCompactJson = buildCompactJson(data);
     return parseArowResponse(data);
   } catch (error) {
     console.error("AROW poll failed:", error);

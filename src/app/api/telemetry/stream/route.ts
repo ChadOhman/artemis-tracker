@@ -12,6 +12,7 @@ import {
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData } from "@/lib/db";
+import { getLastCompactJson } from "@/lib/pollers/arow";
 
 export const cache = new TelemetryCache();
 const sseManager = new SseManager();
@@ -69,7 +70,7 @@ export function ensurePollers(): void {
     latestArow = arow;
     sseManager.broadcast("arow", arow);
     if (++arowArchiveCounter % 10 === 0) {
-      try { archiveArow(arow); } catch { /* db error — non-fatal */ }
+      try { archiveArow(arow, getLastCompactJson()); } catch { /* db error — non-fatal */ }
     }
   });
   pollSolar();

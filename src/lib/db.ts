@@ -165,6 +165,15 @@ function runMigrations(db: Database.Database): void {
     db.pragma("user_version = 3");
     console.log("[db] migration 3 applied: added RCS thruster + SAW gimbal columns");
   }
+
+  // Migration 4: Add raw_params_json column for complete AROW data capture.
+  // Stores a compact {paramNum: value} JSON (~2 KB) so we archive every
+  // parameter, even ones we don't parse yet.
+  if (currentVersion < 4) {
+    try { db.exec("ALTER TABLE arow_telemetry ADD COLUMN raw_params_json TEXT"); } catch { /* may exist */ }
+    db.pragma("user_version = 4");
+    console.log("[db] migration 4 applied: added raw_params_json column");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -209,7 +218,7 @@ export function archiveArow(arow: {
   sawGimbals: { saw1: { ig: number; og: number }; saw2: { ig: number; og: number }; saw3: { ig: number; og: number }; saw4: { ig: number; og: number } } | null;
   icps: { quaternion: { w: number; x: number; y: number; z: number }; active: boolean };
   spacecraftMode: string;
-}): void {
+}, rawParamsJson?: string | null): void {
   const db = getDb();
   const stmt = db.prepare(`
     INSERT INTO arow_telemetry (timestamp, quat_w, quat_x, quat_y, quat_z,
@@ -217,9 +226,10 @@ export function archiveArow(arow: {
       ant_az1, ant_el1, ant_az2, ant_el2, saw1, saw2, saw3, saw4,
       icps_qw, icps_qx, icps_qy, icps_qz, icps_active, spacecraft_mode,
       rcs_thrusters_json, rcs_status1, rcs_status2,
-      saw1_ig, saw1_og, saw2_ig, saw2_og, saw3_ig, saw3_og, saw4_ig, saw4_og)
+      saw1_ig, saw1_og, saw2_ig, saw2_og, saw3_ig, saw3_og, saw4_ig, saw4_og,
+      raw_params_json)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   stmt.run(
     arow.timestamp,
@@ -241,6 +251,7 @@ export function archiveArow(arow: {
     arow.sawGimbals?.saw2.ig ?? null, arow.sawGimbals?.saw2.og ?? null,
     arow.sawGimbals?.saw3.ig ?? null, arow.sawGimbals?.saw3.og ?? null,
     arow.sawGimbals?.saw4.ig ?? null, arow.sawGimbals?.saw4.og ?? null,
+    rawParamsJson ?? null,
   );
 }
 
