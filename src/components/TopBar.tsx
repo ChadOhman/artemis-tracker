@@ -231,7 +231,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
 
       {/* Crew */}
       <button
-        className="topbar-pill"
+        className="topbar-pill topbar-hide-mobile"
         onClick={() => setCrewOpen(true)}
         style={{
           ...pillStyle,
@@ -269,8 +269,8 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         </div>
       )}
 
-      {/* Telemetry: VEL, ALT, EARTH */}
-      <div className="topbar-pill" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
+      {/* Telemetry: VEL, ALT, EARTH — hidden on mobile (too wide, data is in the Telemetry panel) */}
+      <div className="topbar-pill topbar-hide-mobile" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>{t("topbar.velocity")}</span>
           <span style={valueStyle}>

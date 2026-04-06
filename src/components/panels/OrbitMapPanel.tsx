@@ -1001,18 +1001,18 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           🌙 {showInset ? "✕" : t("orbitMap.zoom")}
         </button>
 
-        {/* Moon detail inset canvas — always mounted so dimensions are valid */}
+        {/* Moon detail inset canvas — always mounted so dimensions are valid.
+            Uses min() so it shrinks on small phones instead of overflowing. */}
         <canvas
           ref={insetRef}
           aria-hidden="true"
           width={520}
           height={520}
+          className="orbit-inset"
           style={{
             position: "absolute",
             bottom: 8,
             right: 8,
-            width: 260,
-            height: 260,
             border: "2px solid rgba(0,229,255,0.5)",
             borderRadius: 6,
             boxShadow: "0 4px 16px rgba(0,0,0,0.6)",

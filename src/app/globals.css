@@ -81,7 +81,7 @@ main {
 /* ── Dashboard Grid ── */
 .dashboard-grid {
   display: grid;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   grid-template-columns: 35fr 40fr 25fr;
   grid-template-rows: 48px auto 1fr 36px;
@@ -546,6 +546,12 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
     min-height: 150px;
     max-height: 180px;
   }
+}
+
+/* Orbit map Moon detail inset — responsive sizing */
+.orbit-inset {
+  width: min(260px, calc(100% - 24px));
+  height: min(260px, calc(100% - 24px));
 }
 
 /* Screen reader only */
