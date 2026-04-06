@@ -123,9 +123,9 @@ function TelemRow({
   return (
     <div className="telem-row">
       <span className="telem-label">{label}</span>
-      <span className="telem-value" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <span className="telem-value" style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
         <span style={{ width: 48, flexShrink: 0, display: "inline-flex", justifyContent: "flex-end" }}>{sparkline ?? null}</span>
-        <span>
+        <span style={{ textAlign: "right" }}>
           {value}
           {unit && <span className="telem-unit">{unit}</span>}
         </span>
@@ -301,6 +301,11 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemRow
         label={tr("telemetry.lightTime")}
         value={arow?.signalLightTimeSec != null ? `${arow.signalLightTimeSec.toFixed(2)}s` : "—"}
+        sparkline={arow?.signalLightTimeSec != null ? (
+          <span style={{ fontSize: 7, color: "var(--text-dim)", whiteSpace: "nowrap" }}>
+            {tr("telemetry.measured")} {arow.signalLightTimeSec.toFixed(1)}s {tr("telemetry.ago")}
+          </span>
+        ) : undefined}
       />
       <TelemRow
         label={tr("telemetry.mode")}
