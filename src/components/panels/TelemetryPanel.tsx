@@ -70,7 +70,7 @@ function TelemRow({
     <div className="telem-row">
       <span className="telem-label">{label}</span>
       <span className="telem-value" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        {sparkline}
+        {sparkline && <span style={{ width: 48, flexShrink: 0, display: "inline-flex" }}>{sparkline}</span>}
         <span>
           {value}
           {unit && <span className="telem-unit">{unit}</span>}

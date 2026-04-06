@@ -977,30 +977,6 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           style={{ display: "block", width: "100%", height: "100%" }}
         />
 
-        {/* Moon detail toggle button */}
-        <button
-          onClick={() => setShowInset((v) => !v)}
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 8,
-            padding: "4px 10px",
-            background: showInset ? "rgba(0,229,255,0.15)" : "rgba(6,11,20,0.8)",
-            border: "1px solid rgba(0,229,255,0.3)",
-            borderRadius: 4,
-            color: "var(--accent-cyan)",
-            fontSize: 9,
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            fontFamily: "'JetBrains Mono', monospace",
-            cursor: "pointer",
-          }}
-          aria-label={showInset ? "Hide Moon detail" : "Show Moon detail"}
-        >
-          🌙 {showInset ? "✕" : t("orbitMap.zoom")}
-        </button>
-
         {/* Moon detail inset canvas — always mounted so dimensions are valid.
             Uses min() so it shrinks on small phones instead of overflowing. */}
         <canvas
@@ -1023,6 +999,33 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             zIndex: 10,
           }}
         />
+
+        {/* Moon detail toggle button — rendered AFTER the canvas so it sits
+            on top without needing a z-index arms race on desktop. On mobile
+            the inset is nearly full-size so the button must be above it. */}
+        <button
+          onClick={() => setShowInset((v) => !v)}
+          style={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            padding: "4px 10px",
+            background: showInset ? "rgba(0,229,255,0.15)" : "rgba(6,11,20,0.8)",
+            border: "1px solid rgba(0,229,255,0.3)",
+            borderRadius: 4,
+            color: "var(--accent-cyan)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            fontFamily: "'JetBrains Mono', monospace",
+            cursor: "pointer",
+            zIndex: 11,
+          }}
+          aria-label={showInset ? "Hide Moon detail" : "Show Moon detail"}
+        >
+          🌙 {showInset ? "✕" : t("orbitMap.zoom")}
+        </button>
       </div>
     </PanelFrame>
   );
