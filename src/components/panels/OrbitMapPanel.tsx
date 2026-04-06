@@ -555,15 +555,17 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
 
     // Place Orion on the reference trajectory curve at the distance-matched position.
     // Two regimes:
-    //   1. Near the Moon (within ~50,000 km): distance-fraction along the figure-8
-    //      curve breaks down because the trajectory loops and x is non-monotonic.
-    //      Use the REAL Moon-relative position projected onto the Earth-Moon axis
-    //      so Orion sits beside the Moon at its actual offset.
+    //   1. Near the Moon (within ~100,000 km): distance-fraction along the
+    //      figure-8 reference curve breaks down because the outbound Bezier
+    //      tops out at x=0.97 (373k km) but the Moon is at x=1.0 (384k km).
+    //      Any Earth distance above ~373k km has NO matching segment, so the
+    //      fraction search falls through to garbage defaults. Use the REAL
+    //      Moon-relative position projected onto the Earth-Moon axis instead.
     //   2. Outbound/return cruise: match Earth-distance fraction against the
     //      reference curve, interpolating Y to stay on the drawn arc.
     let orionPx: { x: number; y: number };
     const nearMoon =
-      telemetry?.moonDistKm != null && telemetry.moonDistKm < 50000 &&
+      telemetry?.moonDistKm != null && telemetry.moonDistKm < 100000 &&
       stateVector && moonPosition;
 
     if (nearMoon && stateVector && moonPosition) {
