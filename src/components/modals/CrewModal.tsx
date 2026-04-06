@@ -17,7 +17,7 @@ const CREW: CrewMember[] = [
     role: "Commander",
     agency: "NASA",
     bio: "Navy Captain and test pilot with experience in the F-35 and F/A-18. Flew to ISS on Expedition 40/41 in 2014. Former Chief of the NASA Astronaut Office.",
-    firsts: [],
+    firsts: ["Oldest human to travel beyond low Earth orbit"],
   },
   {
     name: "Victor Glover",
