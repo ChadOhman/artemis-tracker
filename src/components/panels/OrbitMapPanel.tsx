@@ -5,6 +5,7 @@ import type { StateVector, Telemetry } from "@/lib/types";
 import { getGroundTrackLabel } from "@/lib/ground-track";
 import { getLunarGroundTrackLabel } from "@/lib/lunar-ground-track";
 import { useLocale } from "@/context/LocaleContext";
+import { useMetContext } from "@/context/MetContext";
 
 interface OrbitMapPanelProps {
   stateVector: StateVector | null;
@@ -131,7 +132,7 @@ const RETURN_START_IDX = 61 + 50 + 20 + 40; // 171 — first point of return arc
 const WAYPOINTS = [
   { label: "TLI", metMs: (25 * 3600 + 8 * 60 + 42) * 1000, align: "center" as const, offsetY: -10 },
   { label: "Closest Approach", metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -14 },
-  { label: "~6,513 km", metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -4 },
+  { label: "~6,513 km", distKm: 6513, metMs: (5 * 24 * 3600 + 30 * 60) * 1000, align: "right" as const, offsetY: -4 },
 ];
 
 function generateStars(count: number): { x: number; y: number; r: number; a: number }[] {
@@ -167,8 +168,26 @@ function fmtKm(km: number): string {
   return Math.round(km).toLocaleString("en-US");
 }
 
+/** Convert km to the user's selected distance unit and format */
+function fmtDistCanvas(km: number, unit: string): string {
+  switch (unit) {
+    case "mph": return `${Math.round(km * 0.621371).toLocaleString("en-US")} mi`;
+    case "kn":  return `${Math.round(km * 0.539957).toLocaleString("en-US")} nmi`;
+    default:    return `${fmtKm(km)} km`;
+  }
+}
+
+function distUnitLabel(unit: string): string {
+  switch (unit) {
+    case "mph": return "mi";
+    case "kn":  return "nmi";
+    default:    return "km";
+  }
+}
+
 export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: OrbitMapPanelProps) {
   const { t } = useLocale();
+  const { speedUnit } = useMetContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const insetRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -178,6 +197,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   // Trail of recent Orion-relative-to-Moon positions, for the zoom inset.
   // Only grows when new JPL data arrives (deduped by metMs).
   const insetTrailRef = useRef<Array<{ relX: number; relY: number; metMs: number }>>([]);
+
+  // Store unit in a ref for use inside the draw callback
+  const unitRef = useRef(speedUnit);
+  unitRef.current = speedUnit;
 
   // Store translated inset labels in a ref for use inside the draw callback
   const insetLabelsRef = useRef({ moonDetail: "MOON DETAIL", kmView: "km view" });
@@ -256,7 +279,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillStyle = "rgba(100,160,255,0.25)";
     ctx.textAlign = "center";
     const midX = (earthPx.x + moonPx.x) / 2;
-    ctx.fillText("384,400 km", midX, earthPx.y + 4);
+    ctx.fillText(fmtDistCanvas(384400, unitRef.current), midX, earthPx.y + 4);
     ctx.restore();
 
     // --- FREE-RETURN TRAJECTORY subtitle ---
@@ -353,7 +376,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       ctx.fillStyle = passed ? "rgba(255,213,79,0.9)" : "rgba(255,213,79,0.65)";
       ctx.textAlign = wp.align || "center";
       const labelX = wp.align === "right" ? p.x + 8 : p.x;
-      ctx.fillText(wp.label, labelX, p.y + (wp.offsetY || -8));
+      const wpLabel = (wp as { distKm?: number }).distKm != null
+        ? `~${fmtDistCanvas((wp as { distKm: number }).distKm, unitRef.current)}`
+        : wp.label;
+      ctx.fillText(wpLabel, labelX, p.y + (wp.offsetY || -8));
       ctx.restore();
     }
 
@@ -647,7 +673,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     // --- Earth distance label near Orion ---
     const earthDistKm = telemetry?.earthDistKm ?? null;
     if (earthDistKm != null) {
-      const distText = `${fmtKm(earthDistKm)} km`;
+      const distText = fmtDistCanvas(earthDistKm, unitRef.current);
       ctx.save();
       ctx.font = "bold 9px monospace";
       ctx.textAlign = "center";
@@ -662,7 +688,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     // --- Moon distance label (near the Moon) ---
     const moonDistKm = telemetry?.moonDistKm ?? null;
     if (moonDistKm != null) {
-      const moonDistText = `${fmtKm(moonDistKm)} km`;
+      const moonDistText = fmtDistCanvas(moonDistKm, unitRef.current);
       ctx.save();
       ctx.font = "8px monospace";
       ctx.fillStyle = "rgba(180,185,190,0.6)";
@@ -886,7 +912,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ictx.fillText("Orion", orionIx + 7, orionIy - 7);
             ictx.font = "9px monospace";
             ictx.fillStyle = "rgba(0,255,136,0.75)";
-            ictx.fillText(`${Math.round(telemetry.moonDistKm).toLocaleString()} km`, orionIx + 7, orionIy + 6);
+            ictx.fillText(fmtDistCanvas(telemetry.moonDistKm, unitRef.current), orionIx + 7, orionIy + 6);
             ictx.restore();
           } else {
             // Orion is outside the viewport — draw an off-screen indicator
@@ -911,7 +937,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ictx.fillStyle = "rgba(0,255,136,0.7)";
             ictx.textAlign = "center";
             ictx.fillText(
-              `Orion · ${Math.round(telemetry.moonDistKm).toLocaleString()} km`,
+              `Orion · ${fmtDistCanvas(telemetry.moonDistKm, unitRef.current)}`,
               moonCx,
               moonCy + Math.min(iw, ih) / 2 - 4,
             );
@@ -926,7 +952,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           ictx.fillText(insetLabelsRef.current.moonDetail, 10, 14);
           ictx.font = "8px monospace";
           ictx.fillStyle = "rgba(160,184,207,0.65)";
-          ictx.fillText(`${viewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`, 10, 25);
+          {
+            const viewLabel = unitRef.current === "mph"
+              ? `${Math.round(viewKm * 0.621371).toLocaleString()} mi view`
+              : unitRef.current === "kn"
+              ? `${Math.round(viewKm * 0.539957).toLocaleString()} nmi view`
+              : `${viewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`;
+            ictx.fillText(viewLabel, 10, 25);
+          }
           ictx.restore();
         }
       }
@@ -981,8 +1014,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       : null;
   const orbitDescription = [
     "Lunar flyby trajectory map.",
-    telemetry ? `Orion is ${Math.round(telemetry.earthDistKm).toLocaleString()} km from Earth` : "",
-    telemetry ? `and ${Math.round(telemetry.moonDistKm).toLocaleString()} km from the Moon.` : "",
+    telemetry ? `Orion is ${fmtDistCanvas(telemetry.earthDistKm, speedUnit)} from Earth` : "",
+    telemetry ? `and ${fmtDistCanvas(telemetry.moonDistKm, speedUnit)} from the Moon.` : "",
     groundLabel || "",
     metMs < 5 * 24 * 3600 * 1000 ? "Outbound trajectory." : "Return trajectory.",
   ].filter(Boolean).join(" ");

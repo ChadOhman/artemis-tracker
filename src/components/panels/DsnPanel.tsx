@@ -2,6 +2,7 @@
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { DsnStatus, DsnDish } from "@/lib/types";
 import { useLocale } from "@/context/LocaleContext";
+import { useMetContext } from "@/context/MetContext";
 
 interface DsnPanelProps {
   dsn: DsnStatus | null;
@@ -13,10 +14,17 @@ function fmtRate(bps: number): string {
   return bps.toFixed(0) + " bps";
 }
 
-function fmtRange(km: number): string {
-  if (km >= 1_000_000) return (km / 1_000_000).toFixed(2) + "M km";
-  if (km >= 1_000) return (km / 1_000).toFixed(1) + "k km";
-  return km.toFixed(0) + " km";
+function fmtRange(km: number, unit: string): string {
+  let val: number;
+  let suffix: string;
+  switch (unit) {
+    case "mph": val = km * 0.621371; suffix = "mi"; break;
+    case "kn":  val = km * 0.539957; suffix = "nmi"; break;
+    default:    val = km; suffix = "km"; break;
+  }
+  if (val >= 1_000_000) return (val / 1_000_000).toFixed(2) + `M ${suffix}`;
+  if (val >= 1_000) return (val / 1_000).toFixed(1) + `k ${suffix}`;
+  return val.toFixed(0) + ` ${suffix}`;
 }
 
 function fmtRtlt(s: number): string {
@@ -26,6 +34,7 @@ function fmtRtlt(s: number): string {
 
 function DishCard({ dish }: { dish: DsnDish }) {
   const { t } = useLocale();
+  const { speedUnit } = useMetContext();
   const hasSignal = dish.downlinkActive || dish.uplinkActive;
 
   return (
@@ -131,7 +140,7 @@ function DishCard({ dish }: { dish: DsnDish }) {
             {t("dsnPanel.range").toUpperCase()}
           </span>
           <span style={{ fontSize: 10, fontWeight: 700, color: "var(--text-primary)" }}>
-            {fmtRange(dish.rangeKm)}
+            {fmtRange(dish.rangeKm, speedUnit)}
           </span>
         </div>
         <div style={{ display: "flex", gap: 4, alignItems: "baseline" }}>

@@ -13,6 +13,22 @@ function formatNumber(n: number): string {
   return Math.round(n).toLocaleString();
 }
 
+function convertDist(km: number, unit: string): string {
+  switch (unit) {
+    case "mph": return Math.round(km * 0.621371).toLocaleString();
+    case "kn":  return Math.round(km * 0.539957).toLocaleString();
+    default:    return Math.round(km).toLocaleString();
+  }
+}
+
+function distUnitLabel(unit: string): string {
+  switch (unit) {
+    case "mph": return "mi";
+    case "kn":  return "nmi";
+    default:    return "km";
+  }
+}
+
 function formatCountdown(diffMs: number): string {
   if (diffMs <= 0) return "now";
   const totalSeconds = Math.floor(diffMs / 1000);
@@ -282,9 +298,9 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>{t("topbar.altitude")}</span>
           <span style={valueStyle}>
-            {telemetry ? formatNumber(telemetry.altitudeKm) : "—"}
+            {telemetry ? convertDist(telemetry.altitudeKm, speedUnit) : "—"}
           </span>
-          <span style={unitStyle}>km</span>
+          <span style={unitStyle}>{distUnitLabel(speedUnit)}</span>
         </div>
       </div>
 
@@ -310,7 +326,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(180,185,190,0.3)" }}>
           <span style={labelStyle}>{t("topbar.moon")}</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
-            {Math.round(telemetry.moonDistKm).toLocaleString()} km
+            {convertDist(telemetry.moonDistKm, speedUnit)} {distUnitLabel(speedUnit)}
           </span>
         </div>
       )}

@@ -46,6 +46,29 @@ function fmtSpeed(kmh: number, unit: string): string {
   }
 }
 
+/** Convert km to the distance unit matching the selected speed unit */
+function fmtDist(km: number, unit: string, decimals = 1): string {
+  let val: number;
+  switch (unit) {
+    case "mph": val = km * 0.621371; break;
+    case "kn":  val = km * 0.539957; break;
+    default:    val = km; break;
+  }
+  return val.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+/** Return the distance unit label for the selected speed unit */
+function distUnit(unit: string): string {
+  switch (unit) {
+    case "mph": return "mi";
+    case "kn":  return "nmi";
+    default:    return "km";
+  }
+}
+
 /** Decode spacecraft mode hex byte to a human-readable label */
 function decodeSpacecraftMode(hex: string): string {
   const modeMap: Record<string, string> = {
@@ -183,33 +206,33 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemSection label={tr("panels.position")} />
       <TelemRow
         label={tr("topbar.altitude")}
-        value={fmtKm(t?.altitudeKm)}
-        unit="km"
+        value={t?.altitudeKm != null ? fmtDist(t.altitudeKm, speedUnit) : "—"}
+        unit={distUnit(speedUnit)}
         sparkline={<Sparkline metric="altitude_km" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.earthDist")}
-        value={fmtKm(t?.earthDistKm)}
-        unit="km"
+        value={t?.earthDistKm != null ? fmtDist(t.earthDistKm, speedUnit) : "—"}
+        unit={distUnit(speedUnit)}
         sparkline={<Sparkline metric="earth_dist_km" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.moonDist")}
-        value={fmtKm(t?.moonDistKm)}
-        unit="km"
+        value={t?.moonDistKm != null ? fmtDist(t.moonDistKm, speedUnit) : "—"}
+        unit={distUnit(speedUnit)}
         sparkline={<Sparkline metric="moon_dist_km" hours={24} color="#b388ff" />}
       />
 
       <TelemSection label={tr("panels.orbit")} />
       <TelemRow
         label={tr("telemetry.periapsis")}
-        value={fmtKm(t?.periapsisKm)}
-        unit="km"
+        value={t?.periapsisKm != null ? fmtDist(t.periapsisKm, speedUnit) : "—"}
+        unit={distUnit(speedUnit)}
       />
       <TelemRow
         label={tr("telemetry.apoapsis")}
-        value={fmtKm(t?.apoapsisKm)}
-        unit="km"
+        value={t?.apoapsisKm != null ? fmtDist(t.apoapsisKm, speedUnit) : "—"}
+        unit={distUnit(speedUnit)}
       />
 
       <TelemSection label={tr("panels.attitude")} />
