@@ -10,6 +10,7 @@ interface ChangelogEntry {
 }
 
 const STORAGE_KEY = "lastSeenBuild";
+const DISMISS_KEY = "changelogDismissed";
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const CHANGELOG_RAW = process.env.NEXT_PUBLIC_CHANGELOG ?? "[]";
 
@@ -34,42 +35,58 @@ function formatDate(iso: string, locale: string): string {
   }
 }
 
-export function ChangelogModal() {
+export function ChangelogModal({ manualOpen, onManualClose }: { manualOpen?: boolean; onManualClose?: () => void } = {}) {
   const [isOpen, setIsOpen] = useState(false);
   const [entries, setEntries] = useState<ChangelogEntry[]>([]);
   const { locale, t } = useLocale();
 
+  // Auto-show on new builds (unless user opted out with "never show again")
   useEffect(() => {
     if (!BUILD_ID) return;
+    const dismissed = localStorage.getItem(DISMISS_KEY) === "true";
     const lastSeen = localStorage.getItem(STORAGE_KEY);
 
-    // First-time visitor — just record the current build, don't show modal
     if (!lastSeen) {
       localStorage.setItem(STORAGE_KEY, BUILD_ID);
       return;
     }
-
-    // Same build — nothing new
     if (lastSeen === BUILD_ID) return;
+    if (dismissed) {
+      localStorage.setItem(STORAGE_KEY, BUILD_ID);
+      return;
+    }
 
-    // New build since last visit — show all entries added since lastSeen
     const all = parseChangelog();
     const lastSeenIdx = all.findIndex((e) => e.hash === lastSeen);
-    // If lastSeen isn't in the log (too old), show top 10
     const newEntries = lastSeenIdx === -1 ? all.slice(0, 10) : all.slice(0, lastSeenIdx);
 
     if (newEntries.length > 0) {
       setEntries(newEntries);
       setIsOpen(true);
     } else {
-      // No feat: commits between builds, just update silently
       localStorage.setItem(STORAGE_KEY, BUILD_ID);
     }
   }, []);
 
+  // Manual open from footer
+  useEffect(() => {
+    if (manualOpen) {
+      setEntries(parseChangelog().slice(0, 20));
+      setIsOpen(true);
+    }
+  }, [manualOpen]);
+
   function handleClose() {
     localStorage.setItem(STORAGE_KEY, BUILD_ID);
     setIsOpen(false);
+    onManualClose?.();
+  }
+
+  function handleNeverShow() {
+    localStorage.setItem(DISMISS_KEY, "true");
+    localStorage.setItem(STORAGE_KEY, BUILD_ID);
+    setIsOpen(false);
+    onManualClose?.();
   }
 
   const title = locale === "fr" ? "Nouveautés" : "What's New";
@@ -78,6 +95,7 @@ export function ChangelogModal() {
       ? "Voici ce qui a changé depuis votre dernière visite :"
       : "Here's what's changed since your last visit:";
   const closeLabel = locale === "fr" ? "Compris" : "Got it";
+  const neverLabel = locale === "fr" ? "Ne plus afficher" : "Never show again";
 
   return (
     <Modal title={title} isOpen={isOpen} onClose={handleClose} maxWidth="580px">
@@ -102,6 +120,8 @@ export function ChangelogModal() {
             display: "flex",
             flexDirection: "column",
             gap: 10,
+            maxHeight: 400,
+            overflowY: "auto",
           }}
         >
           {entries.map((entry) => (
@@ -142,10 +162,26 @@ export function ChangelogModal() {
         <div
           style={{
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-between",
+            alignItems: "center",
             marginTop: 20,
           }}
         >
+          <button
+            onClick={handleNeverShow}
+            style={{
+              padding: "6px 12px",
+              background: "none",
+              color: "var(--text-dim)",
+              border: "1px solid var(--border-panel)",
+              borderRadius: 4,
+              fontSize: 10,
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            {neverLabel}
+          </button>
           <button
             onClick={handleClose}
             style={{

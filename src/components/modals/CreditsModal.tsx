@@ -162,6 +162,11 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           url="/api-docs"
           description="All telemetry data is available via free REST and SSE endpoints. See the API documentation for details."
         />
+
+        <SectionHeader label={t("credits.landAcknowledgement")} />
+        <div style={{ fontSize: 11, color: "var(--text-dim)", lineHeight: 1.7, marginBottom: 8 }}>
+          {t("credits.landAcknowledgementText")}
+        </div>
       </div>
     </Modal>
   );

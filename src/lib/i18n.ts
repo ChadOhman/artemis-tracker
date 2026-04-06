@@ -121,6 +121,8 @@ export const TRANSLATIONS = {
       groundTrack: "Ground Track Mapping",
       historicalContext: "Historical Context",
       builtWith: "Built With",
+      landAcknowledgement: "Land Acknowledgement",
+      landAcknowledgementText: "This tracker is hosted on servers located in Edmonton, Alberta, Canada — Treaty 6 territory and the traditional and ancestral lands of the Cree, Dene, Blackfoot, Saulteaux, Nakota Sioux, and Métis peoples. We acknowledge their enduring relationship with this land and honour their history, languages, and cultures.",
     },
     track: {
       liveTracking: "Live Tracking",
@@ -401,6 +403,8 @@ export const TRANSLATIONS = {
       groundTrack: "Cartographie de la trace au sol",
       historicalContext: "Contexte historique",
       builtWith: "Construit avec",
+      landAcknowledgement: "Reconnaissance territoriale",
+      landAcknowledgementText: "Ce traqueur est hébergé sur des serveurs situés à Edmonton, en Alberta, au Canada — territoire du Traité n° 6 et terres traditionnelles et ancestrales des peuples Cris, Dénés, Pieds-Noirs, Saulteaux, Nakota Sioux et Métis. Nous reconnaissons leur relation durable avec cette terre et honorons leur histoire, leurs langues et leurs cultures.",
     },
     track: {
       liveTracking: "Suivi en direct",

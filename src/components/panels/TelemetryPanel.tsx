@@ -109,14 +109,14 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemSection label={tr("panels.dynamics")} />
       <TelemRow
         label={tr("telemetry.speed")}
-        value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : (t.speedKmS * 1000).toFixed(1)) : "—"}
+        value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : speedUnit === "mph" ? Math.round(t.speedKmH * 0.621371).toLocaleString() : (t.speedKmS * 1000).toFixed(1)) : "—"}
         unit={speedUnit}
         sparkline={<Sparkline metric="speed_km_h" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.moonRelSpeed")}
-        value={t?.moonRelSpeedKmH ? Math.round(t.moonRelSpeedKmH).toLocaleString() : "—"}
-        unit="km/h"
+        value={t?.moonRelSpeedKmH ? (speedUnit === "mph" ? Math.round(t.moonRelSpeedKmH * 0.621371).toLocaleString() : Math.round(t.moonRelSpeedKmH).toLocaleString()) : "—"}
+        unit={speedUnit === "mph" ? "mph" : "km/h"}
         sparkline={<Sparkline metric="moon_rel_speed_km_h" hours={24} color="#b388ff" />}
       />
       <TelemRow

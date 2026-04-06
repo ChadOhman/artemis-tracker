@@ -5,6 +5,7 @@ import { useMetContext, type PlaybackSpeed, type SpeedUnit } from "@/context/Met
 import { MISSION_DURATION_MS } from "@/lib/constants";
 import type { Milestone } from "@/lib/types";
 import { CreditsModal } from "./modals/CreditsModal";
+import { ChangelogModal } from "./modals/ChangelogModal";
 import { useLocale } from "@/context/LocaleContext";
 
 interface BottomBarProps {
@@ -22,6 +23,7 @@ const SPEED_OPTIONS: { label: string; value: PlaybackSpeed }[] = [
 
 export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
   const [creditsOpen, setCreditsOpen] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
   const [ago, setAgo] = useState<number | null>(null);
   const { locale, setLocale, t } = useLocale();
 
@@ -117,7 +119,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
 
       {/* Speed unit toggle */}
       <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
-        {(["km/h", "m/s"] as SpeedUnit[]).map((unit) => (
+        {(["km/h", "m/s", "mph"] as SpeedUnit[]).map((unit) => (
           <button
             key={unit}
             onClick={() => setSpeedUnit(unit)}
@@ -269,6 +271,22 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
           {t("bottomBar.credits")}
         </button>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+        <button
+          onClick={() => setChangelogOpen(true)}
+          style={{
+            background: "none",
+            border: "none",
+            color: "var(--text-dim)",
+            cursor: "pointer",
+            padding: 0,
+            fontSize: "inherit",
+            fontFamily: "inherit",
+            letterSpacing: "inherit",
+          }}
+        >
+          Changelog
+        </button>
+        <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
           href="/track"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
@@ -317,6 +335,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
         )}
       </div>
       <CreditsModal isOpen={creditsOpen} onClose={() => setCreditsOpen(false)} />
+      <ChangelogModal manualOpen={changelogOpen} onManualClose={() => setChangelogOpen(false)} />
     </div>
   );
 }
