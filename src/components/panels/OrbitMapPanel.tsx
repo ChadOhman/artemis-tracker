@@ -916,6 +916,16 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ictx.font = "9px monospace";
             ictx.fillStyle = "rgba(0,255,136,0.75)";
             ictx.fillText(fmtDistCanvas(telemetry.moonDistKm, unitRef.current), orionIx + 7, orionIy + 6);
+            // Lunar ground track label
+            if (moonPosition) {
+              const lunarLabel = getLunarGroundTrackLabel(
+                { x: stateVector.position.x - moonPosition.x, y: stateVector.position.y - moonPosition.y, z: stateVector.position.z - moonPosition.z },
+                moonPosition,
+              );
+              ictx.font = "7px monospace";
+              ictx.fillStyle = "rgba(200,200,220,0.6)";
+              ictx.fillText(lunarLabel, orionIx + 7, orionIy + 16);
+            }
             ictx.restore();
           } else {
             // Orion is outside the viewport — draw an off-screen indicator
