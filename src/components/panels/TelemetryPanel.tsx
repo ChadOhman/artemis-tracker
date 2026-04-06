@@ -251,9 +251,9 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         const g = arow?.sawGimbals?.[k];
         return (
           <div key={k} className="telem-row" style={{ flexDirection: "column", gap: 2, alignItems: "stretch" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span className="telem-label">{tr("telemetry.saw")} {i + 1}</span>
-              <span className="telem-value">
+              <span className="telem-value" style={{ minWidth: 130 }}>
                 {g ? (
                   <>
                     <span title="Inner Gimbal — rotation around the boom axis" style={{ cursor: "help", borderBottom: "1px dotted var(--text-dim)" }}>IG</span>
@@ -301,11 +301,6 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemRow
         label={tr("telemetry.lightTime")}
         value={arow?.signalLightTimeSec != null ? `${arow.signalLightTimeSec.toFixed(2)}s` : "—"}
-        sparkline={arow?.signalLightTimeSec != null ? (
-          <span style={{ fontSize: 7, color: "var(--text-dim)" }}>
-            {tr("telemetry.measured")} {arow.signalLightTimeSec.toFixed(1)}s {tr("telemetry.ago")}
-          </span>
-        ) : undefined}
       />
       <TelemRow
         label={tr("telemetry.mode")}
