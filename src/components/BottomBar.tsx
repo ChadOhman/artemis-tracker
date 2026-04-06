@@ -302,6 +302,13 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
+          href="/stats"
+          style={{ color: "var(--text-dim)", textDecoration: "none" }}
+        >
+          Stats
+        </a>
+        <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
+        <a
           href="/api-docs"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
