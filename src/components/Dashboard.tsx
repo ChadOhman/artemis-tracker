@@ -51,6 +51,21 @@ const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? "";
 const BUILD_CHECK_INTERVAL = 60_000; // check every 60 seconds
 
 function useBuildCheck() {
+  // Restore scroll position after a build-triggered reload
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem("scrollRestore");
+    if (savedScroll) {
+      sessionStorage.removeItem("scrollRestore");
+      const y = parseInt(savedScroll, 10);
+      // Defer so the layout has rendered
+      requestAnimationFrame(() => {
+        const scrollable = document.querySelector(".dashboard-left") as HTMLElement
+          ?? document.scrollingElement;
+        if (scrollable) scrollable.scrollTop = y;
+      });
+    }
+  }, []);
+
   useEffect(() => {
     if (!BUILD_ID) return;
     const id = setInterval(async () => {
@@ -58,6 +73,12 @@ function useBuildCheck() {
         const res = await fetch("/api/build");
         const data = await res.json();
         if (data.buildId && data.buildId !== BUILD_ID) {
+          // Save scroll position before reload so we can restore it
+          const scrollable = document.querySelector(".dashboard-left") as HTMLElement
+            ?? document.scrollingElement;
+          if (scrollable) {
+            sessionStorage.setItem("scrollRestore", String(scrollable.scrollTop));
+          }
           window.location.reload();
         }
       } catch {
