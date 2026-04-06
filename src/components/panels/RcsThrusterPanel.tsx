@@ -1,7 +1,10 @@
 "use client";
+import { useRef } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { useLocale } from "@/context/LocaleContext";
 import type { ArowTelemetry } from "@/lib/types";
+
+const RECENT_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
 
 interface RcsThrusterPanelProps {
   arow: ArowTelemetry | null;
@@ -57,7 +60,18 @@ const POD_LABELS = [
 export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
   const { t } = useLocale();
   const thrusters = arow?.rcsThrusters?.thrusters ?? {};
+
+  // Track when each thruster was last seen firing
+  const lastFiredRef = useRef<Record<string, number>>({});
+  const now = Date.now();
+  for (const [name, firing] of Object.entries(thrusters)) {
+    if (firing) lastFiredRef.current[name] = now;
+  }
+
   const anyFiring = Object.values(thrusters).some(Boolean);
+  const recentCount = Object.keys(lastFiredRef.current).filter(
+    (name) => now - (lastFiredRef.current[name] ?? 0) < RECENT_WINDOW_MS
+  ).length;
   const firingCount = Object.values(thrusters).filter(Boolean).length;
 
   return (
@@ -77,6 +91,18 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
             }}
           >
             {firingCount} {t("telemetry.firing")}
+          </span>
+        ) : recentCount > 0 ? (
+          <span
+            style={{
+              fontSize: 9,
+              color: "var(--accent-yellow)",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            {recentCount} RECENT
           </span>
         ) : (
           <span
@@ -148,15 +174,24 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
           {/* Thrusters */}
           {THRUSTER_LAYOUT.map((th) => {
             const firing = thrusters[th.name] === true;
+            const lastFired = lastFiredRef.current[th.name];
+            const recent = !firing && lastFired != null && (now - lastFired) < RECENT_WINDOW_MS;
+            // Fade amber from 1.0 to 0.3 over the 5-minute window
+            const recentOpacity = recent ? 0.3 + 0.7 * (1 - (now - lastFired!) / RECENT_WINDOW_MS) : 0;
+
+            const fillColor = firing ? "#00ff88" : recent ? `rgba(255,170,0,${recentOpacity})` : "rgba(80,90,100,0.5)";
+            const strokeColor = firing ? "rgba(0,255,136,0.6)" : recent ? `rgba(255,170,0,${recentOpacity * 0.8})` : "rgba(80,90,100,0.3)";
+            const labelColor = firing ? "rgba(0,255,136,0.9)" : recent ? `rgba(255,170,0,${recentOpacity})` : "rgba(140,150,160,0.5)";
+
             return (
               <g key={th.name}>
-                {/* Glow when firing */}
-                {firing && (
+                {/* Glow when firing or recent */}
+                {(firing || recent) && (
                   <circle
                     cx={th.cx}
                     cy={th.cy}
                     r="3.5"
-                    fill="rgba(0,255,136,0.25)"
+                    fill={firing ? "rgba(0,255,136,0.25)" : `rgba(255,170,0,${recentOpacity * 0.2})`}
                   />
                 )}
                 {/* Thruster dot */}
@@ -166,12 +201,12 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
                   width="4"
                   height="4"
                   rx="0.8"
-                  fill={firing ? "#00ff88" : "rgba(80,90,100,0.5)"}
-                  stroke={firing ? "rgba(0,255,136,0.6)" : "rgba(80,90,100,0.3)"}
+                  fill={fillColor}
+                  stroke={strokeColor}
                   strokeWidth="0.3"
                   suppressHydrationWarning
                 >
-                  <title suppressHydrationWarning>{th.name}: {firing ? t("telemetry.firing") : t("telemetry.idle")}</title>
+                  <title suppressHydrationWarning>{th.name}: {firing ? t("telemetry.firing") : recent ? "RECENT" : t("telemetry.idle")}</title>
                 </rect>
                 {/* Label */}
                 <text
@@ -179,7 +214,7 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
                   y={th.cy + 5.5}
                   textAnchor="middle"
                   fontSize="2.2"
-                  fill={firing ? "rgba(0,255,136,0.9)" : "rgba(140,150,160,0.5)"}
+                  fill={labelColor}
                   fontFamily="monospace"
                 >
                   {th.name.slice(1)}
