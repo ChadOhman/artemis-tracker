@@ -46,6 +46,49 @@ function fmtSpeed(kmh: number, unit: string): string {
   }
 }
 
+/** Decode spacecraft mode hex byte to a human-readable label */
+function decodeSpacecraftMode(hex: string): string {
+  const modeMap: Record<string, string> = {
+    "80": "Attitude Hold",
+    "81": "Sun Safe",
+    "82": "Rate Damp",
+    "ad": "Burn Attitude",
+    "ae": "Observation",
+    "b0": "Coast",
+    "ec": "Maneuver",
+    "ed": "Separation",
+  };
+  const upper = hex.toUpperCase();
+  return modeMap[hex.toLowerCase()] ?? `0x${upper}`;
+}
+
+/** Dead-band indicator — shows where the angular rate sits within ±band */
+function DeadBandBar({ rate, band }: { rate: number | null; band: number }) {
+  if (rate == null) return null;
+  const clamped = Math.max(-band, Math.min(band, rate));
+  const pct = ((clamped + band) / (2 * band)) * 100;
+  const inBand = Math.abs(rate) <= band;
+  const color = inBand ? "var(--accent-green)" : "var(--accent-red)";
+  return (
+    <div style={{ width: 48, height: 6, flexShrink: 0, background: "rgba(255,255,255,0.05)", borderRadius: 3, position: "relative", overflow: "hidden" }}>
+      {/* Center line */}
+      <div style={{ position: "absolute", left: "50%", top: 0, width: 1, height: "100%", background: "rgba(255,255,255,0.15)" }} />
+      {/* Rate marker */}
+      <div style={{
+        position: "absolute",
+        left: `${pct}%`,
+        top: 0,
+        width: 3,
+        height: "100%",
+        background: color,
+        borderRadius: 1,
+        transform: "translateX(-1.5px)",
+        boxShadow: `0 0 3px ${color}`,
+      }} />
+    </div>
+  );
+}
+
 function TelemSection({ label }: { label: string }) {
   return (
     <div
@@ -81,7 +124,7 @@ function TelemRow({
     <div className="telem-row">
       <span className="telem-label">{label}</span>
       <span className="telem-value" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-        {sparkline && <span style={{ width: 48, flexShrink: 0, display: "inline-flex" }}>{sparkline}</span>}
+        <span style={{ width: 48, flexShrink: 0, display: "inline-flex", justifyContent: "flex-end" }}>{sparkline ?? null}</span>
         <span>
           {value}
           {unit && <span className="telem-unit">{unit}</span>}
@@ -175,12 +218,32 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
           <TelemRow label={tr("telemetry.roll")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.roll) : "—"} />
           <TelemRow label={tr("telemetry.pitch")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.pitch) : "—"} />
           <TelemRow label={tr("telemetry.yaw")} value={arow?.eulerDeg ? fmtDeg(arow.eulerDeg.yaw) : "—"} />
-          <TelemRow label={tr("telemetry.rollRate")} value={arow?.rollRate != null ? fmt(arow.rollRate, 2) : "—"} unit="°/s" />
-          <TelemRow label={tr("telemetry.pitchRate")} value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s" />
-          <TelemRow label={tr("telemetry.yawRate")} value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s" />
+          <TelemRow label={tr("telemetry.rollRate")} value={arow?.rollRate != null ? fmt(arow.rollRate, 2) : "—"} unit="°/s"
+            sparkline={<DeadBandBar rate={arow?.rollRate ?? null} band={1.0} />}
+          />
+          <TelemRow label={tr("telemetry.pitchRate")} value={arow?.pitchRate != null ? fmt(arow.pitchRate, 2) : "—"} unit="°/s"
+            sparkline={<DeadBandBar rate={arow?.pitchRate ?? null} band={1.0} />}
+          />
+          <TelemRow label={tr("telemetry.yawRate")} value={arow?.yawRate != null ? fmt(arow.yawRate, 2) : "—"} unit="°/s"
+            sparkline={<DeadBandBar rate={arow?.yawRate ?? null} band={1.0} />}
+          />
         </div>
         <AttitudeIndicator quaternion={arow?.quaternion ?? null} eulerDeg={arow?.eulerDeg} />
       </div>
+      {/* Gyro cross-check — outside the flex container so it's full-width */}
+      {arow?.rollRate != null && arow?.rollRateFallback != null && (() => {
+        const maxDelta = Math.max(
+          Math.abs((arow.rollRate ?? 0) - (arow.rollRateFallback ?? 0)),
+          Math.abs((arow.pitchRate ?? 0) - (arow.pitchRateFallback ?? 0)),
+          Math.abs((arow.yawRate ?? 0) - (arow.yawRateFallback ?? 0)),
+        );
+        return (
+          <TelemRow
+            label={tr("telemetry.gyroHealth")}
+            value={`${fmt(maxDelta, 3)}°/s`}
+          />
+        );
+      })()}
 
       <TelemSection label={tr("panels.solarArrays")} />
       {(["saw1", "saw2", "saw3", "saw4"] as const).map((k, i) => {
@@ -207,6 +270,25 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         );
       })}
 
+      {/* Solar power estimate — 11.2 kW nominal ESM output × average SAW efficiency */}
+      {arow && (arow.sawGimbals || arow.sawAngles) && (() => {
+        const NOMINAL_KW = 11.2;
+        let totalEff = 0;
+        for (const k of ["saw1", "saw2", "saw3", "saw4"] as const) {
+          totalEff += computeSawEfficiency(arow.sawGimbals, arow.sawAngles, k);
+        }
+        const avgEff = totalEff / 4;
+        const powerKw = NOMINAL_KW * avgEff;
+        const color = avgEff > 0.7 ? "var(--accent-green)" : avgEff > 0.4 ? "var(--accent-yellow)" : "var(--accent-red)";
+        return (
+          <TelemRow
+            label={tr("telemetry.solarPower")}
+            value={`~${powerKw.toFixed(1)} kW`}
+            sparkline={<span style={{ fontSize: 7, color, fontWeight: 700 }}>{Math.round(avgEff * 100)}% eff</span>}
+          />
+        );
+      })()}
+
       <TelemSection label={tr("panels.commLink")} />
       <TelemRow
         label={tr("telemetry.antenna1")}
@@ -217,8 +299,17 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
         value={arow?.antennaGimbal ? `${fmt(arow.antennaGimbal.az2)}° / ${fmt(arow.antennaGimbal.el2)}°` : "—"}
       />
       <TelemRow
+        label={tr("telemetry.lightTime")}
+        value={arow?.signalLightTimeSec != null ? `${arow.signalLightTimeSec.toFixed(2)}s` : "—"}
+        sparkline={arow?.signalLightTimeSec != null ? (
+          <span style={{ fontSize: 7, color: "var(--text-dim)" }}>
+            {tr("telemetry.measured")} {arow.signalLightTimeSec.toFixed(1)}s {tr("telemetry.ago")}
+          </span>
+        ) : undefined}
+      />
+      <TelemRow
         label={tr("telemetry.mode")}
-        value={arow ? `0x${arow.spacecraftMode.toUpperCase()}` : "—"}
+        value={arow ? decodeSpacecraftMode(arow.spacecraftMode) : "—"}
       />
 
       </div>

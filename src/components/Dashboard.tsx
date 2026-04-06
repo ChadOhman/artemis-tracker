@@ -20,7 +20,7 @@ import { StationSchedulePanel } from "./panels/StationSchedulePanel";
 import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
 import { ThermalPanel } from "./panels/ThermalPanel";
 import { BuyMeACoffee } from "./BuyMeACoffee";
-import { ChangelogModal } from "./modals/ChangelogModal";
+// ChangelogModal is rendered in BottomBar — not here to avoid double-mount
 import { WakeupSongsPanel } from "./panels/WakeupSongsPanel";
 import { RcsThrusterPanel } from "./panels/RcsThrusterPanel";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
@@ -166,7 +166,7 @@ function DashboardInner() {
         <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />
       </div>
       <BuyMeACoffee />
-      <ChangelogModal />
+      {/* ChangelogModal lives in BottomBar to avoid double-mount */}
     </div>
   );
 }

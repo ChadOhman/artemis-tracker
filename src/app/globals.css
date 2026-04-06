@@ -238,6 +238,8 @@ main {
   font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  min-width: 130px;
+  text-align: right;
 }
 
 .telem-unit {
@@ -470,8 +472,8 @@ input[type="range"].sim-scrubber::-moz-range-thumb {
     grid-template-rows: auto auto auto auto auto auto;
     grid-template-areas:
       "topbar"
-      "left"
       "timeline"
+      "left"
       "center"
       "right"
       "bottombar";

@@ -80,10 +80,18 @@ export interface ArowTelemetry {
   rollRate: number | null;
   pitchRate: number | null;
   yawRate: number | null;
+  /** Fallback gyro rates — independent IMU for cross-check */
+  rollRateFallback: number | null;
+  pitchRateFallback: number | null;
+  yawRateFallback: number | null;
   antennaGimbal: { az1: number; el1: number; az2: number; el2: number } | null;
+  /** One-way signal light time in seconds (from param 5010) */
+  signalLightTimeSec: number | null;
   sawAngles: { saw1: number; saw2: number; saw3: number; saw4: number } | null;
   rcsThrusters: RcsThrusterState | null;
   sawGimbals: SawGimbalAngles | null;
+  /** SAW gimbal fallback angles — for health cross-check */
+  sawGimbalsFallback: SawGimbalAngles | null;
   icps: {
     quaternion: { w: number; x: number; y: number; z: number };
     active: boolean;

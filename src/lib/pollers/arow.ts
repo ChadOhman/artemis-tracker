@@ -79,11 +79,14 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
 
   // Angular rates — each independently nullable.
   // Params 2091/2092/2093 are delivered in DEGREES per second, not radians.
-  // (Verified against live values: applying * RAD2DEG produced implausible
-  // ~14 °/s tumble rates; raw values ~0.25 °/s match normal dead-band drift.)
   const rollRateDegS = getParamFloat(data, "2091");
   const pitchRateDegS = getParamFloat(data, "2092");
   const yawRateDegS = getParamFloat(data, "2093");
+
+  // Fallback gyro rates (2081-2083) — independent IMU for cross-check
+  const rollRateFB = getParamFloat(data, "2081");
+  const pitchRateFB = getParamFloat(data, "2082");
+  const yawRateFB = getParamFloat(data, "2083");
 
   // Antenna gimbal — all four required, or null
   const az1 = getParamFloat(data, "5002");
@@ -120,6 +123,30 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
         saw4: { ig: sawIG4 * RAD2DEG, og: sawOG4 * RAD2DEG },
       }
     : null;
+
+  // SAW gimbal fallbacks (2056-2063) — for health cross-check
+  const sawIGFB1 = getParamFloat(data, "2056");
+  const sawIGFB2 = getParamFloat(data, "2057");
+  const sawIGFB3 = getParamFloat(data, "2058");
+  const sawIGFB4 = getParamFloat(data, "2059");
+  const sawOGFB1 = getParamFloat(data, "2060");
+  const sawOGFB2 = getParamFloat(data, "2061");
+  const sawOGFB3 = getParamFloat(data, "2062");
+  const sawOGFB4 = getParamFloat(data, "2063");
+  const sawGimbalsFallback: SawGimbalAngles | null =
+    (sawIGFB1 != null && sawIGFB2 != null && sawIGFB3 != null && sawIGFB4 != null &&
+     sawOGFB1 != null && sawOGFB2 != null && sawOGFB3 != null && sawOGFB4 != null)
+    ? {
+        saw1: { ig: sawIGFB1 * RAD2DEG, og: sawOGFB1 * RAD2DEG },
+        saw2: { ig: sawIGFB2 * RAD2DEG, og: sawOGFB2 * RAD2DEG },
+        saw3: { ig: sawIGFB3 * RAD2DEG, og: sawOGFB3 * RAD2DEG },
+        saw4: { ig: sawIGFB4 * RAD2DEG, og: sawOGFB4 * RAD2DEG },
+      }
+    : null;
+
+  // Signal light time (param 5010) — one-way, in nanoseconds → seconds
+  const lightTimeNs = getParamFloat(data, "5010");
+  const signalLightTimeSec = lightTimeNs != null ? lightTimeNs / 1e9 : null;
 
   // RCS thruster firing states (bit-packed integers)
   let rcsThrusters: RcsThrusterState | null = null;
@@ -162,10 +189,15 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
     rollRate: rollRateDegS ?? null,
     pitchRate: pitchRateDegS ?? null,
     yawRate: yawRateDegS ?? null,
+    rollRateFallback: rollRateFB ?? null,
+    pitchRateFallback: pitchRateFB ?? null,
+    yawRateFallback: yawRateFB ?? null,
     antennaGimbal,
+    signalLightTimeSec,
     sawAngles,
     rcsThrusters,
     sawGimbals,
+    sawGimbalsFallback,
     icps: { quaternion: { w: icpsQw, x: icpsQx, y: icpsQy, z: icpsQz }, active: icpsActive },
     spacecraftMode: mode,
   };
