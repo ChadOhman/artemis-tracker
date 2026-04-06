@@ -47,4 +47,10 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     artist: "CeeLo Green",
     notes: "Accompanied by a special wake-up message from Apollo 16 moonwalker Charlie Duke.",
   },
+  {
+    flightDay: 6,
+    title: "Good Morning",
+    artist: "Mandisa & TobyMac",
+    notes: "Woke the crew on lunar flyby day. Accompanied by a congratulatory message from the late Jim Lovell (Apollo 8/13), who congratulated the crew on breaking his distance record and expressed pride in passing the torch to Artemis II.",
+  },
 ];
