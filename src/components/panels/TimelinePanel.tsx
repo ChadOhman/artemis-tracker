@@ -24,6 +24,7 @@ const PHASE_COLORS: Record<MissionPhase, string> = {
   LEO: "#0d47a1",
   "High Earth Orbit": "#1a237e",
   "Trans-Lunar": "#4a148c",
+  "Lunar Flyby": "#6a1b9a",
   "Trans-Earth": "#1b5e20",
   EDL: "#bf360c",
   Recovery: "#e65100",

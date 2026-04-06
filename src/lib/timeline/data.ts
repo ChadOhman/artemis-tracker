@@ -71,37 +71,42 @@ const RAW_MILESTONES: Milestone[] = [
   {
     name: "Lunar SOI Entry",
     description: "Orion enters the lunar sphere of influence",
-    metMs: Math.round(102.05 * 3600 * 1000), // metHours=102.05 → ~4d 06h 03m
+    metMs: Math.round(102.10 * 3600 * 1000), // updated from upstream
+  },
+  {
+    name: "Distance Record",
+    description: "Artemis II surpasses Apollo 13 distance record",
+    metMs: Math.round(115.40 * 3600 * 1000),
   },
   {
     name: "Flyby Coverage Begins",
     description: "NASA begins live coverage of the lunar flyby",
-    metMs: Math.round(114.41 * 3600 * 1000), // metHours=114.41 → ~4d 18h 25m
+    metMs: Math.round(114.41 * 3600 * 1000),
   },
   {
     name: "Far-Side Blackout",
-    description: "Loss of signal — Orion passes behind the Moon",
-    metMs: Math.round(120.20 * 3600 * 1000), // metHours=120.20 → ~5d 00h 12m
+    description: "Loss of signal — Orion behind the Moon",
+    metMs: Math.round(120.13 * 3600 * 1000), // refined from 120.20
   },
   {
     name: "Lunar Close Approach",
-    description: "Closest approach — ~4,066 miles (~6,543 km) above the lunar surface",
-    metMs: Math.round(120.45 * 3600 * 1000), // metHours=120.45 → ~5d 00h 27m
+    description: "Closest approach — 6,545 km (4,067 mi) above the lunar surface",
+    metMs: Math.round(120.426 * 3600 * 1000), // refined from 120.45
   },
   {
     name: "Max Earth Distance",
-    description: "Maximum distance from Earth — 252,757 miles, surpassing Apollo 13 record",
-    metMs: Math.round(120.50 * 3600 * 1000), // metHours=120.50 → ~5d 00h 30m
+    description: "Maximum distance from Earth — 406,770 km (252,756 mi)",
+    metMs: Math.round(120.461 * 3600 * 1000), // refined from 120.50
   },
   {
     name: "Signal Reacquired",
-    description: "Communications restored after far-side blackout",
-    metMs: Math.round(120.86 * 3600 * 1000), // metHours=120.86 → ~5d 00h 52m
+    description: "Signal reacquired — Earthrise",
+    metMs: Math.round(120.797 * 3600 * 1000), // refined from 120.86
   },
   {
     name: "Solar Eclipse",
     description: "Orion observes a solar eclipse from behind the Moon",
-    metMs: Math.round(123 * 3600 * 1000), // metHours=123 → ~5d 03h 00m
+    metMs: Math.round(122 * 3600 * 1000),
   },
   {
     name: "Lunar SOI Exit",
@@ -172,11 +177,16 @@ const PHASES: PhaseBlock[] = [
   {
     phase: "Trans-Lunar",
     startMetMs: met(1, 1, 8, 42),
-    endMetMs: met(5, 18, 53, 0),
+    endMetMs: Math.round(102.05 * 3600 * 1000), // Lunar SOI entry
+  },
+  {
+    phase: "Lunar Flyby",
+    startMetMs: Math.round(102.05 * 3600 * 1000), // SOI entry
+    endMetMs: Math.round(138.87 * 3600 * 1000),   // SOI exit
   },
   {
     phase: "Trans-Earth",
-    startMetMs: met(5, 18, 53, 0),
+    startMetMs: Math.round(138.87 * 3600 * 1000),
     endMetMs: met(9, 1, 9, 0),
   },
   {

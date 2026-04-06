@@ -97,6 +97,7 @@ export const PHASE_TRANSLATIONS: Record<string, string> = {
   "LEO": "OBT",
   "High Earth Orbit": "Orbite terrestre haute",
   "Trans-Lunar": "Trans-lunaire",
+  "Lunar Flyby": "Survol lunaire",
   "Trans-Earth": "Trans-terrestre",
   "EDL": "ERD",
   "Recovery": "Récupération",

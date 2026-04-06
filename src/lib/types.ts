@@ -118,6 +118,7 @@ export type MissionPhase =
   | "LEO"
   | "High Earth Orbit"
   | "Trans-Lunar"
+  | "Lunar Flyby"
   | "Trans-Earth"
   | "EDL"
   | "Recovery";
