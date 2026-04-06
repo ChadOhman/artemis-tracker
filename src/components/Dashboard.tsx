@@ -15,10 +15,10 @@ import { UpcomingPanel } from "./panels/UpcomingPanel";
 import { MilestonesPanel } from "./panels/MilestonesPanel";
 import { SolarPanel } from "./panels/SolarPanel";
 import { DeltaVPanel } from "./panels/DeltaVPanel";
-import { Co2Panel } from "./panels/Co2Panel";
+// Co2Panel removed — simulated data, not live telemetry
 import { StationSchedulePanel } from "./panels/StationSchedulePanel";
 import { DsnBandwidthPanel } from "./panels/DsnBandwidthPanel";
-import { ThermalPanel } from "./panels/ThermalPanel";
+// ThermalPanel removed — estimated model, not live telemetry
 import { BuyMeACoffee } from "./BuyMeACoffee";
 // ChangelogModal is rendered in BottomBar — not here to avoid double-mount
 import { WakeupSongsPanel } from "./panels/WakeupSongsPanel";
@@ -34,10 +34,9 @@ const MemoTelemetry = memo(TelemetryPanel);
 const MemoDsn = memo(DsnPanel);
 const MemoSolar = memo(SolarPanel);
 const MemoDeltaV = memo(DeltaVPanel);
-const MemoCo2 = memo(Co2Panel);
+
 const MemoStationSchedule = memo(StationSchedulePanel);
 const MemoDsnBandwidth = memo(DsnBandwidthPanel);
-const MemoThermal = memo(ThermalPanel);
 const MemoActivity = memo(ActivityDetailPanel);
 const MemoNextMilestone = memo(NextMilestonePanel);
 const MemoCurrentActivities = memo(CurrentActivitiesPanel);
@@ -148,8 +147,6 @@ function DashboardInner() {
         <MemoDsnBandwidth dsn={dsnData} />
         <MemoSolar solar={solarData} />
         <MemoDeltaV metMs={metMs} />
-        <MemoCo2 metMs={metMs} />
-        <MemoThermal stateVector={stateVector} arow={mode === "LIVE" ? arow : null} metMs={metMs} />
       </div>
       <div className="dashboard-timeline">
         <MemoTimeline metMs={metMs} timeline={timeline} />
