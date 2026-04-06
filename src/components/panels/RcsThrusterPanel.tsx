@@ -169,8 +169,9 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
                   fill={firing ? "#00ff88" : "rgba(80,90,100,0.5)"}
                   stroke={firing ? "rgba(0,255,136,0.6)" : "rgba(80,90,100,0.3)"}
                   strokeWidth="0.3"
+                  suppressHydrationWarning
                 >
-                  <title>{th.name}: {firing ? "FIRING" : "idle"}</title>
+                  <title suppressHydrationWarning>{th.name}: {firing ? "FIRING" : "idle"}</title>
                 </rect>
                 {/* Label */}
                 <text
