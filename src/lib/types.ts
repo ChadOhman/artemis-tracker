@@ -75,6 +75,8 @@ export interface SawGimbalAngles {
 
 export interface ArowTelemetry {
   timestamp: string;
+  /** Spacecraft position in J2000 ecliptic km (from AROW params 2003-2005, converted from feet) */
+  positionKm: { x: number; y: number; z: number } | null;
   quaternion: { w: number; x: number; y: number; z: number } | null;
   eulerDeg: { roll: number; pitch: number; yaw: number } | null;
   rollRate: number | null;

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, memo } from "react";
+import { useEffect, useMemo, memo } from "react";
 import { TopBar } from "./TopBar";
 import { BottomBar } from "./BottomBar";
 import { OrbitMapPanel } from "./panels/OrbitMapPanel";
@@ -116,7 +116,22 @@ function DashboardInner() {
   } = useSimTelemetry(mode, simMetMs);
 
   // In SIM mode prefer snapshot-derived values; fall back to live if not yet loaded
-  const telemetry = mode === "SIM" ? (simTelemetry ?? liveTelemetry) : liveTelemetry;
+  const baseTelemetry = mode === "SIM" ? (simTelemetry ?? liveTelemetry) : liveTelemetry;
+
+  // Refresh Moon/Earth distance from AROW's 1-second position updates.
+  // JPL only polls every 5 minutes so distances go stale during the approach.
+  // AROW position (params 2003-2005) + last known Moon position = fresher distance.
+  const telemetry = useMemo(() => {
+    if (!baseTelemetry || !arow?.positionKm || !liveMoonPosition) return baseTelemetry;
+    const dx = arow.positionKm.x - liveMoonPosition.x;
+    const dy = arow.positionKm.y - liveMoonPosition.y;
+    const dz = arow.positionKm.z - liveMoonPosition.z;
+    const moonDistKm = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const earthDistKm = Math.sqrt(
+      arow.positionKm.x ** 2 + arow.positionKm.y ** 2 + arow.positionKm.z ** 2
+    );
+    return { ...baseTelemetry, moonDistKm, earthDistKm, altitudeKm: earthDistKm - 6371 };
+  }, [baseTelemetry, arow?.positionKm, liveMoonPosition]);
   const stateVector = mode === "SIM" ? (simStateVector ?? liveStateVector) : liveStateVector;
   const moonPosition = mode === "SIM" ? (simMoonPosition ?? liveMoonPosition) : liveMoonPosition;
   const dsnData = mode === "SIM" ? (simDsn ?? dsn) : dsn;

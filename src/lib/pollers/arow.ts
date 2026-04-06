@@ -62,6 +62,15 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
 
   const mode = getParam(data, "2016") ?? "??";
 
+  // Position — params 2003-2005 are in feet, convert to km
+  const FEET_TO_KM = 0.0003048;
+  const posX = getParamFloat(data, "2003");
+  const posY = getParamFloat(data, "2004");
+  const posZ = getParamFloat(data, "2005");
+  const positionKm = (posX != null && posY != null && posZ != null)
+    ? { x: posX * FEET_TO_KM, y: posY * FEET_TO_KM, z: posZ * FEET_TO_KM }
+    : null;
+
   // Attitude — all four quaternion components required, or null
   const qw = getParamFloat(data, "2074");
   const qx = getParamFloat(data, "2075");
@@ -184,6 +193,7 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
 
   return {
     timestamp,
+    positionKm,
     quaternion,
     eulerDeg,
     rollRate: rollRateDegS ?? null,
