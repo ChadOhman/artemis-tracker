@@ -134,19 +134,30 @@ export default function ApiDocsPage() {
 
         <SubHeading>Response (200 OK)</SubHeading>
         <CodeBlock>{`{
-  "timestamp": "2026-04-03T07:15:03.179Z",
-  "quaternion": { "w": 0.221, "x": -0.256, "y": -0.724, "z": -0.588 },
-  "eulerDeg": { "roll": -12.4, "pitch": 75.2, "yaw": -1.8 },
-  "rollRate": 19.4,
-  "pitchRate": 7.0,
-  "yawRate": -19.4,
-  "antennaGimbal": { "az1": 19.4, "el1": 7.0, "az2": -19.4, "el2": -7.0 },
-  "sawAngles": { "saw1": 177.1, "saw2": 0.2, "saw3": 177.1, "saw4": 166.1 },
+  "timestamp": "2026-04-05T23:54:32.675Z",
+  "quaternion": { "w": 0.221, "x": -0.256, "y": -0.724, "z": -1.122 },
+  "eulerDeg": { "roll": -43.2, "pitch": 75.2, "yaw": -1.8 },
+  "rollRate": -0.70,
+  "pitchRate": 0.16,
+  "yawRate": -0.33,
+  "antennaGimbal": { "az1": -39.9, "el1": 9.4, "az2": -18.7, "el2": -9.4 },
+  "sawAngles": { "saw1": 6.0, "saw2": 163.7, "saw3": 179.7, "saw4": 163.7 },
+  "rcsThrusters": {
+    "thrusters": { "SR1R": false, "SR2R": false, "SA3A": false, ... },
+    "status1": "b0",
+    "status2": "b0"
+  },
+  "sawGimbals": {
+    "saw1": { "ig": 7.2, "og": 94.2 },
+    "saw2": { "ig": 220.5, "og": -38.0 },
+    "saw3": { "ig": 51.8, "og": 145.7 },
+    "saw4": { "ig": 33.4, "og": -17.0 }
+  },
   "icps": {
-    "quaternion": { "w": 0.20, "x": 0.34, "y": -0.22, "z": -0.68 },
+    "quaternion": { "w": -0.33, "x": 0.34, "y": -0.22, "z": -0.68 },
     "active": true
   },
-  "spacecraftMode": "ec"
+  "spacecraftMode": "80"
 }`}</CodeBlock>
 
         <SubHeading>Error Response (503)</SubHeading>
@@ -206,15 +217,16 @@ es.addEventListener("error", () => {
             Computed orbital telemetry from JPL Horizons. Updates every 5 minutes.
           </p>
           <CodeBlock>{`{
-  "metMs": 119700000,
-  "speedKmS": 2.755,
-  "speedKmH": 9918.0,
-  "altitudeKm": 79149.3,
-  "earthDistKm": 85520.3,
-  "moonDistKm": 319868.1,
-  "periapsisKm": 185.0,
-  "apoapsisKm": 70377.0,
-  "gForce": 0.0001
+  "metMs": 372600000,
+  "speedKmS": 0.595,
+  "speedKmH": 2141.0,
+  "moonRelSpeedKmH": 3283.0,
+  "altitudeKm": 367171.4,
+  "earthDistKm": 383775.0,
+  "moonDistKm": 61367.0,
+  "periapsisKm": -2744.5,
+  "apoapsisKm": 452478.1,
+  "gForce": 0.0003
 }`}</CodeBlock>
         </div>
 
@@ -289,6 +301,122 @@ es.addEventListener("error", () => {
             Everything in one request — telemetry, state vector, Moon position, DSN, and AROW combined.
           </p>
           <CodeBlock>{`curl -s https://artemis.cdnspace.ca/api/all | jq .`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/solar
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Space weather data from NOAA SWPC — geomagnetic activity, X-ray flux, proton flux, and radiation risk. Updates every 60 seconds.
+          </p>
+          <CodeBlock>{`{
+  "timestamp": "2026-04-05T22:00:00Z",
+  "kpIndex": 2, "kpLabel": "Quiet",
+  "xrayFlux": 1.2e-6, "xrayClass": "B1.2",
+  "protonFlux1MeV": 5.4, "protonFlux10MeV": 0.8, "protonFlux100MeV": 0.1,
+  "radiationRisk": "low"
+}`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/history?metric=&lt;name&gt;&amp;hours=24&amp;points=60
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Downsampled time-series history for sparklines and trend charts. Returns up to <code style={{ color: "#8bd5ca" }}>points</code> data points over the last <code style={{ color: "#8bd5ca" }}>hours</code> hours.
+          </p>
+          <p style={{ fontSize: 12, color: "#7a8a9e", marginBottom: 8 }}>
+            Available metrics: <code style={{ color: "#8bd5ca" }}>speed_km_h</code>, <code style={{ color: "#8bd5ca" }}>speed_km_s</code>, <code style={{ color: "#8bd5ca" }}>moon_rel_speed_km_h</code>, <code style={{ color: "#8bd5ca" }}>altitude_km</code>, <code style={{ color: "#8bd5ca" }}>earth_dist_km</code>, <code style={{ color: "#8bd5ca" }}>moon_dist_km</code>, <code style={{ color: "#8bd5ca" }}>g_force</code>, <code style={{ color: "#8bd5ca" }}>kp_index</code>, <code style={{ color: "#8bd5ca" }}>xray_flux</code>, <code style={{ color: "#8bd5ca" }}>proton_10mev</code>
+          </p>
+          <CodeBlock>{`curl -s "https://artemis.cdnspace.ca/api/history?metric=earth_dist_km&hours=48&points=100" | jq .
+{
+  "metric": "earth_dist_km",
+  "hours": 48,
+  "data": [
+    { "ts": 1743886800000, "value": 85520.3 },
+    { "ts": 1743888600000, "value": 91244.1 },
+    ...
+  ]
+}`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/snapshot?metMs=&lt;number&gt;
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Point-in-time mission replay. Returns the closest archived telemetry, state vector, DSN, and solar data for a given MET timestamp (milliseconds).
+          </p>
+          <CodeBlock>{`curl -s "https://artemis.cdnspace.ca/api/snapshot?metMs=360000000" | jq .`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/stats
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Cumulative mission statistics — max speed, max Earth distance, min Moon distance, total distance traveled, solar event counts, and sample counts.
+          </p>
+          <CodeBlock>{`curl -s https://artemis.cdnspace.ca/api/stats | jq .`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#8bd5ca">GET</Badge>
+            <code style={{ fontSize: 14, color: "#8bd5ca", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/dsn/history?minutes=30
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            DSN contact history — bandwidth rates, active stations, and dish details over the last N minutes (max 1440 = 24 hours). Used for signal timeline and bandwidth charts.
+          </p>
+          <CodeBlock>{`curl -s "https://artemis.cdnspace.ca/api/dsn/history?minutes=60" | jq '.history | length'`}</CodeBlock>
+        </div>
+
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 8 }}>
+            <Badge color="#a6da95">SSE</Badge>
+            <code style={{ fontSize: 14, color: "#a6da95", fontFamily: "'JetBrains Mono', 'Fira Code', monospace" }}>
+              /api/telemetry/stream
+            </code>
+          </div>
+          <p style={{ fontSize: 13, marginBottom: 8 }}>
+            Primary SSE stream — the full firehose. Pushes all event types: <code style={{ color: "#8bd5ca" }}>telemetry</code> (JPL state + orbit, every 5 min), <code style={{ color: "#8bd5ca" }}>dsn</code> (every 10s), <code style={{ color: "#8bd5ca" }}>arow</code> (every 1s), <code style={{ color: "#8bd5ca" }}>solar</code> (every 60s), <code style={{ color: "#8bd5ca" }}>visitors</code> (every 5s).
+          </p>
+          <CodeBlock>{`const es = new EventSource("https://artemis.cdnspace.ca/api/telemetry/stream");
+
+es.addEventListener("telemetry", (e) => {
+  const { telemetry, stateVector, moonPosition, dsn } = JSON.parse(e.data);
+  console.log("Speed:", telemetry.speedKmH, "km/h");
+});
+
+es.addEventListener("arow", (e) => {
+  const arow = JSON.parse(e.data);
+  console.log("Roll:", arow.eulerDeg?.roll?.toFixed(1) + "\u00B0");
+});
+
+es.addEventListener("dsn", (e) => {
+  const dsn = JSON.parse(e.data);
+  console.log("Signal:", dsn.signalActive ? "ACTIVE" : "LOS");
+});
+
+es.addEventListener("solar", (e) => {
+  const solar = JSON.parse(e.data);
+  console.log("Kp:", solar.kpIndex, solar.kpLabel);
+});`}</CodeBlock>
         </div>
 
         {/* Field Reference */}
