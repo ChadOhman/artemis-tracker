@@ -3,6 +3,7 @@ import { useRef, useEffect, useCallback, useState } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import type { StateVector, Telemetry } from "@/lib/types";
 import { getGroundTrackLabel } from "@/lib/ground-track";
+import { getLunarGroundTrackLabel } from "@/lib/lunar-ground-track";
 import { useLocale } from "@/context/LocaleContext";
 
 interface OrbitMapPanelProps {
@@ -31,6 +32,7 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
 
   const tliMetMs = (25 * 3600 + 8 * 60 + 42) * 1000;
   const lunarSoiMetMs = (4 * 24 * 3600 + 6 * 3600 + 38 * 60) * 1000;
+  const closestApproachMetMs = Math.round(120.45 * 3600 * 1000); // ~5d 00h 27m
   const exitMetMs = (5 * 24 * 3600 + 18 * 3600 + 53 * 60) * 1000;
   const entryMetMs = (9 * 24 * 3600 + 1 * 3600 + 29 * 60) * 1000;
 
@@ -65,7 +67,23 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
     });
   }
 
-  // Phase 3: Lunar flyby - tight loop behind the Moon's far side
+  // Phase 3a: Approach inside SOI — straight segment from outbound Bezier
+  // end (x=0.97) to the near side of the Moon (x≈0.955, the flyby loop start).
+  // This covers the ~18 hours between SOI entry and closest approach.
+  const approachSteps = 20;
+  const approachEndX = 0.955; // near side of Moon, just before flyby loop
+  const approachEndY = 0.01;
+  for (let i = 1; i <= approachSteps; i++) {
+    const t = i / approachSteps;
+    points.push({
+      x: 0.97 + t * (approachEndX - 0.97),
+      y: 0.05 + t * (approachEndY - 0.05),
+      metMs: lunarSoiMetMs + t * (closestApproachMetMs - lunarSoiMetMs),
+    });
+  }
+
+  // Phase 3b: Lunar flyby — tight loop behind the Moon's far side.
+  // Starts at closest approach and ends at SOI exit.
   const flybyR = 0.045;
   const flybySteps = 40;
   const flybyStartAngle = -Math.PI * 0.15;
@@ -78,7 +96,7 @@ function generateReferenceTrajectory(): TrajectoryPoint[] {
     points.push({
       x: 1.0 + Math.cos(angle) * rx,
       y: Math.sin(angle) * ry,
-      metMs: lunarSoiMetMs + t * (exitMetMs - lunarSoiMetMs),
+      metMs: closestApproachMetMs + t * (exitMetMs - closestApproachMetMs),
     });
   }
 
@@ -106,8 +124,9 @@ const REFERENCE_TRAJECTORY = generateReferenceTrajectory();
 
 // Phase boundaries within REFERENCE_TRAJECTORY. Keep in sync with
 // generateReferenceTrajectory(): spiral=61, outbound=50, flyby=40, return=50.
-const OUTBOUND_END_IDX = 61 + 50 - 1;   // 110 — last point of outbound Bezier
-const RETURN_START_IDX = 61 + 50 + 40;  // 151 — first point of return arc
+// Phase boundaries: spiral=61, outbound=50, approach=20, flyby=40, return=50
+const OUTBOUND_END_IDX = 61 + 50 + 20 - 1; // 130 — last point of approach segment
+const RETURN_START_IDX = 61 + 50 + 20 + 40; // 171 — first point of return arc
 
 const WAYPOINTS = [
   { label: "TLI", metMs: (25 * 3600 + 8 * 60 + 42) * 1000, align: "center" as const, offsetY: -10 },
@@ -155,6 +174,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [showInset, setShowInset] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   // Trail of recent Orion-relative-to-Moon positions, for the zoom inset.
   // Only grows when new JPL data arrives (deduped by metMs).
   const insetTrailRef = useRef<Array<{ relX: number; relY: number; metMs: number }>>([]);
@@ -166,12 +186,12 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     kmView: t("orbitMap.kmView"),
   };
 
-  // Auto-enable inset during lunar approach (within 100,000 km of Moon)
+  // Auto-enable inset when Orion is within the zoom viewport (60,000 km)
   useEffect(() => {
-    if (telemetry && telemetry.moonDistKm < 100000) {
+    if (telemetry && telemetry.moonDistKm < 60000) {
       setShowInset(true);
     }
-  }, [telemetry?.moonDistKm != null && telemetry.moonDistKm < 100000]);
+  }, [telemetry?.moonDistKm != null && telemetry.moonDistKm < 60000]);
 
 
   const draw = useCallback(() => {
@@ -678,14 +698,26 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.fillText("Orion", orionPx.x + 7, orionPx.y - 8);
     ctx.restore();
 
-    // Ground track — show what region Orion is above
+    // Ground track — show what region Orion is above.
+    // When inside the Moon's SOI (~61,500 km), show lunar features instead.
     if (stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)) {
-      const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
+      const LUNAR_SOI_KM = 61500;
+      const inLunarSoi = telemetry && telemetry.moonDistKm < LUNAR_SOI_KM && moonPosition;
+      const trackLabel = inLunarSoi && moonPosition
+        ? getLunarGroundTrackLabel(
+            {
+              x: stateVector.position.x - moonPosition.x,
+              y: stateVector.position.y - moonPosition.y,
+              z: stateVector.position.z - moonPosition.z,
+            },
+            moonPosition,
+          )
+        : getGroundTrackLabel(stateVector.position, metMs);
       ctx.save();
       ctx.font = "8px monospace";
-      ctx.fillStyle = "rgba(0, 255, 136, 0.5)";
+      ctx.fillStyle = inLunarSoi ? "rgba(200, 200, 220, 0.6)" : "rgba(0, 255, 136, 0.5)";
       ctx.textAlign = "left";
-      ctx.fillText(groundLabel, orionPx.x + 7, orionPx.y + 4);
+      ctx.fillText(trackLabel, orionPx.x + 7, orionPx.y + 4);
       ctx.restore();
     }
 
@@ -936,9 +968,16 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   }, [draw]);
 
   // Compute accessible ground track description
+  const LUNAR_SOI_KM = 61500;
+  const inLunarSoi = telemetry && telemetry.moonDistKm < LUNAR_SOI_KM && moonPosition;
   const groundLabel =
     stateVector && (stateVector.position.x !== 0 || stateVector.position.y !== 0)
-      ? getGroundTrackLabel(stateVector.position, metMs)
+      ? (inLunarSoi && moonPosition
+        ? getLunarGroundTrackLabel(
+            { x: stateVector.position.x - moonPosition.x, y: stateVector.position.y - moonPosition.y, z: stateVector.position.z - moonPosition.z },
+            moonPosition,
+          )
+        : getGroundTrackLabel(stateVector.position, metMs))
       : null;
   const orbitDescription = [
     "Lunar flyby trajectory map.",
@@ -949,10 +988,20 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   ].filter(Boolean).join(" ");
 
   return (
+    <div style={isFullscreen ? {
+      position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 9999, background: "#060b14",
+    } : undefined}>
     <PanelFrame title={t("orbitMap.title")} accentColor="var(--accent-cyan)" headerRight={<span style={{ fontSize: "9px", color: "var(--text-muted)", letterSpacing: "1px" }}>{t("orbitMap.topDown").toUpperCase()}</span>}>
       <div
         ref={containerRef}
-        style={{ width: "100%", height: "min(320px, 50vw)", position: "relative", overflow: "hidden", borderRadius: 4 }}
+        style={{
+          width: "100%",
+          height: isFullscreen ? "calc(100vh - 36px)" : "min(320px, 50vw)",
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: isFullscreen ? 0 : 4,
+        }}
       >
         <span className="sr-only">{orbitDescription}</span>
         <canvas
@@ -984,9 +1033,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }}
         />
 
-        {/* Moon detail toggle button — rendered AFTER the canvas so it sits
-            on top without needing a z-index arms race on desktop. On mobile
-            the inset is nearly full-size so the button must be above it. */}
+        {/* Moon detail toggle button */}
         <button
           onClick={() => setShowInset((v) => !v)}
           style={{
@@ -1010,7 +1057,33 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         >
           🌙 {showInset ? "✕" : t("orbitMap.zoom")}
         </button>
+
+        {/* Fullscreen toggle button */}
+        <button
+          onClick={() => setIsFullscreen((v) => !v)}
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 8,
+            padding: "4px 10px",
+            background: isFullscreen ? "rgba(0,229,255,0.15)" : "rgba(6,11,20,0.8)",
+            border: "1px solid rgba(0,229,255,0.3)",
+            borderRadius: 4,
+            color: "var(--accent-cyan)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            fontFamily: "'JetBrains Mono', monospace",
+            cursor: "pointer",
+            zIndex: 11,
+          }}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+        >
+          {isFullscreen ? "✕ EXIT" : "⛶ FULL"}
+        </button>
       </div>
     </PanelFrame>
+    </div>
   );
 }
