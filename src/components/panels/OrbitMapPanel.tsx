@@ -769,8 +769,9 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           ictx.fillStyle = "#060b14";
           ictx.fillRect(0, 0, iw, ih);
 
-          // Zoom parameters: viewport spans ~60,000 km centered on the Moon
-          const viewKm = 60000;
+          // Viewport spans 130,000 km so Orion is visible as soon as the
+          // inset auto-enables at 60,000 km (60k < 130k/2 = 65k radius)
+          const viewKm = 130000;
           const moonCx = iw / 2;
           const moonCy = ih / 2;
           const insetPxPerKm = Math.min(iw, ih) / viewKm;
