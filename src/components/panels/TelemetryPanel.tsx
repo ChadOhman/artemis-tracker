@@ -4,7 +4,7 @@ import { useMetContext } from "@/context/MetContext";
 import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { AttitudeIndicator } from "@/components/AttitudeIndicator";
-import { SawIndicator } from "@/components/SawIndicator";
+import { SawEfficiencyBar, computeSawEfficiency } from "@/components/SawIndicator";
 import { useLocale } from "@/context/LocaleContext";
 import { Sparkline } from "@/components/shared/Sparkline";
 
@@ -183,29 +183,29 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       </div>
 
       <TelemSection label={tr("panels.solarArrays")} />
-      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>
-          {arow?.sawGimbals ? (
-            <>
-              {(["saw1", "saw2", "saw3", "saw4"] as const).map((k, i) => (
-                <TelemRow
-                  key={k}
-                  label={`SAW ${i + 1}`}
-                  value={`${tr("telemetry.innerGimbal")} ${fmtDeg(arow.sawGimbals![k].ig)}  ${tr("telemetry.outerGimbal")} ${fmtDeg(arow.sawGimbals![k].og)}`}
-                />
-              ))}
-            </>
-          ) : (
-            <>
-              <TelemRow label="SAW 1" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw1) : "—"} />
-              <TelemRow label="SAW 2" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw2) : "—"} />
-              <TelemRow label="SAW 3" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw3) : "—"} />
-              <TelemRow label="SAW 4" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw4) : "—"} />
-            </>
-          )}
-        </div>
-        <SawIndicator sawGimbals={arow?.sawGimbals ?? null} sawAngles={arow?.sawAngles ?? null} />
-      </div>
+      {(["saw1", "saw2", "saw3", "saw4"] as const).map((k, i) => {
+        const eff = computeSawEfficiency(arow?.sawGimbals ?? null, arow?.sawAngles ?? null, k);
+        const g = arow?.sawGimbals?.[k];
+        return (
+          <div key={k} className="telem-row" style={{ flexDirection: "column", gap: 2, alignItems: "stretch" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span className="telem-label">{tr("telemetry.saw")} {i + 1}</span>
+              <span className="telem-value">
+                {g ? (
+                  <>
+                    <span title="Inner Gimbal — rotation around the boom axis" style={{ cursor: "help", borderBottom: "1px dotted var(--text-dim)" }}>IG</span>
+                    {" "}{fmtDeg(g.ig)}
+                    {"  "}
+                    <span title="Outer Gimbal — tilt toward/away from the sun" style={{ cursor: "help", borderBottom: "1px dotted var(--text-dim)" }}>OG</span>
+                    {" "}{fmtDeg(g.og)}
+                  </>
+                ) : arow?.sawAngles ? fmtDeg(arow.sawAngles[k]) : "—"}
+              </span>
+            </div>
+            <SawEfficiencyBar efficiency={eff} />
+          </div>
+        );
+      })}
 
       <TelemSection label={tr("panels.commLink")} />
       <TelemRow
