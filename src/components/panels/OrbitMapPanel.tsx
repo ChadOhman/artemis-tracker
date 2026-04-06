@@ -553,40 +553,24 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       }
     }
 
-    // Place Orion on the reference trajectory curve at the distance-matched position.
-    // Two regimes:
-    //   1. Near the Moon (within ~100,000 km): distance-fraction along the
-    //      figure-8 reference curve breaks down because the outbound Bezier
-    //      tops out at x=0.97 (373k km) but the Moon is at x=1.0 (384k km).
-    //      Any Earth distance above ~373k km has NO matching segment, so the
-    //      fraction search falls through to garbage defaults. Use the REAL
-    //      Moon-relative position projected onto the Earth-Moon axis instead.
+    // Place Orion on the reference trajectory curve.
+    // Three regimes:
+    //   1. Near the Moon (within ~100,000 km): the outbound Bezier tops out at
+    //      x=0.97 and the flyby loop's x is non-monotonic, so distance-fraction
+    //      matching fails. Use MET-based interpolation along the reference curve
+    //      instead — MET is always monotonic, so this keeps Orion exactly ON the
+    //      drawn figure-8 curve. (Real position is used in the zoom inset which
+    //      has its own coordinate frame.)
     //   2. Outbound/return cruise: match Earth-distance fraction against the
     //      reference curve, interpolating Y to stay on the drawn arc.
     let orionPx: { x: number; y: number };
     const nearMoon =
-      telemetry?.moonDistKm != null && telemetry.moonDistKm < 100000 &&
-      stateVector && moonPosition;
+      telemetry?.moonDistKm != null && telemetry.moonDistKm < 100000;
 
-    if (nearMoon && stateVector && moonPosition) {
-      // Build a 2D frame aligned with the Earth→Moon axis in J2000 ecliptic.
-      const mx = moonPosition.x;
-      const my = moonPosition.y;
-      const moonMag = Math.hypot(mx, my);
-      const ux = moonMag > 0 ? mx / moonMag : 1;
-      const uy = moonMag > 0 ? my / moonMag : 0;
-      const vx = -uy;
-      const vy = ux;
-      // Real Orion→Moon offset in km
-      const drx = stateVector.position.x - mx;
-      const dry = stateVector.position.y - my;
-      // Project onto (u_hat, v_hat): relX along Earth-Moon line, relY perpendicular
-      const relX = drx * ux + dry * uy;
-      const relY = drx * vx + dry * vy;
-      orionPx = {
-        x: moonPx.x + relX * pixelsPerKm,
-        y: moonPx.y - relY * pixelsPerKm, // canvas Y flipped
-      };
+    if (nearMoon) {
+      // MET interpolation — refPt was already computed above from the reference
+      // trajectory using the current metMs. It stays on the curve by definition.
+      orionPx = toCanvas(refPt.x, refPt.y);
     } else if (telemetry?.earthDistKm != null) {
       const frac = telemetry.earthDistKm / MOON_DIST_KM;
 
