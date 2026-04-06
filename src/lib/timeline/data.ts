@@ -65,28 +65,43 @@ const RAW_MILESTONES: Milestone[] = [
   },
   {
     name: "OTC-3",
-    description: "Final outbound mid-course correction; Orion enters lunar sphere of influence",
+    description: "Final outbound mid-course correction — 9.9 ft/s, 17.5 second burn",
     metMs: Math.round(100.48 * 3600 * 1000), // metHours=100.48 → ~4d 04h 29m
   },
   {
     name: "Lunar SOI Entry",
     description: "Orion enters the lunar sphere of influence",
-    metMs: Math.round(102.13 * 3600 * 1000), // metHours=102.13 → ~4d 06h 08m
+    metMs: Math.round(102.05 * 3600 * 1000), // metHours=102.05 → ~4d 06h 03m
   },
   {
-    name: "Lunar Close Approach",
-    description: "Closest approach to the Moon — ~8,900 km above the lunar surface",
-    metMs: Math.round(120.52 * 3600 * 1000), // metHours=120.52 → ~5d 00h 31m
-  },
-  {
-    name: "Max Earth Distance",
-    description: "Maximum distance from Earth — ~4,600 miles beyond the lunar far side",
-    metMs: Math.round(115.16 * 3600 * 1000), // metHours=115.16 → ~4d 19h 10m
+    name: "Flyby Coverage Begins",
+    description: "NASA begins live coverage of the lunar flyby",
+    metMs: Math.round(114.41 * 3600 * 1000), // metHours=114.41 → ~4d 18h 25m
   },
   {
     name: "Far-Side Blackout",
-    description: "Orion passes behind the Moon — communications blackout 30–50 min",
-    metMs: Math.round(122 * 3600 * 1000), // metHours=122 → ~5d 02h 00m
+    description: "Loss of signal — Orion passes behind the Moon",
+    metMs: Math.round(120.20 * 3600 * 1000), // metHours=120.20 → ~5d 00h 12m
+  },
+  {
+    name: "Lunar Close Approach",
+    description: "Closest approach — ~4,066 miles (~6,543 km) above the lunar surface",
+    metMs: Math.round(120.45 * 3600 * 1000), // metHours=120.45 → ~5d 00h 27m
+  },
+  {
+    name: "Max Earth Distance",
+    description: "Maximum distance from Earth — 252,757 miles, surpassing Apollo 13 record",
+    metMs: Math.round(120.50 * 3600 * 1000), // metHours=120.50 → ~5d 00h 30m
+  },
+  {
+    name: "Signal Reacquired",
+    description: "Communications restored after far-side blackout",
+    metMs: Math.round(120.86 * 3600 * 1000), // metHours=120.86 → ~5d 00h 52m
+  },
+  {
+    name: "Solar Eclipse",
+    description: "Orion observes a solar eclipse from behind the Moon",
+    metMs: Math.round(123 * 3600 * 1000), // metHours=123 → ~5d 03h 00m
   },
   {
     name: "Lunar SOI Exit",
@@ -105,7 +120,7 @@ const RAW_MILESTONES: Milestone[] = [
   },
   {
     name: "CM/SM Separation",
-    description: "Crew module separates from European Service Module before re-entry",
+    description: "Service module jettisoned before atmospheric entry",
     metMs: Math.round(216.5 * 3600 * 1000), // metHours=216.5 → ~9d 00h 30m
   },
   {
@@ -114,9 +129,24 @@ const RAW_MILESTONES: Milestone[] = [
     metMs: Math.round(217 * 3600 * 1000), // metHours=217 → ~9d 01h 00m
   },
   {
+    name: "Drogue Chutes",
+    description: "Drogue parachutes deploy to stabilize the crew module",
+    metMs: Math.round(217.30 * 3600 * 1000), // metHours=217.30 → ~9d 01h 18m
+  },
+  {
+    name: "Main Chutes",
+    description: "Three main parachutes deploy — slowing Orion to ~20 mph",
+    metMs: Math.round(217.40 * 3600 * 1000), // metHours=217.40 → ~9d 01h 24m
+  },
+  {
     name: "Splashdown",
     description: "Orion crew module splashes down in the Pacific Ocean",
     metMs: Math.round(217.51 * 3600 * 1000), // metHours=217.51 → ~9d 01h 31m
+  },
+  {
+    name: "Recovery",
+    description: "Crew recovery by USS Portland",
+    metMs: Math.round(218 * 3600 * 1000), // metHours=218 → ~9d 02h 00m
   },
 ];
 
