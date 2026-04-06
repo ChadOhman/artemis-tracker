@@ -211,7 +211,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
               style={{ flexShrink: 0 }}
             >
               <option value="" disabled>
-                JUMP TO
+                {t("bottomBar.jumpTo")}
               </option>
               {milestones.map((m) => (
                 <option key={m.metMs} value={m.metMs}>
@@ -284,7 +284,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
             letterSpacing: "inherit",
           }}
         >
-          Changelog
+          {t("bottomBar.changelog")}
         </button>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
@@ -305,14 +305,14 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
           href="/stats"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          Stats
+          {t("bottomBar.stats")}
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a
           href="/api-docs"
           style={{ color: "var(--text-dim)", textDecoration: "none" }}
         >
-          API
+          {t("bottomBar.api")}
         </a>
         <span style={{ margin: "0 6px", opacity: 0.3 }}>·</span>
         <a

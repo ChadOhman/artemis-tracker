@@ -171,7 +171,7 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
                   strokeWidth="0.3"
                   suppressHydrationWarning
                 >
-                  <title suppressHydrationWarning>{th.name}: {firing ? "FIRING" : "idle"}</title>
+                  <title suppressHydrationWarning>{th.name}: {firing ? t("telemetry.firing") : t("telemetry.idle")}</title>
                 </rect>
                 {/* Label */}
                 <text
@@ -199,7 +199,7 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
             fontWeight="700"
             letterSpacing="0.15em"
           >
-            AFT VIEW
+            {t("rcs.aftView")}
           </text>
         </svg>
 

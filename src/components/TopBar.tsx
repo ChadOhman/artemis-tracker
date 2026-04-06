@@ -185,7 +185,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
               paddingLeft: 6,
             }}
           >
-            RECONNECTING…
+            {t("common.reconnecting")}
           </span>
         )}
         {!reconnecting && isStale && (
@@ -199,7 +199,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
               paddingLeft: 6,
             }}
           >
-            TELEMETRY DELAYED
+            {t("common.telemetryDelayed")}
           </span>
         )}
       </div>
@@ -241,7 +241,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           style={{ width: 6, height: 6 }}
         />
         <span style={{ fontSize: 10, color: commsActive ? "var(--accent-green)" : "var(--text-dim)" }}>
-          {activeDish ? activeDish.dish : "No contact"}
+          {activeDish ? activeDish.dish : t("common.noContact")}
         </span>
       </div>
 
@@ -356,7 +356,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-panel)";
         }}
       >
-        VEHICLE
+        {t("topbar.vehicle")}
       </button>
 
       {/* Next event countdown */}

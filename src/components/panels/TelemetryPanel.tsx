@@ -70,16 +70,16 @@ function distUnit(unit: string): string {
 }
 
 /** Decode spacecraft mode hex byte to a human-readable label */
-function decodeSpacecraftMode(hex: string): string {
+function decodeSpacecraftMode(hex: string, translate: (key: string) => string): string {
   const modeMap: Record<string, string> = {
-    "80": "Attitude Hold",
-    "81": "Sun Safe",
-    "82": "Rate Damp",
-    "ad": "Burn Attitude",
-    "ae": "Observation",
-    "b0": "Coast",
-    "ec": "Maneuver",
-    "ed": "Separation",
+    "80": translate("telemetry.attitudeHold"),
+    "81": translate("telemetry.sunSafe"),
+    "82": translate("telemetry.rateDamp"),
+    "ad": translate("telemetry.burnAttitude"),
+    "ae": translate("telemetry.observation"),
+    "b0": translate("telemetry.coast"),
+    "ec": translate("telemetry.maneuver"),
+    "ed": translate("telemetry.separation"),
   };
   const upper = hex.toUpperCase();
   return modeMap[hex.toLowerCase()] ?? `0x${upper}`;
@@ -332,7 +332,7 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       />
       <TelemRow
         label={tr("telemetry.mode")}
-        value={arow ? decodeSpacecraftMode(arow.spacecraftMode) : "—"}
+        value={arow ? decodeSpacecraftMode(arow.spacecraftMode, tr) : "—"}
       />
 
       </div>

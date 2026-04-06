@@ -4,13 +4,10 @@ import { WAKEUP_SONGS } from "@/lib/wakeup-songs";
 import { useLocale } from "@/context/LocaleContext";
 
 export function WakeupSongsPanel() {
-  const { locale } = useLocale();
-  const title = locale === "fr" ? "Chansons de réveil" : "Wake-Up Songs";
-  const subtitle =
-    locale === "fr"
-      ? "Tradition depuis Apollo — musique pour réveiller l'équipage"
-      : "A tradition since Apollo — music to wake the crew";
-  const fdLabel = locale === "fr" ? "JV" : "FD";
+  const { t } = useLocale();
+  const title = t("wakeupSongs.title");
+  const subtitle = t("wakeupSongs.subtitle");
+  const fdLabel = t("wakeupSongs.flightDay");
 
   // Show most recent first
   const sorted = [...WAKEUP_SONGS].sort((a, b) => b.flightDay - a.flightDay);
@@ -32,7 +29,7 @@ export function WakeupSongsPanel() {
 
         {sorted.length === 0 && (
           <div style={{ fontSize: 11, color: "var(--text-dim)", textAlign: "center", padding: "12px 0" }}>
-            {locale === "fr" ? "Aucune chanson encore" : "No songs yet"}
+            {t("wakeupSongs.noSongs")}
           </div>
         )}
 
@@ -64,7 +61,7 @@ export function WakeupSongsPanel() {
                     textDecoration: "none",
                     flex: 1,
                   }}
-                  title={locale === "fr" ? "Rechercher cette chanson" : "Search for this song"}
+                  title={t("wakeupSongs.search")}
                 >
                   {song.title}
                 </a>

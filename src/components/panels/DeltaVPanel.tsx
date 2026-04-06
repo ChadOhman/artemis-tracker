@@ -123,7 +123,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            Since PRM
+            {t("deltaV.sincePRM")}
           </div>
           <div
             style={{
@@ -135,7 +135,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
           >
             {totalUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--text-dim)" }}>m/s</span>
           </div>
-          <div style={{ fontSize: 8, color: "var(--text-dim)", marginTop: 1 }}>incl. ICPS</div>
+          <div style={{ fontSize: 8, color: "var(--text-dim)", marginTop: 1 }}>{t("deltaV.inclICPS")}</div>
         </div>
       </div>
 
@@ -151,8 +151,8 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
             letterSpacing: "0.08em",
           }}
         >
-          <span>ESM BUDGET</span>
-          <span>{usedPercent.toFixed(1)}% used</span>
+          <span>{t("deltaV.esmBudget")}</span>
+          <span>{usedPercent.toFixed(1)}{t("deltaV.percentUsed")}</span>
         </div>
         <div
           style={{

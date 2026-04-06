@@ -18,7 +18,7 @@ export function ThermalPanel({ stateVector, arow, metMs }: ThermalPanelProps) {
     return (
       <PanelFrame title={t("panels.thermal")} icon="🌡️" accentColor="var(--accent-orange)">
         <div style={{ padding: 12, color: "var(--text-dim)", fontSize: 11 }}>
-          Waiting for telemetry...
+          {t("thermal.waiting")}
         </div>
       </PanelFrame>
     );
