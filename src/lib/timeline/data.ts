@@ -382,10 +382,14 @@ const ACTIVITIES: TimelineActivity[] = [
   // ── Day 6: Lunar Flyby Day ───────────────────────────────────────────────
   act("Wake early — lunar flyby day", "other", 4, 18, 0, 4, 20, 0, "Early wake-up for the historic lunar flyby."),
   act("Crew meal & flyby prep", "meal", 4, 20, 0, 4, 22, 0, "Breakfast and final preparation for close lunar approach."),
-  act("Lunar flyby — photography & observations", "science", 4, 22, 0, 5, 4, 0, "Closest approach ~8,900 km above lunar surface. Crew photographs and observes the Moon up close."),
-  act("Solar eclipse observation", "science", 5, 3, 0, 5, 4, 0, "Sun hidden behind Moon. Crew observes corona, meteoroid flashes, lunar dust."),
-  act("Far-side transit — loss of signal", "other", 5, 4, 0, 5, 5, 0, "Orion passes behind the Moon. Communications blackout lasting 30-50 minutes."),
-  act("Post-flyby science & observation", "science", 5, 5, 0, 5, 10, 0, "Continued photography and recordings after reacquiring signal."),
+  // MET times aligned with jakobrosin/artemis-data 2026-04-06T22:43
+  act("Lunar approach — photography & observations", "science", 4, 22, 0, 5, 0, 8, "Approaching the Moon. Crew photographs and observes from Orion's windows."),
+  act("Far-side transit — loss of signal", "other", 5, 0, 8, 5, 0, 48, "Orion passes behind the Moon. Communications blackout ~40 minutes."),
+  act("Lunar surface observation & photography", "science", 5, 0, 48, 5, 2, 0, "Signal reacquired. Crew photographs the lunar surface and Earthrise."),
+  act("Solar eclipse observation", "science", 5, 2, 0, 5, 2, 45, "Sun hidden behind Moon. Crew observes corona and lunar dust."),
+  act("Far-side photography session", "science", 5, 2, 45, 5, 4, 0, "Continued photography of the lunar far side."),
+  act("Post-flyby downlink", "pao", 5, 4, 0, 5, 6, 0, "Live crew downlink sharing the lunar flyby experience."),
+  act("Post-flyby science & observation", "science", 5, 6, 0, 5, 10, 0, "Continued photography and recordings on the return trajectory."),
   act("Exercise & crew meal", "exercise", 5, 10, 0, 5, 12, 0, "Post-flyby meal and exercise."),
   act("Video downlink", "pao", 5, 12, 0, 5, 14, 0, "Share lunar flyby experience with Mission Control and the world."),
   act("Sleep period", "sleep", 5, 14, 0, 5, 22, 0, "Rest period after the historic flyby."),
