@@ -4,6 +4,7 @@ import { useMetContext } from "@/context/MetContext";
 import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { AttitudeIndicator } from "@/components/AttitudeIndicator";
+import { SawIndicator } from "@/components/SawIndicator";
 import { useLocale } from "@/context/LocaleContext";
 import { Sparkline } from "@/components/shared/Sparkline";
 
@@ -172,24 +173,29 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       </div>
 
       <TelemSection label={tr("panels.solarArrays")} />
-      {arow?.sawGimbals ? (
-        <>
-          {(["saw1", "saw2", "saw3", "saw4"] as const).map((k, i) => (
-            <TelemRow
-              key={k}
-              label={`SAW ${i + 1}`}
-              value={`${tr("telemetry.innerGimbal")} ${fmtDeg(arow.sawGimbals![k].ig)}  ${tr("telemetry.outerGimbal")} ${fmtDeg(arow.sawGimbals![k].og)}`}
-            />
-          ))}
-        </>
-      ) : (
-        <>
-          <TelemRow label="SAW 1" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw1) : "—"} />
-          <TelemRow label="SAW 2" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw2) : "—"} />
-          <TelemRow label="SAW 3" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw3) : "—"} />
-          <TelemRow label="SAW 4" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw4) : "—"} />
-        </>
-      )}
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+        <div style={{ flex: 1 }}>
+          {arow?.sawGimbals ? (
+            <>
+              {(["saw1", "saw2", "saw3", "saw4"] as const).map((k, i) => (
+                <TelemRow
+                  key={k}
+                  label={`SAW ${i + 1}`}
+                  value={`${tr("telemetry.innerGimbal")} ${fmtDeg(arow.sawGimbals![k].ig)}  ${tr("telemetry.outerGimbal")} ${fmtDeg(arow.sawGimbals![k].og)}`}
+                />
+              ))}
+            </>
+          ) : (
+            <>
+              <TelemRow label="SAW 1" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw1) : "—"} />
+              <TelemRow label="SAW 2" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw2) : "—"} />
+              <TelemRow label="SAW 3" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw3) : "—"} />
+              <TelemRow label="SAW 4" value={arow?.sawAngles ? fmtDeg(arow.sawAngles.saw4) : "—"} />
+            </>
+          )}
+        </div>
+        <SawIndicator sawGimbals={arow?.sawGimbals ?? null} sawAngles={arow?.sawAngles ?? null} />
+      </div>
 
       <TelemSection label={tr("panels.commLink")} />
       <TelemRow
