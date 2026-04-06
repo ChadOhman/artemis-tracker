@@ -12,7 +12,7 @@ const BURNS = [
   { name: "TLI", metHours: 25.23, dv: 3180, status: "executed" },
   { name: "OTC-1", metHours: 49, dv: 0, status: "cancelled" },
   { name: "OTC-2", metHours: 73, dv: 0, status: "cancelled" },
-  { name: "OTC-3", metHours: 100, dv: 3, status: "planned" },
+  { name: "OTC-3", metHours: 100, dv: 3, status: "executed" },
   { name: "RTC-1", metHours: 147, dv: 10, status: "planned" },
   { name: "RTC-2", metHours: 196, dv: 2, status: "planned" },
   { name: "CM Raise", metHours: 217, dv: 5, status: "planned" },
