@@ -12,7 +12,7 @@ import { LAUNCH_TIME_MS, MISSION_DURATION_MS } from "@/lib/constants";
 
 export type MetMode = "LIVE" | "SIM";
 export type PlaybackSpeed = 0 | 1 | 10 | 100 | 1000;
-export type SpeedUnit = "km/h" | "m/s" | "mph";
+export type SpeedUnit = "km/h" | "m/s" | "mph" | "kn";
 export type TimeFormat = "MET" | "UTC";
 
 interface MetContextValue {

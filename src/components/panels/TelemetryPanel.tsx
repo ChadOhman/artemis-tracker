@@ -36,6 +36,16 @@ function fmtDeg(n: number | undefined, decimals = 1): string {
   return n.toFixed(decimals) + "°";
 }
 
+/** Convert km/h to the selected speed unit and format */
+function fmtSpeed(kmh: number, unit: string): string {
+  switch (unit) {
+    case "mph": return Math.round(kmh * 0.621371).toLocaleString();
+    case "kn":  return Math.round(kmh * 0.539957).toLocaleString();
+    case "m/s": return (kmh / 3.6).toFixed(1);
+    default:    return Math.round(kmh).toLocaleString();
+  }
+}
+
 function TelemSection({ label }: { label: string }) {
   return (
     <div
@@ -110,14 +120,14 @@ export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProp
       <TelemSection label={tr("panels.dynamics")} />
       <TelemRow
         label={tr("telemetry.speed")}
-        value={t ? (speedUnit === "km/h" ? Math.round(t.speedKmH).toLocaleString() : speedUnit === "mph" ? Math.round(t.speedKmH * 0.621371).toLocaleString() : (t.speedKmS * 1000).toFixed(1)) : "—"}
+        value={t ? fmtSpeed(t.speedKmH, speedUnit) : "—"}
         unit={speedUnit}
         sparkline={<Sparkline metric="speed_km_h" hours={24} color="#00e5ff" />}
       />
       <TelemRow
         label={tr("telemetry.moonRelSpeed")}
-        value={t?.moonRelSpeedKmH ? (speedUnit === "mph" ? Math.round(t.moonRelSpeedKmH * 0.621371).toLocaleString() : Math.round(t.moonRelSpeedKmH).toLocaleString()) : "—"}
-        unit={speedUnit === "mph" ? "mph" : "km/h"}
+        value={t?.moonRelSpeedKmH ? fmtSpeed(t.moonRelSpeedKmH, speedUnit) : "—"}
+        unit={speedUnit}
         sparkline={<Sparkline metric="moon_rel_speed_km_h" hours={24} color="#b388ff" />}
       />
       <TelemRow

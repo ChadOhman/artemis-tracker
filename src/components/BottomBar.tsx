@@ -119,7 +119,7 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
 
       {/* Speed unit toggle */}
       <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
-        {(["km/h", "m/s", "mph"] as SpeedUnit[]).map((unit) => (
+        {(["km/h", "m/s", "mph", "kn"] as SpeedUnit[]).map((unit) => (
           <button
             key={unit}
             onClick={() => setSpeedUnit(unit)}
