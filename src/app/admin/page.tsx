@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 
 interface StatusData {
-  dbSizeMB?: number;
-  rows?: {
-    stateVectors?: number;
-    arowTelemetry?: number;
-    dsnContacts?: number;
-    solarActivity?: number;
+  db?: {
+    sizeMB?: number;
+    rows?: {
+      stateVectors?: number;
+      arowTelemetry?: number;
+      dsnContacts?: number;
+      solarActivity?: number;
+    };
   };
   uptime?: {
     hours?: number;
@@ -103,10 +105,18 @@ export default function AdminPage() {
   const [songNotes, setSongNotes] = useState("");
   const [songs, setSongs] = useState<WakeupSong[]>([]);
 
-  // Burn statuses
-  const [burnStatuses, setBurnStatuses] = useState<Record<string, string>>(
-    () => Object.fromEntries(BURNS.map((b) => [b, "planned"]))
-  );
+  // Burn statuses — initialized from current hardcoded values
+  const [burnStatuses, setBurnStatuses] = useState<Record<string, string>>(() => ({
+    "PRM": "executed",
+    "ARB": "executed",
+    "TLI": "executed",
+    "OTC-1": "cancelled",
+    "OTC-2": "cancelled",
+    "OTC-3": "executed",
+    "RTC-1": "planned",
+    "RTC-2": "planned",
+    "CM Raise": "planned",
+  }));
   const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(
     () => Object.fromEntries(BURNS.map((b) => [b, ""]))
   );
@@ -134,6 +144,20 @@ export default function AdminPage() {
       // silent
     }
   }, [token]);
+
+  // Viewer count via SSE
+  const [viewerCount, setViewerCount] = useState<number | null>(null);
+  useEffect(() => {
+    if (!authed) return;
+    const es = new EventSource("/api/telemetry/stream");
+    es.addEventListener("visitors", (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        setViewerCount(data.count);
+      } catch { /* ignore */ }
+    });
+    return () => es.close();
+  }, [authed]);
 
   // Check current status on auth
   useEffect(() => {
@@ -496,23 +520,23 @@ export default function AdminPage() {
             <div style={{ fontSize: 12, color: "#c0cad0", lineHeight: 2, ...monoStyle }}>
               <div>
                 <span style={{ color: "#5a7a8a" }}>DB Size:</span>{" "}
-                <span style={{ color: "#e0e8f0" }}>{status.dbSizeMB != null ? `${status.dbSizeMB} MB` : "—"}</span>
+                <span style={{ color: "#e0e8f0" }}>{status.db?.sizeMB != null ? `${status.db.sizeMB} MB` : "—"}</span>
               </div>
               <div>
                 <span style={{ color: "#5a7a8a" }}>State Vectors:</span>{" "}
-                <span style={{ color: "#e0e8f0" }}>{status.rows?.stateVectors?.toLocaleString() ?? "—"}</span>
+                <span style={{ color: "#e0e8f0" }}>{status.db?.rows?.stateVectors?.toLocaleString() ?? "—"}</span>
               </div>
               <div>
                 <span style={{ color: "#5a7a8a" }}>AROW Telemetry:</span>{" "}
-                <span style={{ color: "#e0e8f0" }}>{status.rows?.arowTelemetry?.toLocaleString() ?? "—"}</span>
+                <span style={{ color: "#e0e8f0" }}>{status.db?.rows?.arowTelemetry?.toLocaleString() ?? "—"}</span>
               </div>
               <div>
                 <span style={{ color: "#5a7a8a" }}>DSN Contacts:</span>{" "}
-                <span style={{ color: "#e0e8f0" }}>{status.rows?.dsnContacts?.toLocaleString() ?? "—"}</span>
+                <span style={{ color: "#e0e8f0" }}>{status.db?.rows?.dsnContacts?.toLocaleString() ?? "—"}</span>
               </div>
               <div>
                 <span style={{ color: "#5a7a8a" }}>Solar Activity:</span>{" "}
-                <span style={{ color: "#e0e8f0" }}>{status.rows?.solarActivity?.toLocaleString() ?? "—"}</span>
+                <span style={{ color: "#e0e8f0" }}>{status.db?.rows?.solarActivity?.toLocaleString() ?? "—"}</span>
               </div>
             </div>
           ) : (
@@ -579,15 +603,13 @@ export default function AdminPage() {
         {/* Viewer Count */}
         <div style={cardStyle}>
           <div style={labelStyle}>Viewer Count</div>
-          {status?.visitorCount != null ? (
-            <div style={{ fontSize: 20, fontWeight: 700, color: "#00e5ff", ...monoStyle }}>
-              {status.visitorCount.toLocaleString()} <span style={{ fontSize: 11, color: "#5a7a8a", fontWeight: 400 }}>connected</span>
-            </div>
-          ) : (
-            <div style={{ fontSize: 12, color: "#5a7a8a", ...monoStyle }}>
-              Available on main dashboard via SSE stream
-            </div>
-          )}
+          <div style={{ fontSize: 28, fontWeight: 700, color: "#00e5ff", ...monoStyle }}>
+            {viewerCount != null ? (
+              <>{viewerCount.toLocaleString()} <span style={{ fontSize: 12, color: "#5a7a8a", fontWeight: 400 }}>connected via SSE</span></>
+            ) : (
+              <span style={{ fontSize: 12, color: "#5a7a8a", fontWeight: 400 }}>Connecting to SSE stream...</span>
+            )}
+          </div>
         </div>
 
         {/* Burn Status Updater */}
