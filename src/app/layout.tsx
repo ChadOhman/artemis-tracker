@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Artemis II Tracker — Live Mission Control",
   description: "Real-time mission control dashboard tracking NASA's Artemis II crewed lunar flyby. Live telemetry, DSN comms, orbit visualization, and crew activities.",
   icons: {
-    icon: "/icon.svg",
+    icon: "/icon.png",
   },
   openGraph: {
     title: "Artemis II Tracker — Live Mission Control",
