@@ -463,48 +463,8 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
       ctx.restore();
     }
 
-    // --- Splashdown zone (Pacific, off Baja California) ---
-    // Only show during return phase (after lunar flyby, ~MET 5+ days)
-    if (metMs > 5 * 24 * 3600 * 1000) {
-      // Splashdown coordinates: approximately 25°N, 120°W
-      // On our map, Earth is at left. The splashdown zone is relative to Earth.
-      // We can show it as a small marker near Earth with a label.
-      const splashAngle = Math.PI * 0.8; // position it below-left of Earth
-      const splashDist = earthR * 1.8;
-      const splashX = earthPx.x + Math.cos(splashAngle) * splashDist;
-      const splashY = earthPx.y + Math.sin(splashAngle) * splashDist;
-
-      // Target zone circle
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(splashX, splashY, 5, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255,140,0,0.6)";
-      ctx.lineWidth = 1.5;
-      ctx.setLineDash([2, 3]);
-      ctx.stroke();
-      ctx.restore();
-
-      // Crosshair
-      ctx.save();
-      ctx.strokeStyle = "rgba(255,140,0,0.4)";
-      ctx.lineWidth = 0.5;
-      ctx.beginPath();
-      ctx.moveTo(splashX - 8, splashY);
-      ctx.lineTo(splashX + 8, splashY);
-      ctx.moveTo(splashX, splashY - 8);
-      ctx.lineTo(splashX, splashY + 8);
-      ctx.stroke();
-      ctx.restore();
-
-      // Label
-      ctx.save();
-      ctx.font = "7px monospace";
-      ctx.fillStyle = "rgba(255,140,0,0.6)";
-      ctx.textAlign = "center";
-      ctx.fillText("SPLASHDOWN", splashX, splashY + 12);
-      ctx.fillText("ZONE", splashX, splashY + 20);
-      ctx.restore();
-    }
+    // Splashdown zone removed — will be replaced with an Earth detail
+    // zoom inset (like the Moon zoom) closer to re-entry.
 
     // --- Orion position ---
     // The reference trajectory is a static EME2000 projection rotated so the
