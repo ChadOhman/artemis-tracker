@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useLocale } from "@/context/LocaleContext";
 
 const LAUNCH_TIME_MS = new Date("2026-04-01T22:35:00Z").getTime();
 const TOTAL_MISSION_HOURS = 217.51;
@@ -24,12 +25,20 @@ interface MissionStats {
   arowSamples: number;
 }
 
+const MISSION_PHASE_KEYS = [
+  "leo",
+  "highEarthOrbit",
+  "transLunar",
+  "lunarFlyby",
+  "transEarth",
+] as const;
+
 const MISSION_PHASES = [
-  { name: "LEO", startH: 0, endH: 0.83 },
-  { name: "High Earth Orbit", startH: 0.83, endH: 25.23 },
-  { name: "Trans-Lunar", startH: 25.23, endH: 102.05 },
-  { name: "Lunar Flyby", startH: 102.05, endH: 138.87 },
-  { name: "Trans-Earth", startH: 138.87, endH: 217 },
+  { key: "leo" as const, startH: 0, endH: 0.83 },
+  { key: "highEarthOrbit" as const, startH: 0.83, endH: 25.23 },
+  { key: "transLunar" as const, startH: 25.23, endH: 102.05 },
+  { key: "lunarFlyby" as const, startH: 102.05, endH: 138.87 },
+  { key: "transEarth" as const, startH: 138.87, endH: 217 },
 ] as const;
 
 const CREWED_SPEED_RECORDS = [
@@ -174,6 +183,7 @@ function fmtMet(ms: number): string {
 }
 
 export default function StatsPage() {
+  const { t } = useLocale();
   const [stats, setStats] = useState<MissionStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
@@ -252,7 +262,7 @@ export default function StatsPage() {
               textDecoration: "none",
             }}
           >
-            &larr; Dashboard
+            &larr; {t("stats.dashboard")}
           </a>
           <div
             style={{
@@ -272,7 +282,7 @@ export default function StatsPage() {
               margin: 0,
             }}
           >
-            Mission Statistics
+            {t("stats.title")}
           </h1>
         </div>
         {stats && (
@@ -283,7 +293,7 @@ export default function StatsPage() {
               color: "#5a7a8a",
             }}
           >
-            {fmtNum(stats.stateVectorSamples)} samples since{" "}
+            {fmtNum(stats.stateVectorSamples)} {t("stats.samplesSince")}{" "}
             {fmtDate(stats.firstSampleTs)}
           </div>
         )}
@@ -291,20 +301,20 @@ export default function StatsPage() {
 
       {error && (
         <div style={{ padding: 24, color: "#ff4455", fontSize: 13 }}>
-          Error loading stats: {error}
+          {t("stats.errorLoading")} {error}
         </div>
       )}
 
       {!stats && !error && (
         <div style={{ padding: 24, color: "#5a7a8a", fontSize: 13 }}>
-          Loading mission statistics...
+          {t("stats.loadingStats")}
         </div>
       )}
 
       {stats && (
         <div style={{ padding: "28px 24px" }}>
           {/* Mission Progress Bar */}
-          <SectionHeading>Mission Progress</SectionHeading>
+          <SectionHeading>{t("stats.sections.missionProgress")}</SectionHeading>
           <div
             style={{
               background: "#0d1117",
@@ -359,7 +369,7 @@ export default function StatsPage() {
               {/* Phase markers */}
               {MISSION_PHASES.slice(1).map((phase) => (
                 <div
-                  key={phase.name}
+                  key={phase.key}
                   style={{
                     position: "absolute",
                     left: `${(phase.startH / TOTAL_MISSION_HOURS) * 100}%`,
@@ -383,26 +393,26 @@ export default function StatsPage() {
             >
               {MISSION_PHASES.map((phase) => (
                 <span
-                  key={phase.name}
+                  key={phase.key}
                   style={{
                     color:
-                      currentPhase?.name === phase.name
+                      currentPhase?.key === phase.key
                         ? "#00e5ff"
                         : metH > phase.endH
                           ? "#00ff88"
                           : "#4a5a6a",
                     fontWeight:
-                      currentPhase?.name === phase.name ? 700 : 400,
+                      currentPhase?.key === phase.key ? 700 : 400,
                   }}
                 >
-                  {phase.name}
+                  {t(`stats.phases.${phase.key}`)}
                 </span>
               ))}
             </div>
           </div>
 
           {/* Live Counters */}
-          <SectionHeading>Live Counters</SectionHeading>
+          <SectionHeading>{t("stats.sections.liveCounters")}</SectionHeading>
           <div
             style={{
               display: "grid",
@@ -412,29 +422,29 @@ export default function StatsPage() {
             }}
           >
             <StatCard
-              label="Mission Elapsed Time"
+              label={t("stats.cards.met")}
               value={fmtMet(metMs)}
               color="#00e5ff"
-              subtext={currentPhase ? `Current phase: ${currentPhase.name}` : missionProgress >= 100 ? "Mission complete" : "Pre-launch"}
+              subtext={currentPhase ? `${t("stats.cards.currentPhase")} ${t(`stats.phases.${currentPhase.key}`)}` : missionProgress >= 100 ? t("stats.cards.missionComplete") : t("stats.cards.preLaunch")}
             />
             <StatCard
-              label="Approx. Distance Traveled"
+              label={t("stats.cards.approxDistance")}
               value={fmtNum(Math.floor(liveDistanceKm))}
               unit="km"
               color="#ffaa00"
-              subtext={`${fmtNum(Math.floor(liveDistanceKm * 0.621371))} miles (estimated)`}
+              subtext={`${fmtNum(Math.floor(liveDistanceKm * 0.621371))} ${t("stats.cards.milesEstimated")}`}
             />
             <StatCard
-              label="Crew Heartbeats in Space"
+              label={t("stats.cards.heartbeats")}
               value={fmtNum(heartbeats)}
-              unit="beats"
+              unit={t("stats.cards.beats")}
               color="#ff6688"
-              subtext="4 crew × ~70 bpm"
+              subtext={t("stats.cards.heartbeatSubtext")}
             />
           </div>
 
           {/* Time in Each Phase */}
-          <SectionHeading>Mission Phases</SectionHeading>
+          <SectionHeading>{t("stats.sections.missionPhases")}</SectionHeading>
           <div
             style={{
               background: "#0d1117",
@@ -462,7 +472,7 @@ export default function StatsPage() {
 
               return (
                 <div
-                  key={phase.name}
+                  key={phase.key}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -488,7 +498,7 @@ export default function StatsPage() {
                     }}
                   />
                   <div style={{ flex: "0 0 140px", fontSize: 13, color: isCurrent ? "#e0e8f0" : isComplete ? "#8a9aaa" : "#4a5a6a", fontWeight: isCurrent ? 700 : 400 }}>
-                    {phase.name}
+                    {t(`stats.phases.${phase.key}`)}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div
@@ -535,7 +545,7 @@ export default function StatsPage() {
           </div>
 
           {/* Primary stats */}
-          <SectionHeading>Flight Records</SectionHeading>
+          <SectionHeading>{t("stats.sections.flightRecords")}</SectionHeading>
           <div
             style={{
               display: "grid",
@@ -545,48 +555,48 @@ export default function StatsPage() {
             }}
           >
             <StatCard
-              label="Maximum Speed"
+              label={t("stats.cards.maxSpeed")}
               value={fmtNum(stats.maxSpeedKmH)}
               unit="km/h"
               color="#00e5ff"
               subtext={`${fmtNum(stats.maxSpeedKmH * 0.621371)} mph \u00b7 ${fmtNum(stats.maxSpeedKmH / 3.6, 1)} m/s`}
             />
             <StatCard
-              label="Maximum Earth Distance"
+              label={t("stats.cards.maxEarthDist")}
               value={fmtNum(stats.maxEarthDistKm)}
               unit="km"
               color="#00ff88"
-              subtext={`${fmtNum(stats.maxEarthDistKm * 0.621371)} miles`}
+              subtext={`${fmtNum(stats.maxEarthDistKm * 0.621371)} ${t("stats.cards.miles")}`}
             />
             <StatCard
-              label="Closest Moon Approach"
+              label={t("stats.cards.closestMoon")}
               value={fmtNum(stats.minMoonDistKm)}
               unit="km"
               color="#b388ff"
               subtext={
                 stats.minMoonDistKm > 0
-                  ? `${fmtNum(stats.minMoonDistKm * 0.621371)} miles`
-                  : "Awaiting flyby"
+                  ? `${fmtNum(stats.minMoonDistKm * 0.621371)} ${t("stats.cards.miles")}`
+                  : t("stats.cards.awaitingFlyby")
               }
             />
             <StatCard
-              label="Total Distance Traveled"
+              label={t("stats.cards.totalDistance")}
               value={fmtNum(stats.totalDistanceKm)}
               unit="km"
               color="#ffaa00"
-              subtext={`${fmtNum(stats.totalDistanceKm * 0.621371)} miles`}
+              subtext={`${fmtNum(stats.totalDistanceKm * 0.621371)} ${t("stats.cards.miles")}`}
             />
             <StatCard
-              label="Peak G-Force"
+              label={t("stats.cards.peakGForce")}
               value={stats.maxGForce > 0 ? stats.maxGForce.toFixed(2) : "\u2014"}
               unit="G"
               color="#ff6688"
-              subtext={stats.maxGForce > 0 ? `${(stats.maxGForce * 9.81).toFixed(1)} m/s\u00b2` : "No data yet"}
+              subtext={stats.maxGForce > 0 ? `${(stats.maxGForce * 9.81).toFixed(1)} m/s\u00b2` : t("stats.cards.noDataYet")}
             />
           </div>
 
           {/* Speed Ranking */}
-          <SectionHeading>Crewed Speed Record Comparison</SectionHeading>
+          <SectionHeading>{t("stats.sections.speedRecords")}</SectionHeading>
           <div
             style={{
               background: "#0d1117",
@@ -675,7 +685,7 @@ export default function StatsPage() {
           </div>
 
           {/* Communications */}
-          <SectionHeading>Communications</SectionHeading>
+          <SectionHeading>{t("stats.sections.communications")}</SectionHeading>
           <div
             style={{
               display: "grid",
@@ -685,7 +695,7 @@ export default function StatsPage() {
             }}
           >
             <StatCard
-              label="DSN Signal Uptime"
+              label={t("stats.cards.dsnUptime")}
               value={
                 stats.dsnSignalUptime >= 0
                   ? `${stats.dsnSignalUptime.toFixed(1)}%`
@@ -700,10 +710,10 @@ export default function StatsPage() {
                       ? "#ff4455"
                       : "#5a7a8a"
               }
-              subtext="Deep Space Network link availability"
+              subtext={t("stats.cards.dsnUptimeSubtext")}
             />
             <StatCard
-              label="Longest Comm Blackout"
+              label={t("stats.cards.longestBlackout")}
               value={
                 stats.longestBlackoutSec > 0
                   ? stats.longestBlackoutSec >= 60
@@ -714,14 +724,14 @@ export default function StatsPage() {
               color="#ffaa00"
               subtext={
                 stats.longestBlackoutSec > 0
-                  ? `${fmtNum(stats.longestBlackoutSec)} seconds total`
-                  : "No blackouts recorded"
+                  ? `${fmtNum(stats.longestBlackoutSec)} ${t("stats.cards.secondsTotal")}`
+                  : t("stats.cards.noBlackouts")
               }
             />
           </div>
 
           {/* Space weather */}
-          <SectionHeading>Space Weather</SectionHeading>
+          <SectionHeading>{t("stats.sections.spaceWeather")}</SectionHeading>
           <div
             style={{
               display: "grid",
@@ -731,7 +741,7 @@ export default function StatsPage() {
             }}
           >
             <StatCard
-              label="Peak Kp Index"
+              label={t("stats.cards.peakKp")}
               value={stats.maxKpIndex.toFixed(1)}
               color={
                 stats.maxKpIndex >= 5
@@ -742,23 +752,23 @@ export default function StatsPage() {
               }
               subtext={
                 stats.maxKpIndex >= 5
-                  ? "Storm conditions"
+                  ? t("stats.cards.stormConditions")
                   : stats.maxKpIndex >= 4
-                    ? "Unsettled"
-                    : "Quiet"
+                    ? t("stats.cards.unsettled")
+                    : t("stats.cards.quiet")
               }
             />
             <StatCard
-              label="Geomagnetic Events"
+              label={t("stats.cards.geoEvents")}
               value={fmtNum(stats.solarEventCount)}
-              unit="events"
+              unit={t("stats.cards.events")}
               color="#ffaa00"
-              subtext="Kp \u2265 4 observations"
+              subtext={t("stats.cards.kpObservations")}
             />
           </div>
 
           {/* Data collection */}
-          <SectionHeading>Data Collection</SectionHeading>
+          <SectionHeading>{t("stats.sections.dataCollection")}</SectionHeading>
           <div
             style={{
               display: "grid",
@@ -767,34 +777,34 @@ export default function StatsPage() {
             }}
           >
             <StatCard
-              label="Orbital Fixes"
+              label={t("stats.cards.orbitalFixes")}
               value={fmtNum(stats.stateVectorSamples)}
               color="#00e5ff"
-              subtext="JPL Horizons state vectors"
+              subtext={t("stats.cards.orbitalFixesSubtext")}
             />
             <StatCard
-              label="DSN Observations"
+              label={t("stats.cards.dsnObs")}
               value={fmtNum(stats.dsnSamples)}
               color="#00ff88"
-              subtext="Deep Space Network contacts"
+              subtext={t("stats.cards.dsnObsSubtext")}
             />
             <StatCard
-              label="Space Weather Readings"
+              label={t("stats.cards.weatherReadings")}
               value={fmtNum(stats.solarSamples)}
               color="#ffaa00"
-              subtext="NOAA SWPC observations"
+              subtext={t("stats.cards.weatherReadingsSubtext")}
             />
             <StatCard
-              label="AROW Telemetry Samples"
+              label={t("stats.cards.arowSamples")}
               value={fmtNum(stats.arowSamples)}
               color="#b388ff"
-              subtext="NASA AROW attitude & systems data"
+              subtext={t("stats.cards.arowSamplesSubtext")}
             />
             <StatCard
-              label="Tracking Since"
+              label={t("stats.cards.trackingSince")}
               value={fmtDate(stats.firstSampleTs)}
               color="#5a7a8a"
-              subtext={`Latest: ${fmtDate(stats.latestSampleTs)}`}
+              subtext={`${t("stats.cards.latest")} ${fmtDate(stats.latestSampleTs)}`}
             />
           </div>
 
@@ -809,9 +819,7 @@ export default function StatsPage() {
               textAlign: "center",
             }}
           >
-            Statistics computed from archived telemetry stored in the mission
-            database. Data retention: 14 days for AROW/DSN/Solar, 28 days for
-            state vectors. Live counters update every second client-side.
+            {t("stats.footer")}
           </div>
         </div>
       )}

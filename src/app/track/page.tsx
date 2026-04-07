@@ -23,6 +23,7 @@ import {
   getTelescopeState,
   type AlpacaState,
 } from "@/lib/alpaca";
+import { useLocale } from "@/context/LocaleContext";
 import type { SsePayload } from "@/lib/types";
 import {
   predictVisibility,
@@ -42,15 +43,15 @@ function formatLatLon(lat: number, lon: number): string {
   return `${latStr} · ${lonStr}`;
 }
 
-function deriveFlightState(earthDistKm: number, moonDistKm: number): string {
-  if (earthDistKm < 2000) return "LEO";
-  if (moonDistKm < 15000) return "Lunar Flyby";
+function deriveFlightStateKey(earthDistKm: number, moonDistKm: number): string {
+  if (earthDistKm < 2000) return "flightStates.leo";
+  if (moonDistKm < 15000) return "flightStates.lunarFlyby";
   // Use current MET to determine outbound vs inbound
   // Closest approach is at MET 5/01:23 = ~5d 1.4h after launch
   const launchMs = Date.UTC(2026, 3, 1, 22, 35, 0);
   const closestApproachMs = launchMs + (5 * 24 + 1) * 3600000 + 23 * 60000;
-  if (Date.now() < closestApproachMs) return "Outbound from Earth";
-  return "Inbound to Earth";
+  if (Date.now() < closestApproachMs) return "flightStates.outboundFromEarth";
+  return "flightStates.inboundToEarth";
 }
 
 /**
@@ -354,6 +355,8 @@ function useLeafletMap(
 // ---------------------------------------------------------------------------
 
 export default function TrackPage() {
+  const { t } = useLocale();
+
   // SSE state
   const [payload, setPayload] = useState<SsePayload | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -422,7 +425,7 @@ export default function TrackPage() {
       });
 
       es.onerror = () => {
-        setSseError("Stream disconnected — reconnecting…");
+        setSseError("stream_disconnected");
         es.close();
         reconnectTimer = setTimeout(connect, 5000);
       };
@@ -568,10 +571,10 @@ export default function TrackPage() {
   // Sunlight badge helper
   // ---------------------------------------------------------------------------
   function sunlightBadge() {
-    if (!sunlight) return <span style={{ color: "#aa9900" }}>Unknown</span>;
-    if (sunlight.state === "sunlit") return <span style={{ color: "#00ff88" }}>Sunlit</span>;
-    if (sunlight.state === "shadow") return <span style={{ color: "#5a7a8a" }}>In Shadow</span>;
-    return <span style={{ color: "#aa9900" }}>Unknown</span>;
+    if (!sunlight) return <span style={{ color: "#aa9900" }}>{t("common.unknown")}</span>;
+    if (sunlight.state === "sunlit") return <span style={{ color: "#00ff88" }}>{t("track.sunlit")}</span>;
+    if (sunlight.state === "shadow") return <span style={{ color: "#5a7a8a" }}>{t("track.inShadow")}</span>;
+    return <span style={{ color: "#aa9900" }}>{t("common.unknown")}</span>;
   }
 
   // ---------------------------------------------------------------------------
@@ -609,7 +612,7 @@ export default function TrackPage() {
               marginRight: 4,
             }}
           >
-            &larr; Dashboard
+            &larr; {t("track.dashboard")}
           </a>
           <div
             style={{ width: 3, height: 22, background: "#00ff88", borderRadius: 2 }}
@@ -624,7 +627,7 @@ export default function TrackPage() {
               margin: 0,
             }}
           >
-            Live Tracking
+            {t("track.liveTracking")}
           </h1>
         </div>
         <div
@@ -636,13 +639,13 @@ export default function TrackPage() {
         >
           {lastUpdate ? (
             <>
-              <span style={{ color: "#4a6a5a" }}>UPDATED </span>
+              <span style={{ color: "#4a6a5a" }}>{t("trackPage.updated")} </span>
               {formatUtcTime(lastUpdate)}
             </>
           ) : sseError ? (
-            <span style={{ color: "#ff4444" }}>{sseError}</span>
+            <span style={{ color: "#ff4444" }}>{sseError === "stream_disconnected" ? t("trackPage.streamDisconnected") : sseError}</span>
           ) : (
-            <span style={{ color: "#5a7a8a" }}>Connecting…</span>
+            <span style={{ color: "#5a7a8a" }}>{t("trackPage.connecting")}</span>
           )}
         </div>
       </div>
@@ -669,36 +672,36 @@ export default function TrackPage() {
               margin: "0 0 14px",
             }}
           >
-            Mission Geometry
+            {t("track.missionGeometry")}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <Card label="Telemetry Source">JPL Horizons</Card>
+            <Card label={t("track.telemetrySource")}>JPL Horizons</Card>
 
-            <Card label="Sunlight">{sunlightBadge()}</Card>
+            <Card label={t("track.sunlight")}>{sunlightBadge()}</Card>
 
-            <Card label="Flight State">
+            <Card label={t("track.flightState")}>
               {payload
-                ? deriveFlightState(
+                ? t(deriveFlightStateKey(
                     payload.telemetry.earthDistKm,
                     payload.telemetry.moonDistKm
-                  )
+                  ))
                 : "—"}
             </Card>
 
-            <Card label="Direction of Travel">
+            <Card label={t("track.directionOfTravel")}>
               {heading !== null ? formatHeading(heading) : "—"}
             </Card>
 
             <Card
-              label="Sub-Point"
-              subtitle="Point on Earth directly beneath Orion"
+              label={t("track.subPoint")}
+              subtitle={t("trackPage.subPointSubtitle")}
             >
               {subPoint
                 ? formatLatLon(subPoint.lat, subPoint.lon)
                 : "—"}
             </Card>
 
-            <Card label="Distance · Earth">
+            <Card label={t("track.distanceEarth")}>
               {payload
                 ? payload.telemetry.earthDistKm.toLocaleString("en-US", {
                     maximumFractionDigits: 0,
@@ -706,7 +709,7 @@ export default function TrackPage() {
                 : "—"}
             </Card>
 
-            <Card label="Distance · Moon">
+            <Card label={t("track.distanceMoon")}>
               {payload
                 ? payload.telemetry.moonDistKm.toLocaleString("en-US", {
                     maximumFractionDigits: 0,
@@ -714,24 +717,24 @@ export default function TrackPage() {
                 : "—"}
             </Card>
 
-            <Card label="Speed">
+            <Card label={t("trackPage.speed")}>
               {payload
                 ? payload.telemetry.speedKmH.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km/h"
                 : "—"}
             </Card>
 
             {/* Signal delay from observer */}
-            <Card label="Signal Delay" subtitle="One-way light time from you">
+            <Card label={t("trackPage.signalDelay")} subtitle={t("trackPage.signalDelaySubtitle")}>
               {topo
                 ? `${(topo.range / 299792).toFixed(2)}s`
                 : payload
-                ? `${(payload.telemetry.earthDistKm / 299792).toFixed(2)}s (geocentric)`
+                ? `${(payload.telemetry.earthDistKm / 299792).toFixed(2)}s (${t("trackPage.geocentric")})`
                 : "—"}
             </Card>
 
             {/* Closest ground point distance */}
             {observer && subPoint && (
-              <Card label="Ground Distance" subtitle="Great-circle distance to sub-point">
+              <Card label={t("trackPage.groundDistance")} subtitle={t("trackPage.groundDistanceSubtitle")}>
                 {(() => {
                   const R = 6371;
                   const dLat = (subPoint.lat - observer.lat) * Math.PI / 180;
@@ -762,10 +765,10 @@ export default function TrackPage() {
               const dotSO = sunX * orionUnit.x + sunY * orionUnit.y;
               const elongation = Math.acos(Math.max(-1, Math.min(1, dotSO))) * (180 / Math.PI);
               return (
-                <Card label="Solar Elongation" subtitle="Sun-Earth-Orion angle">
+                <Card label={t("trackPage.solarElongation")} subtitle={t("trackPage.solarElongationSubtitle")}>
                   <span>{elongation.toFixed(1)}°</span>
                   <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
-                    {elongation > 90 ? "Good viewing (away from Sun)" : elongation > 30 ? "Moderate (Sun nearby)" : "Poor (near Sun glare)"}
+                    {elongation > 90 ? t("trackPage.goodViewing") : elongation > 30 ? t("trackPage.moderateViewing") : t("trackPage.poorViewing")}
                   </span>
                 </Card>
               );
@@ -824,7 +827,7 @@ export default function TrackPage() {
                 else constellation = "Piscis Austrinus";
               }
               return (
-                <Card label="Constellation" subtitle="Current location in the sky">
+                <Card label={t("trackPage.constellation")} subtitle={t("trackPage.constellationSubtitle")}>
                   {constellation}
                 </Card>
               );
@@ -832,15 +835,15 @@ export default function TrackPage() {
 
             {/* Earth-Moon-Orion geometry diagram */}
             {payload && payload.moonPosition && (
-              <Card label="Geometry" subtitle="Earth-Moon-Orion (not to scale)">
+              <Card label={t("trackPage.geometry")} subtitle={t("trackPage.geometrySubtitle")}>
                 <svg viewBox="0 0 200 80" style={{ width: "100%", maxWidth: 300 }}>
                   {/* Earth */}
                   <circle cx="20" cy="40" r="10" fill="rgba(80,140,255,0.15)" stroke="rgba(80,140,255,0.4)" strokeWidth="0.5" />
-                  <text x="20" y="60" textAnchor="middle" fontSize="7" fill="rgba(80,140,255,0.7)" fontFamily="monospace">Earth</text>
+                  <text x="20" y="60" textAnchor="middle" fontSize="7" fill="rgba(80,140,255,0.7)" fontFamily="monospace">{t("trackPage.earth")}</text>
 
                   {/* Moon */}
                   <circle cx="160" cy="40" r="5" fill="rgba(200,200,210,0.15)" stroke="rgba(200,200,210,0.4)" strokeWidth="0.5" />
-                  <text x="160" y="55" textAnchor="middle" fontSize="7" fill="rgba(200,200,210,0.7)" fontFamily="monospace">Moon</text>
+                  <text x="160" y="55" textAnchor="middle" fontSize="7" fill="rgba(200,200,210,0.7)" fontFamily="monospace">{t("trackPage.moon")}</text>
 
                   {/* Earth-Moon line */}
                   <line x1="30" y1="40" x2="155" y2="40" stroke="rgba(100,100,120,0.2)" strokeWidth="0.5" strokeDasharray="3,3" />
@@ -891,7 +894,7 @@ export default function TrackPage() {
               margin: "0 0 14px",
             }}
           >
-            Your Sky
+            {t("track.yourSky")}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {/* VISIBLE NOW banner */}
@@ -905,24 +908,24 @@ export default function TrackPage() {
                 animation: "pulse 2s ease-in-out infinite",
               }}>
                 <div style={{ fontSize: 16, fontWeight: 700, color: "#00ff88", letterSpacing: "0.12em" }}>
-                  VISIBLE NOW
+                  {t("trackPage.visibleNow")}
                 </div>
                 <div style={{ fontSize: 12, color: "#a0b0c0", marginTop: 4 }}>
-                  Look {azToCardinal(topo.azimuth)} at {topo.elevation.toFixed(0)}° above the horizon
+                  {t("trackPage.lookDirection").replace("{dir}", azToCardinal(topo.azimuth)).replace("{el}", topo.elevation.toFixed(0))}
                 </div>
               </div>
             )}
 
-            <Card label="Visibility">
+            <Card label={t("track.visibility")}>
               {geoStatus === "requesting" ? (
-                <span style={{ color: "#5a7a8a", fontSize: 13 }}>Requesting location…</span>
+                <span style={{ color: "#5a7a8a", fontSize: 13 }}>{t("track.requestingLocation")}</span>
               ) : geoStatus === "denied" ? (
-                <span style={{ color: "#ff4444", fontSize: 13 }}>Location unavailable</span>
+                <span style={{ color: "#ff4444", fontSize: 13 }}>{t("track.locationUnavailable")}</span>
               ) : topo ? (
                 topo.visible ? (
-                  <span style={{ color: "#00ff88" }}>Above your horizon ({topo.elevation.toFixed(1)}°)</span>
+                  <span style={{ color: "#00ff88" }}>{t("track.aboveHorizon")} ({topo.elevation.toFixed(1)}°)</span>
                 ) : (
-                  <span style={{ color: "#ff4444" }}>Below your horizon ({topo.elevation.toFixed(1)}°)</span>
+                  <span style={{ color: "#ff4444" }}>{t("track.belowHorizon")} ({topo.elevation.toFixed(1)}°)</span>
                 )
               ) : (
                 "—"
@@ -931,37 +934,37 @@ export default function TrackPage() {
 
             {/* Compass direction — plain language */}
             {topo && topo.visible && (
-              <Card label="Where to Look" subtitle="Plain language">
+              <Card label={t("trackPage.whereToLook")} subtitle={t("trackPage.whereToLookSubtitle")}>
                 <span style={{ color: "#00ff88", fontSize: 14 }}>
-                  Look {azToCardinal(topo.azimuth)} ({topo.azimuth.toFixed(0)}°), {topo.elevation.toFixed(0)}° up from the horizon
+                  {t("trackPage.lookDirectionDetailed").replace("{dir}", azToCardinal(topo.azimuth)).replace("{az}", topo.azimuth.toFixed(0)).replace("{el}", topo.elevation.toFixed(0))}
                 </span>
               </Card>
             )}
 
             <Card
-              label="Telescope Pointing"
-              subtitle="Azimuth · elevation"
+              label={t("track.telescopePointing")}
+              subtitle={t("trackPage.azimuthElevation")}
             >
               {topo
                 ? `${topo.azimuth.toFixed(1)}° ${azToCardinal(topo.azimuth)} · ${topo.elevation.toFixed(1)}°`
                 : "—"}
             </Card>
 
-            <Card label="RA / Dec" subtitle="J2000 topocentric">
+            <Card label={t("track.raDec")} subtitle={t("trackPage.j2000Topocentric")}>
               {topo ? `${formatRA(topo.ra)}  ${formatDec(topo.dec)}` : "—"}
             </Card>
 
             {/* Estimated magnitude */}
-            <Card label="Est. Magnitude" subtitle="Approximate visual brightness">
+            <Card label={t("trackPage.estMagnitude")} subtitle={t("trackPage.estMagnitudeSubtitle")}>
               {payload ? (() => {
                 const sunInfo = computeSunlight(payload.stateVector.position, Date.now());
                 const mag = estimateMagnitude(payload.telemetry.earthDistKm, sunInfo.state === "sunlit");
-                if (mag === null) return <span style={{ color: "#5a7a8a" }}>In Earth shadow</span>;
+                if (mag === null) return <span style={{ color: "#5a7a8a" }}>{t("trackPage.inEarthShadow")}</span>;
                 return (
                   <div>
                     <span style={{ color: mag < 10 ? "#ffaa00" : "#5a7a8a" }}>mag {mag.toFixed(1)}</span>
                     <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
-                      {mag < 6 ? "Naked eye" : mag < 10 ? "Binoculars" : mag < 14 ? "Small telescope" : "Large telescope"}
+                      {mag < 6 ? t("trackPage.nakedEye") : mag < 10 ? t("trackPage.binoculars") : mag < 14 ? t("trackPage.smallTelescope") : t("trackPage.largeTelescope")}
                     </span>
                   </div>
                 );
@@ -970,14 +973,14 @@ export default function TrackPage() {
 
             {/* Moon proximity */}
             {payload && payload.moonPosition && (
-              <Card label="Moon Proximity" subtitle="Angular separation from the Moon">
+              <Card label={t("trackPage.moonProximity")} subtitle={t("trackPage.moonProximitySubtitle")}>
                 {(() => {
                   const { degrees: sep, direction } = moonAngularSeparation(payload.stateVector.position, payload.moonPosition);
                   return (
                     <div>
                       <span style={{ color: sep < 5 ? "#ffaa00" : "#a0b0c0" }}>{sep.toFixed(1)}°</span>
                       <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
-                        {sep < 0.5 ? "Very close to Moon" : sep < 2 ? `Near the Moon — ${direction} the Moon` : sep < 10 ? `${direction} the Moon` : "Far from Moon"}
+                        {sep < 0.5 ? t("trackPage.veryCloseToMoon") : sep < 2 ? `${t("trackPage.nearTheMoon")} — ${direction}` : sep < 10 ? `${direction}` : t("trackPage.farFromMoon")}
                       </span>
                     </div>
                   );
@@ -985,7 +988,7 @@ export default function TrackPage() {
               </Card>
             )}
 
-            <Card label="Range from You">
+            <Card label={t("track.rangeFromYou")}>
               {topo
                 ? topo.range.toLocaleString("en-US", {
                     maximumFractionDigits: 0,
@@ -995,10 +998,10 @@ export default function TrackPage() {
 
             {/* TLE Export */}
             {payload && (
-              <Card label="Export TLE" subtitle="For Stellarium / planetarium software">
+              <Card label={t("trackPage.exportTle")} subtitle={t("trackPage.exportTleSubtitle")}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   <div style={{ fontSize: 9, color: "#5a7a8a", lineHeight: 1.4 }}>
-                    Approximate TLE from current state vector. Accuracy degrades within hours — Orion is on a lunar trajectory, not a closed Earth orbit.
+                    {t("trackPage.tleDescription")}
                   </div>
                   <button
                     onClick={() => {
@@ -1008,10 +1011,10 @@ export default function TrackPage() {
                         new Date(),
                       );
                       navigator.clipboard.writeText(tle).then(() => {
-                        alert("TLE copied to clipboard!\n\nPaste into Stellarium via:\nConfiguration → Plugins → Satellites → Add from TLE");
+                        alert(t("trackPage.tleCopiedAlert"));
                       }).catch(() => {
                         // Fallback: show in a prompt
-                        prompt("Copy this TLE:", tle);
+                        prompt(t("trackPage.copyTlePrompt"), tle);
                       });
                     }}
                     style={{
@@ -1026,15 +1029,15 @@ export default function TrackPage() {
                       fontFamily: "'JetBrains Mono', monospace",
                     }}
                   >
-                    Copy TLE to Clipboard
+                    {t("trackPage.copyTleToClipboard")}
                   </button>
                 </div>
               </Card>
             )}
 
             <Card
-              label="Observer"
-              subtitle={manualLocation ? "Manual coordinates" : "Browser geolocation"}
+              label={t("track.observer")}
+              subtitle={manualLocation ? t("trackPage.manualCoordinates") : t("trackPage.browserGeolocation")}
             >
               {observer ? (
                 <div>
@@ -1042,9 +1045,9 @@ export default function TrackPage() {
                   {observer.alt > 0 && <span style={{ color: "#5a7a8a", fontSize: 10, marginLeft: 6 }}>{(observer.alt * 1000).toFixed(0)}m</span>}
                 </div>
               ) : geoStatus === "requesting" ? (
-                <span style={{ color: "#5a7a8a", fontSize: 13 }}>Requesting…</span>
+                <span style={{ color: "#5a7a8a", fontSize: 13 }}>{t("trackPage.requesting")}</span>
               ) : (
-                <span style={{ color: "#5a7a8a", fontSize: 13 }}>Unavailable</span>
+                <span style={{ color: "#5a7a8a", fontSize: 13 }}>{t("trackPage.unavailable")}</span>
               )}
               <button
                 onClick={() => setManualLocation((v) => !v)}
@@ -1060,7 +1063,7 @@ export default function TrackPage() {
                   fontFamily: "inherit",
                 }}
               >
-                {manualLocation ? "Use GPS" : "Set manually"}
+                {manualLocation ? t("trackPage.useGps") : t("trackPage.setManually")}
               </button>
               {manualLocation && (
                 <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -1068,7 +1071,7 @@ export default function TrackPage() {
                     <input
                       type="number"
                       step="0.001"
-                      placeholder="Lat (decimal, e.g. 53.54)"
+                      placeholder={t("trackPage.latPlaceholder")}
                       value={manualLat}
                       onChange={(e) => setManualLat(e.target.value)}
                       style={{
@@ -1085,7 +1088,7 @@ export default function TrackPage() {
                     <input
                       type="number"
                       step="0.001"
-                      placeholder="Lon (decimal, e.g. -113.49)"
+                      placeholder={t("trackPage.lonPlaceholder")}
                       value={manualLon}
                       onChange={(e) => setManualLon(e.target.value)}
                       style={{
@@ -1104,7 +1107,7 @@ export default function TrackPage() {
                     <input
                       type="number"
                       step="1"
-                      placeholder="Elevation in meters (e.g. 645)"
+                      placeholder={t("trackPage.elevationPlaceholder")}
                       value={manualAlt}
                       onChange={(e) => setManualAlt(e.target.value)}
                       style={{
@@ -1139,7 +1142,7 @@ export default function TrackPage() {
                         cursor: "pointer",
                       }}
                     >
-                      Set
+                      {t("trackPage.set")}
                     </button>
                   </div>
                 </div>
@@ -1159,7 +1162,7 @@ export default function TrackPage() {
                 margin: "0 0 14px",
               }}
             >
-              Telescope Control
+              {t("track.telescopeControl")}
             </h2>
             <div
               style={{
@@ -1173,24 +1176,12 @@ export default function TrackPage() {
               }}
             >
               <div style={{ fontSize: 11, color: "#5a7a8a", lineHeight: 1.5, marginBottom: 4 }}>
-                Compatible with any telescope supporting the{" "}
-                <a href="https://ascom-standards.org/Developer/Alpaca.htm" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
-                  ASCOM Alpaca
-                </a>{" "}
-                REST API. Works with most GoTo mounts via{" "}
-                <a href="https://www.ascom-standards.org/" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
-                  ASCOM Platform
-                </a>{" "}
-                (Windows) or{" "}
-                <a href="https://indigo-astronomy.github.io/indigo_imager/" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
-                  INDIGO
-                </a>{" "}
-                (macOS/Linux). Celestron, Meade, Sky-Watcher, iOptron, and PlaneWave mounts are supported.
+                {t("trackPage.telescopeDescription")}
               </div>
               {/* Host input + connect/disconnect */}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <label htmlFor="telescope-host" className="sr-only">
-                  Telescope host address
+                  {t("trackPage.telescopeHostLabel")}
                 </label>
                 <input
                   id="telescope-host"
@@ -1215,14 +1206,14 @@ export default function TrackPage() {
                     onClick={handleConnect}
                     style={btnStyle("#00e5ff", "#001a20")}
                   >
-                    Connect
+                    {t("trackPage.connect")}
                   </button>
                 ) : (
                   <button
                     onClick={handleDisconnect}
                     style={btnStyle("#ff4444", "#200000")}
                   >
-                    Disconnect
+                    {t("trackPage.disconnect")}
                   </button>
                 )}
               </div>
@@ -1255,10 +1246,10 @@ export default function TrackPage() {
                   }}
                 />
                 <span style={{ color: "#8a9aaa", textTransform: "uppercase", letterSpacing: "0.1em", fontSize: 10 }}>
-                  {telescopeStatus}
+                  {t(`trackPage.telescopeStatus.${telescopeStatus}`)}
                 </span>
                 {alpacaState?.slewing && (
-                  <span style={{ color: "#00e5ff", fontSize: 10 }}>· SLEWING</span>
+                  <span style={{ color: "#00e5ff", fontSize: 10 }}>· {t("trackPage.slewing")}</span>
                 )}
               </div>
 
@@ -1279,7 +1270,7 @@ export default function TrackPage() {
                     telescopeStatus !== "connected" || !topo
                   )}
                 >
-                  Goto Orion
+                  {t("trackPage.gotoOrion")}
                 </button>
 
                 <button
@@ -1291,7 +1282,7 @@ export default function TrackPage() {
                     telescopeStatus !== "connected"
                   )}
                 >
-                  {isTracking ? "Stop Track" : "Track"}
+                  {isTracking ? t("trackPage.stopTrack") : t("trackPage.trackBtn")}
                 </button>
 
                 <button
@@ -1303,7 +1294,7 @@ export default function TrackPage() {
                     telescopeStatus === "disconnected"
                   )}
                 >
-                  Abort
+                  {t("trackPage.abort")}
                 </button>
               </div>
             </div>
@@ -1323,15 +1314,15 @@ export default function TrackPage() {
             margin: "0 0 14px",
           }}
         >
-          When Can I See Orion? — 48h Forecast
+          {t("track.visibilityForecast")}
         </h2>
         {geoStatus !== "ok" ? (
           <div style={{ background: "#0d1117", border: "1px solid rgba(0,229,255,0.1)", borderRadius: 8, padding: 16, color: "#5a7a8a", fontSize: 13 }}>
-            {geoStatus === "requesting" ? "Requesting your location to compute visibility windows..." : "Location required for visibility predictions. Please allow browser geolocation."}
+            {geoStatus === "requesting" ? t("trackPage.forecastRequestingLocation") : t("trackPage.forecastLocationRequired")}
           </div>
         ) : forecast.length === 0 ? (
           <div style={{ background: "#0d1117", border: "1px solid rgba(0,229,255,0.1)", borderRadius: 8, padding: 16, color: "#5a7a8a", fontSize: 13 }}>
-            {payload ? "No visible passes in the next 48 hours from your location. Orion may be too faint or only above the horizon during daylight." : "Waiting for telemetry data..."}
+            {payload ? t("trackPage.forecastNoPassesDetailed") : t("trackPage.forecastWaitingTelemetry")}
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -1348,15 +1339,15 @@ export default function TrackPage() {
             >
               <thead>
                 <tr style={{ borderBottom: "1px solid rgba(0,229,255,0.15)", color: "#5a7a8a", textAlign: "left" }}>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Date</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Start</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>End</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Duration</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Max El.</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Direction</th>
-                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>RA / Dec</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.date")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.start")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.end")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.duration")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.maxElevation")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.direction")}</th>
+                  <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("track.raDec")}</th>
                   {telescopeStatus === "connected" && (
-                    <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>Slew</th>
+                    <th style={{ padding: "10px 12px", fontSize: 9, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" }}>{t("trackPage.slew")}</th>
                   )}
                 </tr>
               </thead>
@@ -1374,7 +1365,7 @@ export default function TrackPage() {
                       <td style={{ padding: "8px 12px" }}>{formatLocalDate(w.startUtc)}</td>
                       <td style={{ padding: "8px 12px" }}>{formatLocalTime(w.startUtc)}</td>
                       <td style={{ padding: "8px 12px" }}>{formatLocalTime(w.endUtc)}</td>
-                      <td style={{ padding: "8px 12px" }}>{w.durationMin} min</td>
+                      <td style={{ padding: "8px 12px" }}>{w.durationMin} {t("trackPage.min")}</td>
                       <td style={{ padding: "8px 12px", color: isBest ? "#00ff88" : undefined }}>
                         {w.maxElevation}° {azToCardinal(w.maxElevationAz)}
                       </td>
@@ -1400,7 +1391,7 @@ export default function TrackPage() {
                               fontFamily: "'JetBrains Mono', monospace",
                             }}
                           >
-                            Goto
+                            {t("trackPage.goto")}
                           </button>
                         </td>
                       )}
@@ -1410,9 +1401,8 @@ export default function TrackPage() {
               </tbody>
             </table>
             <div style={{ fontSize: 10, color: "#4a5a6a", marginTop: 8, lineHeight: 1.6 }}>
-              Passes with max elevation ≥20° are highlighted — these offer the best viewing.
-              Times shown in your local timezone. Visibility requires dark sky (sun below -6°) and Orion above the horizon.
-              {telescopeStatus === "connected" && " Click Goto to pre-slew your telescope to the predicted RA/Dec at max elevation."}
+              {t("trackPage.forecastFooter")}
+              {telescopeStatus === "connected" && t("trackPage.forecastFooterTelescope")}
             </div>
           </div>
         )}
@@ -1438,17 +1428,17 @@ export default function TrackPage() {
               margin: 0,
             }}
           >
-            Live Ground Map
+            {t("track.liveGroundMap")}
           </h2>
           <span style={{ color: "#5a7a8a", fontSize: 9 }}>
-            <span style={{ color: "#00ff88" }}>●</span> Orion Sub-Point
+            <span style={{ color: "#00ff88" }}>●</span> {t("trackPage.orionSubPoint")}
             {"  "}
-            <span style={{ color: "#4488ff" }}>●</span> Your Location
+            <span style={{ color: "#4488ff" }}>●</span> {t("trackPage.yourLocation")}
           </span>
         </div>
         <div
           ref={mapContainerRef}
-          aria-label="Live ground map showing Orion sub-satellite point and observer location"
+          aria-label={t("trackPage.mapAriaLabel")}
           role="img"
           style={{
             height: 400,
