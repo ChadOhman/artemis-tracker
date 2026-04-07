@@ -150,6 +150,14 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Detailed annotated flight transcripts maintained by David Woods and the NASA History Division. Primary source for Apollo 8 event timing and descriptions."
         />
 
+        <SectionHeader label={t("credits.communityContributions")} />
+
+        <Source
+          name="Brian Brown — Real Ephemeris Trajectory"
+          url="https://github.com/briangbrown"
+          description="Replaced the synthetic figure-8 orbit map with a real reference trajectory built from JPL Horizons ephemeris data and the NASA/JSC Artemis II OEM, with Douglas-Peucker simplification and proper EME2000 frame projection."
+        />
+
         <SectionHeader label={t("credits.builtWith")} />
 
         <Source
