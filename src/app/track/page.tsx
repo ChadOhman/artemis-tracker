@@ -623,6 +623,7 @@ export default function TrackPage() {
           gridTemplateColumns: "1fr 1fr",
           gap: 24,
           padding: "24px 24px 0",
+          alignItems: "start",
         }}
       >
         {/* Left column: Mission Geometry */}
