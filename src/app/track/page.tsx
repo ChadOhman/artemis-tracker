@@ -53,6 +53,101 @@ function deriveFlightState(earthDistKm: number, moonDistKm: number): string {
   return "Inbound to Earth";
 }
 
+/**
+ * Estimate visual magnitude of Orion spacecraft.
+ * Based on a simplified model: apparent magnitude depends on distance,
+ * spacecraft cross-section (~25 m²), albedo (~0.3), and solar illumination.
+ * At lunar distance (~400,000 km) Orion is roughly mag 15-17.
+ */
+function estimateMagnitude(earthDistKm: number, sunlit: boolean): number | null {
+  if (!sunlit) return null; // not visible if in Earth's shadow
+  // Reference: ISS at ~400 km is mag ~-3 with ~4000 m² area
+  // Orion has ~25 m² cross-section, albedo ~0.3
+  // Mag = refMag + 5*log10(dist/refDist) - 2.5*log10(area/refArea)
+  const refMag = -3;
+  const refDistKm = 400;
+  const refAreaM2 = 4000;
+  const orionAreaM2 = 25;
+  const mag = refMag
+    + 5 * Math.log10(earthDistKm / refDistKm)
+    - 2.5 * Math.log10(orionAreaM2 / refAreaM2);
+  return Math.round(mag * 10) / 10;
+}
+
+/**
+ * Compute angular separation between Orion and the Moon as seen from an observer.
+ * Both positions are geocentric — for an observer on Earth the parallax is negligible
+ * at lunar distances.
+ */
+function moonAngularSeparation(
+  scPos: { x: number; y: number; z: number },
+  moonPos: { x: number; y: number; z: number },
+): number {
+  const scMag = Math.sqrt(scPos.x ** 2 + scPos.y ** 2 + scPos.z ** 2);
+  const moonMag = Math.sqrt(moonPos.x ** 2 + moonPos.y ** 2 + moonPos.z ** 2);
+  if (scMag === 0 || moonMag === 0) return 0;
+  // Unit vectors
+  const dot = (scPos.x * moonPos.x + scPos.y * moonPos.y + scPos.z * moonPos.z) / (scMag * moonMag);
+  return Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
+}
+
+/**
+ * Generate a simple two-line element set for Orion.
+ * NOTE: TLEs are designed for Earth-orbiting objects and cannot accurately
+ * represent a lunar trajectory. This is an approximation for use in
+ * planetarium software — it will drift significantly within hours.
+ */
+function generateApproxTLE(
+  pos: { x: number; y: number; z: number },
+  vel: { x: number; y: number; z: number },
+  utcDate: Date,
+): string {
+  const MU = 398600.4418; // Earth GM km³/s²
+  const r = Math.sqrt(pos.x ** 2 + pos.y ** 2 + pos.z ** 2);
+  const v = Math.sqrt(vel.x ** 2 + vel.y ** 2 + vel.z ** 2);
+
+  // Specific orbital energy
+  const energy = (v * v) / 2 - MU / r;
+  // Semi-major axis (may be negative for hyperbolic)
+  const sma = -MU / (2 * energy);
+
+  // Angular momentum vector
+  const hx = pos.y * vel.z - pos.z * vel.y;
+  const hy = pos.z * vel.x - pos.x * vel.z;
+  const hz = pos.x * vel.y - pos.y * vel.x;
+  const h = Math.sqrt(hx * hx + hy * hy + hz * hz);
+
+  // Inclination
+  const inc = Math.acos(hz / h) * (180 / Math.PI);
+
+  // Eccentricity
+  const eSq = 1 - (h * h) / (sma * MU);
+  const ecc = Math.sqrt(Math.max(0, eSq));
+
+  // RAAN (right ascension of ascending node)
+  const nx = -hy;
+  const ny = hx;
+  const nMag = Math.sqrt(nx * nx + ny * ny);
+  let raan = nMag > 0 ? Math.acos(nx / nMag) * (180 / Math.PI) : 0;
+  if (ny < 0) raan = 360 - raan;
+
+  // Mean motion (rev/day)
+  const absA = Math.abs(sma);
+  const period = 2 * Math.PI * Math.sqrt((absA ** 3) / MU); // seconds
+  const meanMotion = 86400 / period;
+
+  // Epoch
+  const year = utcDate.getUTCFullYear() % 100;
+  const startOfYear = Date.UTC(utcDate.getUTCFullYear(), 0, 1);
+  const dayOfYear = (utcDate.getTime() - startOfYear) / 86400000 + 1;
+
+  // Format TLE (simplified — many fields are approximated)
+  const line1 = `1 99999U 26000A   ${String(year).padStart(2, "0")}${dayOfYear.toFixed(8).padStart(12, "0")}  .00000000  00000-0  00000-0 0  9999`;
+  const line2 = `2 99999 ${inc.toFixed(4).padStart(8)} ${raan.toFixed(4).padStart(8)} ${ecc.toFixed(7).slice(2).padStart(7, "0")} 000.0000 000.0000 ${meanMotion.toFixed(8).padStart(11)}00001`;
+
+  return `ORION (ARTEMIS II)\n${line1}\n${line2}`;
+}
+
 function formatUtcTime(date: Date): string {
   return date.toLocaleTimeString("en-US", {
     hour: "2-digit",
@@ -604,6 +699,25 @@ export default function TrackPage() {
             Your Sky
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {/* VISIBLE NOW banner */}
+            {topo && topo.visible && (
+              <div style={{
+                background: "rgba(0,255,136,0.08)",
+                border: "2px solid rgba(0,255,136,0.4)",
+                borderRadius: 8,
+                padding: "12px 16px",
+                textAlign: "center",
+                animation: "pulse 2s ease-in-out infinite",
+              }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#00ff88", letterSpacing: "0.12em" }}>
+                  VISIBLE NOW
+                </div>
+                <div style={{ fontSize: 12, color: "#a0b0c0", marginTop: 4 }}>
+                  Look {azToCardinal(topo.azimuth)} at {topo.elevation.toFixed(0)}° above the horizon
+                </div>
+              </div>
+            )}
+
             <Card label="Visibility">
               {geoStatus === "requesting" ? (
                 <span style={{ color: "#5a7a8a", fontSize: 13 }}>Requesting location…</span>
@@ -611,14 +725,23 @@ export default function TrackPage() {
                 <span style={{ color: "#ff4444", fontSize: 13 }}>Location unavailable</span>
               ) : topo ? (
                 topo.visible ? (
-                  <span style={{ color: "#00ff88" }}>Above your horizon</span>
+                  <span style={{ color: "#00ff88" }}>Above your horizon ({topo.elevation.toFixed(1)}°)</span>
                 ) : (
-                  <span style={{ color: "#ff4444" }}>Below your horizon</span>
+                  <span style={{ color: "#ff4444" }}>Below your horizon ({topo.elevation.toFixed(1)}°)</span>
                 )
               ) : (
                 "—"
               )}
             </Card>
+
+            {/* Compass direction — plain language */}
+            {topo && topo.visible && (
+              <Card label="Where to Look" subtitle="Plain language">
+                <span style={{ color: "#00ff88", fontSize: 14 }}>
+                  Look {azToCardinal(topo.azimuth)} ({topo.azimuth.toFixed(0)}°), {topo.elevation.toFixed(0)}° up from the horizon
+                </span>
+              </Card>
+            )}
 
             <Card
               label="Telescope Pointing"
@@ -633,6 +756,40 @@ export default function TrackPage() {
               {topo ? `${formatRA(topo.ra)}  ${formatDec(topo.dec)}` : "—"}
             </Card>
 
+            {/* Estimated magnitude */}
+            <Card label="Est. Magnitude" subtitle="Approximate visual brightness">
+              {payload ? (() => {
+                const sunInfo = computeSunlight(payload.stateVector.position, Date.now());
+                const mag = estimateMagnitude(payload.telemetry.earthDistKm, sunInfo.state === "sunlit");
+                if (mag === null) return <span style={{ color: "#5a7a8a" }}>In Earth shadow</span>;
+                return (
+                  <div>
+                    <span style={{ color: mag < 10 ? "#ffaa00" : "#5a7a8a" }}>mag {mag.toFixed(1)}</span>
+                    <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
+                      {mag < 6 ? "Naked eye" : mag < 10 ? "Binoculars" : mag < 14 ? "Small telescope" : "Large telescope"}
+                    </span>
+                  </div>
+                );
+              })() : "—"}
+            </Card>
+
+            {/* Moon proximity */}
+            {payload && payload.moonPosition && (
+              <Card label="Moon Proximity" subtitle="Angular separation from the Moon">
+                {(() => {
+                  const sep = moonAngularSeparation(payload.stateVector.position, payload.moonPosition);
+                  return (
+                    <div>
+                      <span style={{ color: sep < 5 ? "#ffaa00" : "#a0b0c0" }}>{sep.toFixed(1)}°</span>
+                      <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
+                        {sep < 0.5 ? "Very close to Moon" : sep < 2 ? "Near the Moon" : sep < 10 ? "Same region as Moon" : "Far from Moon"}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </Card>
+            )}
+
             <Card label="Range from You">
               {topo
                 ? topo.range.toLocaleString("en-US", {
@@ -640,6 +797,45 @@ export default function TrackPage() {
                   }) + " km"
                 : "—"}
             </Card>
+
+            {/* TLE Export */}
+            {payload && (
+              <Card label="Export TLE" subtitle="For Stellarium / planetarium software">
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ fontSize: 9, color: "#5a7a8a", lineHeight: 1.4 }}>
+                    Approximate TLE from current state vector. Accuracy degrades within hours — Orion is on a lunar trajectory, not a closed Earth orbit.
+                  </div>
+                  <button
+                    onClick={() => {
+                      const tle = generateApproxTLE(
+                        payload.stateVector.position,
+                        payload.stateVector.velocity,
+                        new Date(),
+                      );
+                      navigator.clipboard.writeText(tle).then(() => {
+                        alert("TLE copied to clipboard!\n\nPaste into Stellarium via:\nConfiguration → Plugins → Satellites → Add from TLE");
+                      }).catch(() => {
+                        // Fallback: show in a prompt
+                        prompt("Copy this TLE:", tle);
+                      });
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      background: "#1a2332",
+                      border: "1px solid rgba(0,229,255,0.2)",
+                      borderRadius: 4,
+                      color: "#00e5ff",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      fontFamily: "'JetBrains Mono', monospace",
+                    }}
+                  >
+                    Copy TLE to Clipboard
+                  </button>
+                </div>
+              </Card>
+            )}
 
             <Card
               label="Observer"
