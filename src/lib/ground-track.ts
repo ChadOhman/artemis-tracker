@@ -13,12 +13,11 @@ const GMST_J2000 = 4.89496121274;
 /** J2000.0 epoch in ms */
 const J2000_MS = Date.UTC(2000, 0, 1, 12, 0, 0);
 
-/** Mean obliquity of ecliptic at J2000 */
-const OBLIQUITY = 23.4393 * (Math.PI / 180);
-
 /**
- * Compute sub-satellite latitude and longitude from a J2000 ecliptic
- * geocentric position vector. Converts to equatorial first.
+ * Compute sub-satellite latitude and longitude from a J2000 equatorial
+ * (EME2000/ICRF) geocentric position vector. The JPL Horizons poller
+ * requests REF_PLANE='FRAME', so position is already in the equatorial
+ * frame — no obliquity rotation needed.
  * Returns { lat, lon } in degrees.
  */
 export function positionToLatLon(
@@ -28,12 +27,10 @@ export function positionToLatLon(
   const r = Math.sqrt(position.x ** 2 + position.y ** 2 + position.z ** 2);
   if (r === 0) return { lat: 0, lon: 0 };
 
-  // Convert ecliptic → equatorial (rotate around X axis by obliquity)
-  const cosE = Math.cos(OBLIQUITY);
-  const sinE = Math.sin(OBLIQUITY);
+  // Position is already in the J2000 equatorial frame.
   const eqX = position.x;
-  const eqY = position.y * cosE - position.z * sinE;
-  const eqZ = position.y * sinE + position.z * cosE;
+  const eqY = position.y;
+  const eqZ = position.z;
 
   // Declination (latitude) — angle from equatorial plane
   const lat = Math.asin(eqZ / r) * (180 / Math.PI);

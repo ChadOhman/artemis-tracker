@@ -45,13 +45,14 @@ const LUNAR_FEATURES: { name: string; lat: number; lon: number }[] = [
 
 /**
  * Compute selenographic latitude/longitude from a Moon-relative position
- * vector. The input vector is in J2000 ecliptic coordinates centered on
- * the Moon. Since the Moon is tidally locked with its near side toward
- * Earth (approximately along the -Earth→Moon direction), we project the
- * position onto a frame where the sub-Earth point is at lon=0.
+ * vector. The input vector is in J2000 equatorial (EME2000/ICRF)
+ * coordinates centered on the Moon. Since the Moon is tidally locked with
+ * its near side toward Earth (approximately along the -Earth→Moon
+ * direction), we project the position onto a frame where the sub-Earth
+ * point is at lon=0.
  *
- * @param relPosition Orion position minus Moon position (J2000 ecliptic km)
- * @param moonPosition Moon position from Earth center (J2000 ecliptic km)
+ * @param relPosition Orion position minus Moon position (J2000 equatorial km)
+ * @param moonPosition Moon position from Earth center (J2000 equatorial km)
  */
 export function moonRelativeToSelenographic(
   relPosition: { x: number; y: number; z: number },
@@ -59,7 +60,9 @@ export function moonRelativeToSelenographic(
 ): { lat: number; lon: number } {
   // Build a frame aligned with the Moon:
   //   u = unit vector from Moon toward Earth (= -moonPosition normalized)
-  //   w = ecliptic north (0, 0, 1)
+  //   w = J2000 equatorial north (0, 0, 1) — approximation; the true lunar
+  //       pole is offset from this by ~1.5° but it's adequate for naming
+  //       lunar features
   //   v = w × u (east in selenographic frame)
   const mx = moonPosition.x, my = moonPosition.y, mz = moonPosition.z;
   const mMag = Math.sqrt(mx * mx + my * my + mz * mz);
