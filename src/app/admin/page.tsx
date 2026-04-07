@@ -117,9 +117,17 @@ export default function AdminPage() {
     "RTC-2": "planned",
     "CM Raise": "planned",
   }));
-  const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(
-    () => Object.fromEntries(BURNS.map((b) => [b, ""]))
-  );
+  const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(() => ({
+    "PRM": "2.6",
+    "ARB": "140",
+    "TLI": "3180",
+    "OTC-1": "0",
+    "OTC-2": "0",
+    "OTC-3": "3",
+    "RTC-1": "10",
+    "RTC-2": "2",
+    "CM Raise": "5",
+  }));
 
   const fetchStatus = useCallback(async () => {
     if (!token) return;
