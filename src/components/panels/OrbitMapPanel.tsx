@@ -102,32 +102,43 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   const { speedUnit } = useMetContext();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const insetRef = useRef<HTMLCanvasElement>(null);
+  const earthInsetRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
   const [showInset, setShowInset] = useState(false);
+  const [showEarthInset, setShowEarthInset] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [realScale, setRealScale] = useState(false);
   // Trail of recent Orion-relative-to-Moon positions, for the zoom inset.
-  // Only grows when new JPL data arrives (deduped by metMs).
   const insetTrailRef = useRef<Array<{ relX: number; relY: number; metMs: number }>>([]);
+  // Trail for Earth inset
+  const earthInsetTrailRef = useRef<Array<{ x: number; y: number; metMs: number }>>([]);
 
   // Store unit in a ref for use inside the draw callback
   const unitRef = useRef(speedUnit);
   unitRef.current = speedUnit;
 
   // Store translated inset labels in a ref for use inside the draw callback
-  const insetLabelsRef = useRef({ moonDetail: "MOON DETAIL", kmView: "km view" });
+  const insetLabelsRef = useRef({ moonDetail: "MOON DETAIL", earthDetail: "EARTH DETAIL", kmView: "km view" });
   insetLabelsRef.current = {
     moonDetail: t("orbitMap.moonDetail").toUpperCase(),
+    earthDetail: "EARTH DETAIL",
     kmView: t("orbitMap.kmView"),
   };
 
-  // Auto-enable inset when Orion is within the zoom viewport (60,000 km)
+  // Auto-enable Moon inset when within 60,000 km
   useEffect(() => {
     if (telemetry && telemetry.moonDistKm < 60000) {
       setShowInset(true);
     }
   }, [telemetry?.moonDistKm != null && telemetry.moonDistKm < 60000]);
+
+  // Auto-enable Earth inset when within 60,000 km of Earth (re-entry approach)
+  useEffect(() => {
+    if (telemetry && telemetry.earthDistKm < 60000) {
+      setShowEarthInset(true);
+    }
+  }, [telemetry?.earthDistKm != null && telemetry.earthDistKm < 60000]);
 
 
   const draw = useCallback(() => {
@@ -817,7 +828,209 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         }
       }
     }
-  }, [stateVector, moonPosition, metMs, telemetry, showInset, realScale]);
+    // --- Earth detail inset ---
+    // Shows Orion's position relative to Earth during re-entry approach.
+    // Mirrors the Moon inset pattern but centered on Earth.
+    const earthInset = earthInsetRef.current;
+    if (showEarthInset && earthInset && stateVector && telemetry) {
+      const eiw = earthInset.clientWidth;
+      const eih = earthInset.clientHeight;
+      if (eiw > 0 && eih > 0) {
+        if (earthInset.width !== eiw * dpr || earthInset.height !== eih * dpr) {
+          earthInset.width = eiw * dpr;
+          earthInset.height = eih * dpr;
+        }
+        const ectx = earthInset.getContext("2d");
+        if (ectx) {
+          ectx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ectx.clearRect(0, 0, eiw, eih);
+
+          // Background
+          ectx.fillStyle = "#060b14";
+          ectx.fillRect(0, 0, eiw, eih);
+
+          // Dynamic zoom — scale with Earth distance
+          const earthDistKm = telemetry.earthDistKm;
+          const eViewKm = Math.max(20000, Math.min(130000, earthDistKm * 2.6));
+          const earthCx = eiw / 2;
+          const earthCy = eih / 2;
+          const ePxPerKm = Math.min(eiw, eih) / eViewKm;
+
+          // Altitude rings
+          const altRings = [10000, 20000, 40000];
+          for (const rKm of altRings) {
+            const rPx = (6371 + rKm) * ePxPerKm;
+            if (rPx < 2 || rPx > Math.max(eiw, eih)) continue;
+            ectx.save();
+            ectx.beginPath();
+            ectx.arc(earthCx, earthCy, rPx, 0, Math.PI * 2);
+            ectx.strokeStyle = "rgba(100,160,255,0.12)";
+            ectx.lineWidth = 0.5;
+            ectx.setLineDash([3, 4]);
+            ectx.stroke();
+            ectx.restore();
+          }
+
+          // Earth
+          const eR = Math.max(8, 6371 * ePxPerKm);
+          const eGrad = ectx.createRadialGradient(
+            earthCx - eR * 0.3, earthCy - eR * 0.3, 0,
+            earthCx, earthCy, eR
+          );
+          eGrad.addColorStop(0, "#4a90d9");
+          eGrad.addColorStop(0.6, "#1a5a9e");
+          eGrad.addColorStop(1, "#0a2a4e");
+          ectx.save();
+          ectx.beginPath();
+          ectx.arc(earthCx, earthCy, eR, 0, Math.PI * 2);
+          ectx.fillStyle = eGrad;
+          ectx.fill();
+          ectx.restore();
+
+          ectx.save();
+          ectx.font = "bold 10px monospace";
+          ectx.fillStyle = "rgba(100,160,255,0.9)";
+          ectx.textAlign = "center";
+          ectx.fillText("Earth", earthCx, earthCy + eR + 12);
+          ectx.restore();
+
+          // Splashdown zone marker (~25°N, 120°W in the Pacific)
+          // Draw as a small orange crosshair near Earth
+          if (eR > 5) {
+            const splashAngle = Math.PI * 0.7; // approximate position on globe
+            const splashR = eR * 0.8;
+            const sx = earthCx + Math.cos(splashAngle) * splashR;
+            const sy = earthCy + Math.sin(splashAngle) * splashR;
+            ectx.save();
+            ectx.beginPath();
+            ectx.arc(sx, sy, 3, 0, Math.PI * 2);
+            ectx.strokeStyle = "rgba(255,140,0,0.7)";
+            ectx.lineWidth = 1;
+            ectx.setLineDash([2, 2]);
+            ectx.stroke();
+            ectx.font = "6px monospace";
+            ectx.fillStyle = "rgba(255,140,0,0.6)";
+            ectx.textAlign = "center";
+            ectx.fillText("SPLASHDOWN", sx, sy + 8);
+            ectx.restore();
+          }
+
+          // Earth trail
+          const eTrail = earthInsetTrailRef.current;
+          const orionR = Math.sqrt(
+            stateVector.position.x ** 2 + stateVector.position.y ** 2 + stateVector.position.z ** 2
+          );
+          // Project onto a simple 2D plane — use X and Y from the state vector
+          // normalized by Earth distance, centered on Earth
+          const orionEIx = earthCx + stateVector.position.x / orionR * earthDistKm * ePxPerKm;
+          const orionEIy = earthCy - stateVector.position.y / orionR * earthDistKm * ePxPerKm;
+
+          // Actually, simpler: Orion is at earthDistKm from Earth center.
+          // Use RA to determine the angle, place Orion at that angle at the right distance.
+          const ra = Math.atan2(stateVector.position.y, stateVector.position.x);
+          const dec = Math.asin(stateVector.position.z / orionR);
+          // Project: angle in the 2D plane = RA, distance from center = earthDistKm (projected by cos(dec))
+          const projDist = earthDistKm * Math.cos(dec) * ePxPerKm;
+          const oEIx = earthCx + Math.cos(ra) * projDist;
+          const oEIy = earthCy - Math.sin(ra) * projDist;
+
+          // Append to trail
+          const lastE = eTrail[eTrail.length - 1];
+          if (!lastE || Math.hypot(oEIx - lastE.x, oEIy - lastE.y) > 2 || metMs - lastE.metMs > 60000) {
+            eTrail.push({ x: oEIx, y: oEIy, metMs });
+            if (eTrail.length > 120) eTrail.shift();
+          }
+
+          // Draw trail
+          if (eTrail.length >= 2) {
+            ectx.save();
+            ectx.strokeStyle = "rgba(0,220,255,0.5)";
+            ectx.lineWidth = 1.3;
+            ectx.beginPath();
+            for (let i = 0; i < eTrail.length; i++) {
+              if (i === 0) ectx.moveTo(eTrail[i].x, eTrail[i].y);
+              else ectx.lineTo(eTrail[i].x, eTrail[i].y);
+            }
+            ectx.stroke();
+            ectx.restore();
+          }
+
+          // Orion dot
+          if (oEIx > -10 && oEIx < eiw + 10 && oEIy > -10 && oEIy < eih + 10) {
+            ectx.save();
+            const glow = ectx.createRadialGradient(oEIx, oEIy, 0, oEIx, oEIy, 12);
+            glow.addColorStop(0, "rgba(0,255,136,0.6)");
+            glow.addColorStop(1, "rgba(0,255,136,0)");
+            ectx.beginPath();
+            ectx.arc(oEIx, oEIy, 12, 0, Math.PI * 2);
+            ectx.fillStyle = glow;
+            ectx.fill();
+            ectx.beginPath();
+            ectx.arc(oEIx, oEIy, 4, 0, Math.PI * 2);
+            ectx.fillStyle = "#00ff88";
+            ectx.fill();
+            ectx.font = "bold 10px monospace";
+            ectx.fillStyle = "#00ff88";
+            ectx.textAlign = "left";
+            ectx.fillText("Orion", oEIx + 7, oEIy - 7);
+            ectx.font = "9px monospace";
+            ectx.fillStyle = "rgba(0,255,136,0.75)";
+            ectx.fillText(fmtDistCanvas(earthDistKm, unitRef.current), oEIx + 7, oEIy + 6);
+            // Ground track label
+            const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
+            ectx.font = "7px monospace";
+            ectx.fillStyle = "rgba(0,255,136,0.5)";
+            ectx.fillText(groundLabel, oEIx + 7, oEIy + 16);
+            ectx.restore();
+          } else {
+            // Off-screen indicator
+            const ang = Math.atan2(oEIy - earthCy, oEIx - earthCx);
+            const edgeR = Math.min(eiw, eih) / 2 - 18;
+            const ex = earthCx + Math.cos(ang) * edgeR;
+            const ey = earthCy + Math.sin(ang) * edgeR;
+            ectx.save();
+            ectx.translate(ex, ey);
+            ectx.rotate(ang);
+            ectx.fillStyle = "rgba(0,255,136,0.85)";
+            ectx.beginPath();
+            ectx.moveTo(0, 0);
+            ectx.lineTo(-10, -5);
+            ectx.lineTo(-10, 5);
+            ectx.closePath();
+            ectx.fill();
+            ectx.restore();
+            ectx.save();
+            ectx.font = "8px monospace";
+            ectx.fillStyle = "rgba(0,255,136,0.7)";
+            ectx.textAlign = "center";
+            ectx.fillText(
+              `Orion · ${fmtDistCanvas(earthDistKm, unitRef.current)}`,
+              earthCx, earthCy + Math.min(eiw, eih) / 2 - 4,
+            );
+            ectx.restore();
+          }
+
+          // Inset title
+          ectx.save();
+          ectx.font = "bold 9px monospace";
+          ectx.fillStyle = "rgba(100,160,255,0.75)";
+          ectx.textAlign = "left";
+          ectx.fillText(insetLabelsRef.current.earthDetail, 10, 14);
+          ectx.font = "8px monospace";
+          ectx.fillStyle = "rgba(160,184,207,0.65)";
+          {
+            const viewLabel = unitRef.current === "mph"
+              ? `${Math.round(eViewKm * 0.621371).toLocaleString()} mi view`
+              : unitRef.current === "kn"
+              ? `${Math.round(eViewKm * 0.539957).toLocaleString()} nmi view`
+              : `${eViewKm.toLocaleString()} ${insetLabelsRef.current.kmView}`;
+            ectx.fillText(viewLabel, 10, 25);
+          }
+          ectx.restore();
+        }
+      }
+    }
+  }, [stateVector, moonPosition, metMs, telemetry, showInset, showEarthInset, realScale]);
 
   // Animation loop
   useEffect(() => {
@@ -919,6 +1132,28 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }}
         />
 
+        {/* Earth detail inset canvas */}
+        <canvas
+          ref={earthInsetRef}
+          aria-hidden="true"
+          width={520}
+          height={520}
+          className="orbit-inset"
+          style={{
+            position: "absolute",
+            bottom: 8,
+            left: 8,
+            border: "2px solid rgba(100,160,255,0.5)",
+            borderRadius: 6,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
+            background: "#060b14",
+            opacity: showEarthInset ? 1 : 0,
+            pointerEvents: showEarthInset ? "auto" : "none",
+            transition: "opacity 200ms ease-out",
+            zIndex: 10,
+          }}
+        />
+
         {/* Moon detail toggle button */}
         <button
           onClick={() => setShowInset((v) => !v)}
@@ -942,6 +1177,31 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           aria-label={showInset ? "Hide Moon detail" : "Show Moon detail"}
         >
           🌙 {showInset ? "✕" : t("orbitMap.zoom")}
+        </button>
+
+        {/* Earth detail toggle button */}
+        <button
+          onClick={() => setShowEarthInset((v) => !v)}
+          style={{
+            position: "absolute",
+            top: 8,
+            right: showInset ? 80 : 70,
+            padding: "4px 10px",
+            background: showEarthInset ? "rgba(100,160,255,0.15)" : "rgba(6,11,20,0.8)",
+            border: "1px solid rgba(100,160,255,0.3)",
+            borderRadius: 4,
+            color: "rgba(100,160,255,0.9)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            fontFamily: "'JetBrains Mono', monospace",
+            cursor: "pointer",
+            zIndex: 11,
+          }}
+          aria-label={showEarthInset ? "Hide Earth detail" : "Show Earth detail"}
+        >
+          🌍 {showEarthInset ? "✕" : "EARTH"}
         </button>
 
         {/* Fullscreen toggle button */}
