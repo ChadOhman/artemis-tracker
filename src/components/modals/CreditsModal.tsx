@@ -158,6 +158,12 @@ export function CreditsModal({ isOpen, onClose }: CreditsModalProps) {
           description="Replaced the synthetic figure-8 orbit map with a real reference trajectory built from JPL Horizons ephemeris data and the NASA/JSC Artemis II OEM, with Douglas-Peucker simplification and proper EME2000 frame projection."
         />
 
+        <Source
+          name="agmccar — Panel Visibility & Layout Presets"
+          url="https://github.com/agmccar"
+          description="Dashboard layout customization system with panel visibility toggles, column placement, top bar item control, and saved preset support with localStorage persistence."
+        />
+
         <SectionHeader label={t("credits.builtWith")} />
 
         <Source
