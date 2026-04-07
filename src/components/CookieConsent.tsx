@@ -97,7 +97,7 @@ export function CookieConsent() {
         lineHeight: 1.5,
         maxWidth: 600,
       }}>
-        This site uses Google Analytics to understand how visitors use the tracker.
+        This site uses Google Analytics to understand traffic patterns and anticipate server loading.
         If you accept, Google will process your IP address and usage data.{" "}
         <a
           href="https://policies.google.com/technologies/partner-sites"
