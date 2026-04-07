@@ -1031,7 +1031,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }}
           aria-label={realScale ? "Show exaggerated scale" : "Show real scale"}
         >
-          {realScale ? "⊕ NORMAL" : "⊕ SCALE"}
+          ⊕ SCALE
         </button>
       </div>
     </PanelFrame>
