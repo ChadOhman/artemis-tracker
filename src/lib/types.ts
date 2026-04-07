@@ -94,6 +94,14 @@ export interface ArowTelemetry {
   sawGimbals: SawGimbalAngles | null;
   /** SAW gimbal fallback angles — for health cross-check */
   sawGimbalsFallback: SawGimbalAngles | null;
+  /** Separation event flags (params 2064-2073) */
+  separationEvents: {
+    srbSep: number | null;
+    coreStage: number | null;
+    icpsSep: number | null;
+    smSep: number | null;
+    missionSegment: number | null;
+  } | null;
   icps: {
     quaternion: { w: number; x: number; y: number; z: number };
     active: boolean;

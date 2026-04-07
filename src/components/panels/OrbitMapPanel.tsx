@@ -1123,7 +1123,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           borderRadius: isFullscreen ? 0 : 4,
         }}
       >
-        <span className="sr-only">{orbitDescription}</span>
+        <span className="sr-only" aria-live="polite" aria-atomic="true">{orbitDescription}</span>
         <canvas
           ref={canvasRef}
           aria-hidden="true"

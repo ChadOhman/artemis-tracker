@@ -180,6 +180,22 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
     }
   }
 
+  // Separation event flags (2064-2073)
+  const srbSep = getParamFloat(data, "2064");
+  const coreStage = getParamFloat(data, "2069");
+  const icpsSep = getParamFloat(data, "2071");
+  const smSep1 = getParamFloat(data, "2072"); // SM separation flag 1
+  const missionSegment = getParamFloat(data, "2066");
+  const separationEvents = (srbSep != null || coreStage != null || icpsSep != null || smSep1 != null)
+    ? {
+        srbSep: srbSep ?? null,
+        coreStage: coreStage ?? null,
+        icpsSep: icpsSep ?? null,
+        smSep: smSep1 ?? null,
+        missionSegment: missionSegment ?? null,
+      }
+    : null;
+
   // ICPS
   const icpsQw = getParamFloat(data, "2084") ?? 0;
   const icpsQx = getParamFloat(data, "2085") ?? 0;
@@ -208,6 +224,7 @@ export function parseArowResponse(data: Record<string, any>): ArowTelemetry | nu
     rcsThrusters,
     sawGimbals,
     sawGimbalsFallback,
+    separationEvents,
     icps: { quaternion: { w: icpsQw, x: icpsQx, y: icpsQy, z: icpsQz }, active: icpsActive },
     spacecraftMode: mode,
   };

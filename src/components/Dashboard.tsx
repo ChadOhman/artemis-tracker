@@ -23,6 +23,7 @@ import { BuyMeACoffee } from "./BuyMeACoffee";
 // ChangelogModal is rendered in BottomBar — not here to avoid double-mount
 import { WakeupSongsPanel } from "./panels/WakeupSongsPanel";
 import { RcsThrusterPanel } from "./panels/RcsThrusterPanel";
+import { PanelErrorBoundary } from "./shared/PanelErrorBoundary";
 import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
@@ -263,6 +264,11 @@ function DashboardInner() {
   const show = (id: PanelId, col: PanelColumn) =>
     panelVisibility[id] && panelColumns[id] === col;
 
+  // Wrap a panel in an error boundary (prevents one crash from taking down the dashboard)
+  const safe = (name: string, node: React.ReactNode) => (
+    <PanelErrorBoundary panelName={name}>{node}</PanelErrorBoundary>
+  );
+
   return (
     <div id="main-content" role="main" className="dashboard-grid">
       <div className="dashboard-topbar">
@@ -279,61 +285,61 @@ function DashboardInner() {
         />
       </div>
       <div className="dashboard-left">
-        {show("orbitMap", "left") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
-        {show("telemetry", "left") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
-        {show("rcsThrusters", "left") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
-        {show("dsn", "left") && <MemoDsn dsn={dsnData} />}
-        {show("stationSchedule", "left") && <MemoStationSchedule stateVector={stateVector} />}
-        {show("dsnBandwidth", "left") && <MemoDsnBandwidth dsn={dsnData} />}
-        {show("solar", "left") && <MemoSolar solar={solarData} />}
-        {show("deltaV", "left") && <MemoDeltaV metMs={metMs} />}
-        {show("activityDetail", "left") && <MemoActivity timeline={timeline} metMs={metMs} />}
-        {show("nextMilestone", "left") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
-        {show("liveStream", "left") && <LiveStreamPanel />}
-        {show("apollo8", "left") && <MemoApollo8 metMs={metMs} />}
-        {show("wakeupSongs", "left") && <MemoWakeupSongs />}
-        {show("currentActivities", "left") && <MemoCurrentActivities timeline={timeline} />}
-        {show("upcoming", "left") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
-        {show("milestones", "left") && <MemoMilestones timeline={timeline} metMs={metMs} />}
+        {show("orbitMap", "left") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
+        {show("telemetry", "left") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("rcsThrusters", "left") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
+        {show("dsn", "left") && safe("DSN", <MemoDsn dsn={dsnData} />)}
+        {show("stationSchedule", "left") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
+        {show("dsnBandwidth", "left") && safe("DSN Bandwidth", <MemoDsnBandwidth dsn={dsnData} />)}
+        {show("solar", "left") && safe("Solar", <MemoSolar solar={solarData} />)}
+        {show("deltaV", "left") && safe("Delta-V", <MemoDeltaV metMs={metMs} />)}
+        {show("activityDetail", "left") && safe("Activity", <MemoActivity timeline={timeline} metMs={metMs} />)}
+        {show("nextMilestone", "left") && safe("Next Milestone", <MemoNextMilestone timeline={timeline} metMs={metMs} />)}
+        {show("liveStream", "left") && safe("Live Stream", <LiveStreamPanel />)}
+        {show("apollo8", "left") && safe("Apollo 8", <MemoApollo8 metMs={metMs} />)}
+        {show("wakeupSongs", "left") && safe("Wake-Up Songs", <MemoWakeupSongs />)}
+        {show("currentActivities", "left") && safe("Activities", <MemoCurrentActivities timeline={timeline} />)}
+        {show("upcoming", "left") && safe("Upcoming", <MemoUpcoming timeline={timeline} metMs={metMs} />)}
+        {show("milestones", "left") && safe("Milestones", <MemoMilestones timeline={timeline} metMs={metMs} />)}
       </div>
       <div className="dashboard-timeline">
-        {panelVisibility.timeline && <MemoTimeline metMs={metMs} timeline={timeline} />}
+        {panelVisibility.timeline && safe("Timeline", <MemoTimeline metMs={metMs} timeline={timeline} />)}
       </div>
       <div className="dashboard-center">
-        {show("orbitMap", "center") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
-        {show("telemetry", "center") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
-        {show("rcsThrusters", "center") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
-        {show("dsn", "center") && <MemoDsn dsn={dsnData} />}
-        {show("stationSchedule", "center") && <MemoStationSchedule stateVector={stateVector} />}
-        {show("dsnBandwidth", "center") && <MemoDsnBandwidth dsn={dsnData} />}
-        {show("solar", "center") && <MemoSolar solar={solarData} />}
-        {show("deltaV", "center") && <MemoDeltaV metMs={metMs} />}
-        {show("activityDetail", "center") && <MemoActivity timeline={timeline} metMs={metMs} />}
-        {show("nextMilestone", "center") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
-        {show("liveStream", "center") && <LiveStreamPanel />}
-        {show("apollo8", "center") && <MemoApollo8 metMs={metMs} />}
-        {show("wakeupSongs", "center") && <MemoWakeupSongs />}
-        {show("currentActivities", "center") && <MemoCurrentActivities timeline={timeline} />}
-        {show("upcoming", "center") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
-        {show("milestones", "center") && <MemoMilestones timeline={timeline} metMs={metMs} />}
+        {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
+        {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("rcsThrusters", "center") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
+        {show("dsn", "center") && safe("DSN", <MemoDsn dsn={dsnData} />)}
+        {show("stationSchedule", "center") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
+        {show("dsnBandwidth", "center") && safe("DSN Bandwidth", <MemoDsnBandwidth dsn={dsnData} />)}
+        {show("solar", "center") && safe("Solar", <MemoSolar solar={solarData} />)}
+        {show("deltaV", "center") && safe("Delta-V", <MemoDeltaV metMs={metMs} />)}
+        {show("activityDetail", "center") && safe("Activity", <MemoActivity timeline={timeline} metMs={metMs} />)}
+        {show("nextMilestone", "center") && safe("Next Milestone", <MemoNextMilestone timeline={timeline} metMs={metMs} />)}
+        {show("liveStream", "center") && safe("Live Stream", <LiveStreamPanel />)}
+        {show("apollo8", "center") && safe("Apollo 8", <MemoApollo8 metMs={metMs} />)}
+        {show("wakeupSongs", "center") && safe("Wake-Up Songs", <MemoWakeupSongs />)}
+        {show("currentActivities", "center") && safe("Activities", <MemoCurrentActivities timeline={timeline} />)}
+        {show("upcoming", "center") && safe("Upcoming", <MemoUpcoming timeline={timeline} metMs={metMs} />)}
+        {show("milestones", "center") && safe("Milestones", <MemoMilestones timeline={timeline} metMs={metMs} />)}
       </div>
       <div className="dashboard-right">
-        {show("orbitMap", "right") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
-        {show("telemetry", "right") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
-        {show("rcsThrusters", "right") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
-        {show("dsn", "right") && <MemoDsn dsn={dsnData} />}
-        {show("stationSchedule", "right") && <MemoStationSchedule stateVector={stateVector} />}
-        {show("dsnBandwidth", "right") && <MemoDsnBandwidth dsn={dsnData} />}
-        {show("solar", "right") && <MemoSolar solar={solarData} />}
-        {show("deltaV", "right") && <MemoDeltaV metMs={metMs} />}
-        {show("activityDetail", "right") && <MemoActivity timeline={timeline} metMs={metMs} />}
-        {show("nextMilestone", "right") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
-        {show("liveStream", "right") && <LiveStreamPanel />}
-        {show("apollo8", "right") && <MemoApollo8 metMs={metMs} />}
-        {show("wakeupSongs", "right") && <MemoWakeupSongs />}
-        {show("currentActivities", "right") && <MemoCurrentActivities timeline={timeline} />}
-        {show("upcoming", "right") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
-        {show("milestones", "right") && <MemoMilestones timeline={timeline} metMs={metMs} />}
+        {show("orbitMap", "right") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
+        {show("telemetry", "right") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("rcsThrusters", "right") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
+        {show("dsn", "right") && safe("DSN", <MemoDsn dsn={dsnData} />)}
+        {show("stationSchedule", "right") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
+        {show("dsnBandwidth", "right") && safe("DSN Bandwidth", <MemoDsnBandwidth dsn={dsnData} />)}
+        {show("solar", "right") && safe("Solar", <MemoSolar solar={solarData} />)}
+        {show("deltaV", "right") && safe("Delta-V", <MemoDeltaV metMs={metMs} />)}
+        {show("activityDetail", "right") && safe("Activity", <MemoActivity timeline={timeline} metMs={metMs} />)}
+        {show("nextMilestone", "right") && safe("Next Milestone", <MemoNextMilestone timeline={timeline} metMs={metMs} />)}
+        {show("liveStream", "right") && safe("Live Stream", <LiveStreamPanel />)}
+        {show("apollo8", "right") && safe("Apollo 8", <MemoApollo8 metMs={metMs} />)}
+        {show("wakeupSongs", "right") && safe("Wake-Up Songs", <MemoWakeupSongs />)}
+        {show("currentActivities", "right") && safe("Activities", <MemoCurrentActivities timeline={timeline} />)}
+        {show("upcoming", "right") && safe("Upcoming", <MemoUpcoming timeline={timeline} metMs={metMs} />)}
+        {show("milestones", "right") && safe("Milestones", <MemoMilestones timeline={timeline} metMs={metMs} />)}
       </div>
       <div className="dashboard-bottombar">
         <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />
