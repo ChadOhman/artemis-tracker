@@ -52,6 +52,8 @@ interface TopBarProps {
   reconnecting: boolean;
   lastUpdate: number | null;
   visitorCount: number;
+  /** Per-item visibility — passed through but not yet wired to rendering */
+  barVisibility?: Record<string, boolean>;
 }
 
 const pillStyle: React.CSSProperties = {
@@ -105,7 +107,7 @@ const infoButtonStyle: React.CSSProperties = {
   transition: "color 0.15s, border-color 0.15s",
 };
 
-export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount }: TopBarProps) {
+export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility: _barVisibility }: TopBarProps) {
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const { speedUnit } = useMetContext();

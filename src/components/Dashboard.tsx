@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, memo } from "react";
+import { useCallback, useEffect, useMemo, useState, memo } from "react";
 import { TopBar } from "./TopBar";
 import { BottomBar } from "./BottomBar";
 import { OrbitMapPanel } from "./panels/OrbitMapPanel";
@@ -27,6 +27,22 @@ import { useTelemetryStream } from "@/hooks/useTelemetryStream";
 import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
 import { MetProvider, useMetContext } from "@/context/MetContext";
+import { defaultPanelVisibility, defaultPanelColumns, isTypingTarget, type PanelId, type PanelColumn } from "@/lib/panel-visibility";
+import { defaultTopBarVisibility, type TopBarItemId } from "@/lib/topbar-visibility";
+import {
+  readStoredPresetsState,
+  writeStoredPresetsState,
+  getSnapshotForPresetId,
+  getDefaultSnapshot,
+  listPresetOptions,
+  setActivePresetId,
+  saveNewPreset,
+  deletePreset,
+  DEFAULT_PRESET_ID,
+  type DashboardLayoutSnapshot,
+  type StoredPresetsState,
+} from "@/lib/dashboard-layout-presets";
+import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
 
 const MemoOrbitMap = memo(OrbitMapPanel);
 const MemoTimeline = memo(TimelinePanel);
@@ -88,9 +104,125 @@ function useBuildCheck() {
   }, []);
 }
 
+function useLayoutPresets() {
+  const [presetsState, setPresetsState] = useState<StoredPresetsState>(() => readStoredPresetsState());
+
+  const activeSnapshot = useMemo(() => {
+    return getSnapshotForPresetId(presetsState.activePresetId, presetsState);
+  }, [presetsState]);
+
+  const [panelVisibility, setPanelVisibility] = useState<Record<PanelId, boolean>>(
+    () => activeSnapshot.panelVisibility,
+  );
+  const [panelColumns, setPanelColumns] = useState<Record<PanelId, PanelColumn>>(
+    () => activeSnapshot.panelColumns,
+  );
+  const [topBarVisibility, setTopBarVisibility] = useState<Record<TopBarItemId, boolean>>(
+    () => activeSnapshot.topBarVisibility,
+  );
+
+  // When active preset changes, sync the live state
+  const applySnapshot = useCallback((snap: DashboardLayoutSnapshot) => {
+    setPanelVisibility(snap.panelVisibility);
+    setPanelColumns(snap.panelColumns);
+    setTopBarVisibility(snap.topBarVisibility);
+  }, []);
+
+  const presetOptions = useMemo(() => listPresetOptions(presetsState), [presetsState]);
+
+  const handlePresetChange = useCallback(
+    (presetId: string) => {
+      const next = setActivePresetId(presetId, presetsState);
+      setPresetsState(next);
+      writeStoredPresetsState(next);
+      applySnapshot(getSnapshotForPresetId(presetId, next));
+    },
+    [presetsState, applySnapshot],
+  );
+
+  const handleSavePreset = useCallback(
+    (name: string): boolean => {
+      const currentSnapshot: DashboardLayoutSnapshot = {
+        panelVisibility,
+        panelColumns,
+        topBarVisibility,
+      };
+      const result = saveNewPreset(name, currentSnapshot, presetsState);
+      if (!result) return false;
+      setPresetsState(result.state);
+      writeStoredPresetsState(result.state);
+      return true;
+    },
+    [panelVisibility, panelColumns, topBarVisibility, presetsState],
+  );
+
+  const handleDeletePreset = useCallback(() => {
+    const next = deletePreset(presetsState.activePresetId, presetsState);
+    setPresetsState(next);
+    writeStoredPresetsState(next);
+    applySnapshot(getSnapshotForPresetId(next.activePresetId, next));
+  }, [presetsState, applySnapshot]);
+
+  const handlePanelToggle = useCallback((id: PanelId, visible: boolean) => {
+    setPanelVisibility((prev) => ({ ...prev, [id]: visible }));
+  }, []);
+
+  const handleColumnChange = useCallback((id: PanelId, col: PanelColumn) => {
+    setPanelColumns((prev) => ({ ...prev, [id]: col }));
+  }, []);
+
+  const handleTopBarToggle = useCallback((id: TopBarItemId, visible: boolean) => {
+    setTopBarVisibility((prev) => ({ ...prev, [id]: visible }));
+  }, []);
+
+  return {
+    panelVisibility,
+    panelColumns,
+    topBarVisibility,
+    presetsState,
+    presetOptions,
+    handlePresetChange,
+    handleSavePreset,
+    handleDeletePreset,
+    handlePanelToggle,
+    handleColumnChange,
+    handleTopBarToggle,
+  };
+}
+
 function DashboardInner() {
   useBuildCheck();
   const { metMs, mode, simMetMs } = useMetContext();
+
+  // Layout / panel visibility
+  const {
+    panelVisibility,
+    panelColumns,
+    topBarVisibility,
+    presetsState,
+    presetOptions,
+    handlePresetChange,
+    handleSavePreset,
+    handleDeletePreset,
+    handlePanelToggle,
+    handleColumnChange,
+    handleTopBarToggle,
+  } = useLayoutPresets();
+
+  const [showPanelModal, setShowPanelModal] = useState(false);
+
+  // Keyboard shortcut: 'M' toggles the panel visibility modal
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (isTypingTarget(e.target)) return;
+      if (e.key === "m" || e.key === "M") {
+        if (e.ctrlKey || e.metaKey || e.altKey) return;
+        setShowPanelModal((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   // Live SSE stream — always running, provides connected/lastUpdate/reconnecting
   const {
@@ -127,6 +259,10 @@ function DashboardInner() {
 
   const timeline = useTimeline(metMs);
 
+  // Helper: check if a panel should render (visible AND assigned to this column)
+  const show = (id: PanelId, col: PanelColumn) =>
+    panelVisibility[id] && panelColumns[id] === col;
+
   return (
     <div id="main-content" role="main" className="dashboard-grid">
       <div className="dashboard-topbar">
@@ -139,38 +275,116 @@ function DashboardInner() {
           reconnecting={reconnecting}
           lastUpdate={lastUpdate}
           visitorCount={visitorCount}
+          barVisibility={topBarVisibility}
         />
       </div>
       <div className="dashboard-left">
-        <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />
-        <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />
-        <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />
-        <MemoDsn dsn={dsnData} />
-        <MemoStationSchedule stateVector={stateVector} />
-        <MemoDsnBandwidth dsn={dsnData} />
-        <MemoSolar solar={solarData} />
-        <MemoDeltaV metMs={metMs} />
+        {show("orbitMap", "left") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
+        {show("telemetry", "left") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
+        {show("rcsThrusters", "left") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
+        {show("dsn", "left") && <MemoDsn dsn={dsnData} />}
+        {show("stationSchedule", "left") && <MemoStationSchedule stateVector={stateVector} />}
+        {show("dsnBandwidth", "left") && <MemoDsnBandwidth dsn={dsnData} />}
+        {show("solar", "left") && <MemoSolar solar={solarData} />}
+        {show("deltaV", "left") && <MemoDeltaV metMs={metMs} />}
+        {show("activityDetail", "left") && <MemoActivity timeline={timeline} metMs={metMs} />}
+        {show("nextMilestone", "left") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
+        {show("liveStream", "left") && <LiveStreamPanel />}
+        {show("apollo8", "left") && <MemoApollo8 metMs={metMs} />}
+        {show("wakeupSongs", "left") && <MemoWakeupSongs />}
+        {show("currentActivities", "left") && <MemoCurrentActivities timeline={timeline} />}
+        {show("upcoming", "left") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
+        {show("milestones", "left") && <MemoMilestones timeline={timeline} metMs={metMs} />}
       </div>
       <div className="dashboard-timeline">
-        <MemoTimeline metMs={metMs} timeline={timeline} />
+        {panelVisibility.timeline && <MemoTimeline metMs={metMs} timeline={timeline} />}
       </div>
       <div className="dashboard-center">
-        <MemoActivity timeline={timeline} metMs={metMs} />
-        <MemoNextMilestone timeline={timeline} metMs={metMs} />
-        <LiveStreamPanel />
-        <MemoApollo8 metMs={metMs} />
-        <MemoWakeupSongs />
+        {show("orbitMap", "center") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
+        {show("telemetry", "center") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
+        {show("rcsThrusters", "center") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
+        {show("dsn", "center") && <MemoDsn dsn={dsnData} />}
+        {show("stationSchedule", "center") && <MemoStationSchedule stateVector={stateVector} />}
+        {show("dsnBandwidth", "center") && <MemoDsnBandwidth dsn={dsnData} />}
+        {show("solar", "center") && <MemoSolar solar={solarData} />}
+        {show("deltaV", "center") && <MemoDeltaV metMs={metMs} />}
+        {show("activityDetail", "center") && <MemoActivity timeline={timeline} metMs={metMs} />}
+        {show("nextMilestone", "center") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
+        {show("liveStream", "center") && <LiveStreamPanel />}
+        {show("apollo8", "center") && <MemoApollo8 metMs={metMs} />}
+        {show("wakeupSongs", "center") && <MemoWakeupSongs />}
+        {show("currentActivities", "center") && <MemoCurrentActivities timeline={timeline} />}
+        {show("upcoming", "center") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
+        {show("milestones", "center") && <MemoMilestones timeline={timeline} metMs={metMs} />}
       </div>
       <div className="dashboard-right">
-        <MemoCurrentActivities timeline={timeline} />
-        <MemoUpcoming timeline={timeline} metMs={metMs} />
-        <MemoMilestones timeline={timeline} metMs={metMs} />
+        {show("orbitMap", "right") && <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />}
+        {show("telemetry", "right") && <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />}
+        {show("rcsThrusters", "right") && <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />}
+        {show("dsn", "right") && <MemoDsn dsn={dsnData} />}
+        {show("stationSchedule", "right") && <MemoStationSchedule stateVector={stateVector} />}
+        {show("dsnBandwidth", "right") && <MemoDsnBandwidth dsn={dsnData} />}
+        {show("solar", "right") && <MemoSolar solar={solarData} />}
+        {show("deltaV", "right") && <MemoDeltaV metMs={metMs} />}
+        {show("activityDetail", "right") && <MemoActivity timeline={timeline} metMs={metMs} />}
+        {show("nextMilestone", "right") && <MemoNextMilestone timeline={timeline} metMs={metMs} />}
+        {show("liveStream", "right") && <LiveStreamPanel />}
+        {show("apollo8", "right") && <MemoApollo8 metMs={metMs} />}
+        {show("wakeupSongs", "right") && <MemoWakeupSongs />}
+        {show("currentActivities", "right") && <MemoCurrentActivities timeline={timeline} />}
+        {show("upcoming", "right") && <MemoUpcoming timeline={timeline} metMs={metMs} />}
+        {show("milestones", "right") && <MemoMilestones timeline={timeline} metMs={metMs} />}
       </div>
       <div className="dashboard-bottombar">
         <BottomBar milestones={timeline.raw?.milestones ?? []} lastUpdate={lastUpdate} />
       </div>
       <BuyMeACoffee />
       {/* ChangelogModal lives in BottomBar to avoid double-mount */}
+
+      {/* Settings button — fixed bottom-left, opens panel visibility modal */}
+      <button
+        type="button"
+        onClick={() => setShowPanelModal(true)}
+        aria-label="Layout settings (M)"
+        title="Layout settings (M)"
+        style={{
+          position: "fixed",
+          bottom: 48,
+          left: 12,
+          zIndex: 900,
+          width: 36,
+          height: 36,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "var(--bg-panel)",
+          border: "1px solid var(--border-panel)",
+          borderRadius: 8,
+          color: "var(--text-secondary)",
+          cursor: "pointer",
+          fontSize: 18,
+          lineHeight: 1,
+          transition: "color 0.15s, border-color 0.15s",
+        }}
+      >
+        &#9881;
+      </button>
+
+      <PanelVisibilityModal
+        isOpen={showPanelModal}
+        onClose={() => setShowPanelModal(false)}
+        activePresetId={presetsState.activePresetId}
+        presetOptions={presetOptions}
+        onPresetChange={handlePresetChange}
+        onSavePreset={handleSavePreset}
+        onDeletePreset={handleDeletePreset}
+        topBarVisibility={topBarVisibility}
+        onTopBarToggle={handleTopBarToggle}
+        visibility={panelVisibility}
+        onToggle={handlePanelToggle}
+        columns={panelColumns}
+        onColumnChange={handleColumnChange}
+      />
     </div>
   );
 }
