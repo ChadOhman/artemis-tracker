@@ -1010,6 +1010,27 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ectx.restore();
           }
 
+          // Direction indicator: arrow pointing toward Moon (right side)
+          ectx.save();
+          ectx.strokeStyle = "rgba(180,185,190,0.4)";
+          ectx.fillStyle = "rgba(180,185,190,0.4)";
+          ectx.lineWidth = 1;
+          ectx.beginPath();
+          ectx.moveTo(eiw - 30, eih - 14);
+          ectx.lineTo(eiw - 14, eih - 14);
+          ectx.stroke();
+          ectx.beginPath();
+          ectx.moveTo(eiw - 14, eih - 14);
+          ectx.lineTo(eiw - 18, eih - 17);
+          ectx.lineTo(eiw - 18, eih - 11);
+          ectx.closePath();
+          ectx.fill();
+          ectx.font = "7px monospace";
+          ectx.fillStyle = "rgba(180,185,190,0.55)";
+          ectx.textAlign = "right";
+          ectx.fillText("to Moon", eiw - 33, eih - 11);
+          ectx.restore();
+
           // Inset title
           ectx.save();
           ectx.font = "bold 9px monospace";
@@ -1201,7 +1222,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           }}
           aria-label={showEarthInset ? "Hide Earth detail" : "Show Earth detail"}
         >
-          🌍 {showEarthInset ? "✕" : "EARTH"}
+          🌍 {showEarthInset ? "✕" : t("orbitMap.zoom")}
         </button>
 
         {/* Fullscreen toggle button */}
