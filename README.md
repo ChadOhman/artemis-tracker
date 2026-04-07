@@ -1,28 +1,98 @@
 # Artemis II Mission Tracker
 
-Real-time mission control dashboard for NASA's Artemis II crewed lunar flyby mission. Tracks Orion's position, DSN communications, crew activities, and mission milestones — all updating live.
+Real-time mission control dashboard for NASA's Artemis II crewed lunar flyby mission. Live at **[artemis.cdnspace.ca](https://artemis.cdnspace.ca)**
 
 **Created by [Canadian Space](https://cdnspace.ca)**
 
 ## Features
 
-- Live MET (Mission Elapsed Time) clock
-- 2D orbit map with figure-8 free-return trajectory
-- Orbital telemetry from JPL Horizons (position, velocity, orbital elements)
-- DSN ground station communications (live from NASA's DSN Now feed)
-- Gantt-style mission timeline with crew activities, attitude modes, and phases
-- NASA Live stream embed (Official Broadcast + Orion Views)
+### Telemetry & Tracking
+- Live MET (Mission Elapsed Time) clock with UTC
+- Real ephemeris orbit map (JPL Horizons + NASA/JSC OEM data) with fullscreen mode and real-scale toggle
+- Moon detail zoom inset with dynamic zoom, real-position projection, and lunar ground track labels
+- Earth detail zoom inset for re-entry approach with splashdown zone
+- Orbital telemetry: speed, Moon-relative speed, G-force, altitude, Earth/Moon distance, periapsis/apoapsis
+- Inline sparklines for all key metrics (24h history)
+- Speed units: km/h, m/s, mph, knots — distance units adapt automatically
+
+### Spacecraft Health
+- NASA AROW real-time telemetry (1 Hz): attitude quaternion, Euler angles, angular rates
+- 3D attitude indicator (Three.js wireframe Orion model)
+- RCS thruster activity map with recent-firing indicators (5-min amber fade)
+- Solar array wing gimbal angles (inner/outer) with sun-facing efficiency bars
+- Solar power estimate from SAW efficiency
+- Gyro cross-check (primary vs fallback IMU deviation)
+- Dead-band indicators on angular rates
+- Signal light time display
+- Spacecraft mode decoder
+
+### Communications
+- Deep Space Network live dish status with country flags (🇺🇸🇪🇸🇦🇺)
+- DSN bandwidth chart (30-min rolling, per-dish breakdown)
+- Ground station handoff predictions with elevation angles
+- Signal light-time delay
+
+### Dedicated Pages
+- **/dsn** — 3D globe with NASA Black Marble night texture, real-time day/night terminator, signal beams, station visibility forecast, 24h signal timeline, bandwidth chart, all-dishes view with az/el polar plots
+- **/stats** — Cumulative mission statistics (max speed, max Earth distance, closest Moon approach, total distance, space weather)
+- **/track** — Ground track map (Leaflet + OpenStreetMap/CARTO)
+- **/api-docs** — Full REST and SSE API documentation
+- **/admin** — Protected admin panel for live status updates
+
+### Mission Context
+- Crew activities timeline (Gantt chart) synced with [jakobrosin/artemis-data](https://github.com/jakobrosin/artemis-data)
+- Apollo 8 historical comparison panel with event-by-event context
+- Wake-up songs panel (continuing the Apollo/Shuttle tradition)
+- Δ-V budget tracker (ESM post-TLI maneuver accounting)
+- Space weather (NOAA SWPC: Kp index, X-ray flux, proton flux, radiation risk)
+- Next milestone countdown
 - Crew bios and spacecraft specifications
-- SIM mode — scrub to any point in the 10-day mission with playback controls
-- Milestone tracker with JUMP TO navigation
+
+### Customization
+- Panel visibility modal (press **M**) — toggle any panel or top bar item
+- Save/load layout presets with column placement (left/center/right)
+- Bilingual: English and French (full i18n coverage)
+- SIM mode — replay the mission from archived snapshots with playback controls
+- GDPR-compliant cookie consent (GA only loads after acceptance)
 
 ## Tech Stack
 
-- Next.js 16 (App Router), TypeScript, Tailwind CSS
-- HTML Canvas for orbit map and Gantt timeline
-- JPL Horizons API (spacecraft `-1024`) for orbital state vectors
-- DSN Now XML feed (spacecraft `EM2`) for comm status
+- Next.js 16 (App Router), TypeScript
+- HTML Canvas (orbit map, Gantt timeline, sparklines)
+- Three.js (attitude indicator, DSN globe)
+- Leaflet + OpenStreetMap/CARTO (ground track)
+- better-sqlite3 (telemetry archive, WAL mode)
 - Server-Sent Events for real-time updates
+
+## Data Sources
+
+| Source | Data | Interval |
+|--------|------|----------|
+| [JPL Horizons](https://ssd.jpl.nasa.gov/horizons/) | Orion & Moon state vectors (EME2000) | 5 min |
+| [NASA AROW](https://www.nasa.gov/missions/artemis-ii/arow/) | Attitude, SAW, RCS, antenna, ICPS (80+ params) | 1 sec |
+| [DSN Now](https://eyes.nasa.gov/dsn/data/dsn.xml) | Ground station dish status, signal bands, data rates | 10 sec |
+| [NOAA SWPC](https://www.swpc.noaa.gov/) | Kp index, X-ray flux, proton flux | 60 sec |
+| [jakobrosin/artemis-data](https://github.com/jakobrosin/artemis-data) | Crew schedule, milestones, mission timeline | Static |
+| NASA/JSC OEM | Artemis II reference trajectory (EME2000) | Build-time |
+
+## API Endpoints
+
+All telemetry is available via free REST and SSE endpoints. See [/api-docs](https://artemis.cdnspace.ca/api-docs) for full documentation.
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/telemetry/stream` | SSE firehose: telemetry, DSN, AROW, solar, visitors |
+| `GET /api/arow` | Latest AROW spacecraft telemetry |
+| `GET /api/arow/stream` | SSE stream of AROW telemetry (1 Hz) |
+| `GET /api/all` | Everything in one request |
+| `GET /api/orbit` | Computed orbital telemetry |
+| `GET /api/state` | Raw state vectors (Orion + Moon) |
+| `GET /api/dsn` | DSN dish contacts |
+| `GET /api/solar` | Space weather |
+| `GET /api/history?metric=&hours=&points=` | Downsampled time-series |
+| `GET /api/snapshot?metMs=` | Point-in-time replay snapshot |
+| `GET /api/stats` | Cumulative mission statistics |
+| `GET /api/timeline` | Full mission timeline |
 
 ## Quick Start
 
@@ -33,16 +103,15 @@ npm run dev
 
 Open http://localhost:3000
 
-## One-Command Deploy from Proxmox Host
+## Deploy to Proxmox LXC
 
-Create and deploy to an LXC container in a single command. Replace `CTID` with your desired container ID and `REPO_URL` with your git repo URL.
+One-command deploy from the Proxmox host:
 
 ```bash
-# From the Proxmox host — creates LXC, installs everything, starts the app
 CTID=200 bash -c '
 pct create $CTID local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst \
   --hostname artemis-tracker \
-  --memory 2048 --cores 2 --swap 512 \
+  --memory 2048 --cores 4 --swap 512 \
   --rootfs local-lvm:8 \
   --net0 name=eth0,bridge=vmbr0,ip=dhcp \
   --unprivileged 1 --features nesting=1 \
@@ -54,7 +123,7 @@ pct exec $CTID -- bash -c "
   git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker && \
   cd /opt/artemis-tracker && \
   npm ci && npm run build && \
-  mkdir -p data && echo \"[]\" > data/telemetry-history.json && \
+  mkdir -p data && \
   cat > /etc/systemd/system/artemis-tracker.service <<EOF
 [Unit]
 Description=Artemis II Mission Tracker
@@ -68,6 +137,7 @@ Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
 Environment=PORT=3000
+Environment=ADMIN_TOKEN=your-secret-token
 
 [Install]
 WantedBy=multi-user.target
@@ -79,72 +149,13 @@ echo "Deployed! Access at http://\$(pct exec $CTID -- hostname -I | tr -d \" \")
 '
 ```
 
-### Deploy to an Existing LXC
-
-Already have an LXC running? Deploy from the Proxmox host:
-
-```bash
-CTID=200 bash -c '
-pct exec $CTID -- bash -c "
-  apt-get update && apt-get install -y curl git ca-certificates && \
-  curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
-  apt-get install -y nodejs && \
-  git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker && \
-  cd /opt/artemis-tracker && \
-  npm ci && npm run build && \
-  mkdir -p data && echo '[]' > data/telemetry-history.json && \
-  cat > /etc/systemd/system/artemis-tracker.service <<SVCEOF
-[Unit]
-Description=Artemis II Mission Tracker
-After=network.target
-
-[Service]
-Type=simple
-WorkingDirectory=/opt/artemis-tracker
-ExecStart=/usr/bin/node node_modules/.bin/next start -p 3000
-Restart=always
-RestartSec=5
-Environment=NODE_ENV=production
-Environment=PORT=3000
-
-[Install]
-WantedBy=multi-user.target
-SVCEOF
-  systemctl daemon-reload && \
-  systemctl enable --now artemis-tracker
-"
-echo "Deployed! Access at http://$(pct exec $CTID -- hostname -I | tr -d " "):3000"
-'
-```
-
-Or SSH directly into the LXC and run:
-
-```bash
-apt-get update && apt-get install -y curl git ca-certificates
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt-get install -y nodejs
-git clone https://github.com/ChadOhman/artemis-tracker.git /opt/artemis-tracker
-cd /opt/artemis-tracker
-npm ci && npm run build
-mkdir -p data && echo "[]" > data/telemetry-history.json
-node node_modules/.bin/next start -p 3000
-```
-
 ### Update an Existing Deployment
 
 ```bash
-CTID=200 bash -c '
-pct exec $CTID -- bash -c "
-  cd /opt/artemis-tracker && \
-  git pull && npm ci && npm run build && \
-  systemctl restart artemis-tracker
-"
-'
+cd /opt/artemis-tracker && git pull && rm -rf .next node_modules && npm install && npm run build && systemctl restart artemis-tracker
 ```
 
 ### Cloudflare Tunnel
-
-If you're exposing through a Cloudflare Tunnel, add an ingress rule to your `config.yml`:
 
 ```yaml
 ingress:
@@ -153,58 +164,21 @@ ingress:
   - service: http_status:404
 ```
 
-The SSE endpoint includes 30-second keepalives for Cloudflare Tunnel compatibility (100s idle timeout).
-
-## Deploy to LXC (Manual)
-
-If you prefer step-by-step instead of the one-liner:
-
-### Prerequisites
-
-- Debian/Ubuntu LXC container (or any Linux)
-- Node.js 20+ (`curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash - && sudo apt install -y nodejs`)
-- Git
-
-### Setup
-
-```bash
-git clone https://github.com/ChadOhman/artemis-tracker.git
-cd artemis-tracker
-npm ci
-npm run build
-mkdir -p data && echo "[]" > data/telemetry-history.json
-```
-
-### Run
-
-```bash
-# With systemd (recommended)
-sudo cp artemis-tracker.service /etc/systemd/system/  # if provided
-sudo systemctl enable --now artemis-tracker
-
-# Or with PM2
-npm install -g pm2
-pm2 start node_modules/.bin/next --name artemis-tracker -- start -p 3000
-pm2 save && pm2 startup
-```
-
-## Data Sources
-
-| Source | Endpoint | Poll Interval | Data |
-|--------|----------|---------------|------|
-| JPL Horizons | `ssd.jpl.nasa.gov/api/horizons.api` | 5 min | Orion position/velocity vectors |
-| DSN Now | `eyes.nasa.gov/dsn/data/dsn.xml` | 10 sec | Ground station comm status |
-| Mission Timeline | Static (from NASA PDF) | — | Crew activities, milestones, phases |
-
-## API Endpoints
-
-- `GET /api/telemetry/stream` — SSE stream of live telemetry + DSN updates
-- `GET /api/telemetry/history?from={metMs}&to={metMs}` — Historical state vectors for SIM mode
-- `GET /api/timeline` — Mission timeline data (activities, milestones, phases, attitudes)
+SSE keepalives every 30s for Cloudflare Tunnel compatibility.
 
 ## Key Mission Dates
 
 - **Launch:** April 1, 2026 at 18:35 ET
-- **TLI:** ~MET 1d 1h 8m 42s
-- **Lunar Close Approach:** ~MET 5d 0h 29m 59s
-- **Splashdown:** ~MET 9d 1h 42m 48s
+- **TLI:** ~MET 25.23h
+- **Lunar Close Approach:** ~MET 120.43h (6,545 km)
+- **Max Earth Distance:** ~MET 120.46h (406,770 km)
+- **Splashdown:** ~MET 217.51h
+
+## Community Contributors
+
+- **[Brian Brown](https://github.com/briangbrown)** — Real ephemeris trajectory from JPL Horizons + NASA/JSC OEM
+- **[agmccar](https://github.com/agmccar)** — Panel visibility modal with layout presets
+
+## Land Acknowledgement
+
+This tracker is hosted on servers located in Edmonton, Alberta, Canada — Treaty 6 territory and the traditional and ancestral lands of the Cree, Dene, Blackfoot, Saulteaux, Nakota Sioux, and Metis peoples.
