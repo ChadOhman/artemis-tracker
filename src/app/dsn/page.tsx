@@ -847,23 +847,17 @@ function GlobeCanvas({ activeDishes, orionPosition }: GlobeProps) {
     if (s.orionGlow) { s.scene.remove(s.orionGlow); s.orionGlow = null; }
 
     // Compute Orion direction in the globe's coordinate frame.
-    // JPL state vector is J2000 ecliptic. Convert to RA/Dec (equatorial),
-    // then use latLonToVec3(dec, ra) so it matches the globe's frame exactly.
+    // JPL state vector is J2000 equatorial (EME2000) — REF_PLANE='FRAME'.
+    // Convert to RA/Dec, then use latLonToVec3(dec, ra) to match the globe.
     let orionDir: [number, number, number] | null = null;
     if (orionPosition) {
       const mag = Math.sqrt(
         orionPosition.x ** 2 + orionPosition.y ** 2 + orionPosition.z ** 2
       );
       if (mag > 0) {
-        const obl = 23.44 * Math.PI / 180;
-        // Ecliptic → equatorial
-        const eqX = orionPosition.x;
-        const eqY = orionPosition.y * Math.cos(obl) - orionPosition.z * Math.sin(obl);
-        const eqZ = orionPosition.y * Math.sin(obl) + orionPosition.z * Math.cos(obl);
-        // RA/Dec from equatorial cartesian
-        const ra = Math.atan2(eqY, eqX) * (180 / Math.PI); // degrees
-        const dec = Math.asin(eqZ / mag) * (180 / Math.PI); // degrees
-        // Use latLonToVec3 with dec as lat, ra as lon — same frame as stations
+        // Position is already equatorial — no obliquity rotation needed
+        const ra = Math.atan2(orionPosition.y, orionPosition.x) * (180 / Math.PI);
+        const dec = Math.asin(orionPosition.z / mag) * (180 / Math.PI);
         const [ox, oy, oz] = latLonToVec3(dec, ra, 1);
         orionDir = [ox, oy, oz];
       }

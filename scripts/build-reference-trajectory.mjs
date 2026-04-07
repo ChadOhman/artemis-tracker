@@ -2,9 +2,9 @@
 // state vectors. Sources, in time order:
 //
 //   1. JPL Horizons API (target '-1024', REF_PLANE='FRAME'). Cached at
-//      public/data/artemis2-horizons-gap.txt. Covers MET ~3.4 h → ~3.25 d.
+//      data/ephemeris/artemis2-horizons-gap.txt. Covers MET ~3.4 h → ~3.25 d.
 //   2. NASA/JSC/FOD/FDO Artemis II OEM (CCSDS OEM v2.0, EME2000) at
-//      public/data/artemis2-oem.asc. Covers MET ~3.25 d → entry interface.
+//      data/ephemeris/artemis2-oem.asc. Covers MET ~3.25 d → entry interface.
 //
 // Both sources are in EME2000 (ICRF / J2000 equator), so they share one
 // projection path. There is no synthetic data — the curve simply starts at
@@ -29,9 +29,9 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const OEM_PATH = "public/data/artemis2-oem.asc";
-const HORIZONS_PATH = "public/data/artemis2-horizons-gap.txt";
-const MOON_PATH = "public/data/artemis2-moon-at-apogee.txt";
+const OEM_PATH = "data/ephemeris/artemis2-oem.asc";
+const HORIZONS_PATH = "data/ephemeris/artemis2-horizons-gap.txt";
+const MOON_PATH = "data/ephemeris/artemis2-moon-at-apogee.txt";
 const OUT_PATH = "src/data/reference-trajectory.ts";
 const LAUNCH_ISO = "2026-04-01T22:35:00Z";
 

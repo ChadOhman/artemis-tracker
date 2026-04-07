@@ -80,8 +80,8 @@ function extrapolatePosition(
 /**
  * Predict visibility windows for the next `hours` hours.
  *
- * @param position - current spacecraft position (J2000 ecliptic, km)
- * @param velocity - current spacecraft velocity (J2000 ecliptic, km/s)
+ * @param position - current spacecraft position (J2000 equatorial / EME2000, km)
+ * @param velocity - current spacecraft velocity (J2000 equatorial / EME2000, km/s)
  * @param observer - observer location
  * @param hours - forecast window in hours (default 48)
  * @returns array of visibility windows

@@ -59,16 +59,12 @@ export function gmst(utcMs: number): number {
 }
 
 /**
- * Convert J2000 ecliptic coordinates to J2000 equatorial (ICRF).
+ * Identity — JPL Horizons now returns J2000 equatorial (EME2000/ICRF)
+ * directly via REF_PLANE='FRAME', so no rotation is needed. Kept as a
+ * passthrough so all call sites remain unchanged.
  */
 export function eclipticToEquatorial(pos: Vec3): Vec3 {
-  const cosE = Math.cos(OBLIQUITY);
-  const sinE = Math.sin(OBLIQUITY);
-  return {
-    x: pos.x,
-    y: pos.y * cosE - pos.z * sinE,
-    z: pos.y * sinE + pos.z * cosE,
-  };
+  return pos;
 }
 
 /**
