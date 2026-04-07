@@ -299,13 +299,14 @@ export default function AdminPage() {
         body: JSON.stringify({
           name: burnName,
           status: burnStatuses[burnName],
-          deltaV: burnDeltaVs[burnName] || undefined,
+          dv: burnDeltaVs[burnName] || undefined,
         }),
       });
+      const data = await res.json();
       if (res.ok) {
         setMessage(`Burn ${burnName} updated to ${burnStatuses[burnName]}`);
       } else {
-        setMessage(`Failed to update burn ${burnName}.`);
+        setMessage(`Failed to update burn ${burnName}: ${data.error ?? res.status}`);
       }
     } catch {
       setMessage("Connection error.");
