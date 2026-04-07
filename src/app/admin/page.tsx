@@ -167,6 +167,18 @@ export default function AdminPage() {
     return () => es.close();
   }, [authed]);
 
+  // Load existing songs (static + runtime) on auth
+  const fetchSongs = useCallback(async () => {
+    try {
+      // Fetch runtime songs
+      const res = await fetch("/api/admin/wakeup-song");
+      if (res.ok) {
+        const data = await res.json();
+        setSongs(data.songs ?? []);
+      }
+    } catch { /* silent */ }
+  }, []);
+
   // Check current status on auth
   useEffect(() => {
     if (!authed) return;
@@ -175,7 +187,8 @@ export default function AdminPage() {
       .then((d) => setToiletStatus(d.status))
       .catch(() => {});
     fetchStatus();
-  }, [authed, token, fetchStatus]);
+    fetchSongs();
+  }, [authed, token, fetchStatus, fetchSongs]);
 
   async function handleLogin() {
     try {
@@ -491,22 +504,51 @@ export default function AdminPage() {
           {songs.length > 0 && (
             <div style={{ marginTop: 12, borderTop: "1px solid rgba(0,229,255,0.1)", paddingTop: 12 }}>
               <div style={{ fontSize: 10, color: "#5a7a8a", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                Current Songs
+                Runtime Song Overrides
               </div>
+              {songs.length === 0 && (
+                <div style={{ fontSize: 11, color: "#5a7a8a", ...monoStyle }}>None — static songs only</div>
+              )}
               {songs.map((s, i) => (
                 <div key={i} style={{
                   padding: "6px 0",
                   borderBottom: i < songs.length - 1 ? "1px solid rgba(255,255,255,0.05)" : undefined,
                   fontSize: 12,
                   color: "#c0cad0",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
                   ...monoStyle,
                 }}>
-                  <span style={{ color: "#00e5ff" }}>FD{s.flightDay}</span>
-                  {" — "}
-                  <span style={{ color: "#e0e8f0" }}>{s.title}</span>
-                  {" by "}
-                  <span style={{ color: "#aab8c0" }}>{s.artist}</span>
-                  {s.notes && <span style={{ color: "#5a7a8a" }}> ({s.notes})</span>}
+                  <div style={{ flex: 1 }}>
+                    <span style={{ color: "#00e5ff" }}>FD{String(s.flightDay).padStart(2, "0")}</span>
+                    {" — "}
+                    <span style={{ color: "#e0e8f0" }}>{s.title}</span>
+                    {" by "}
+                    <span style={{ color: "#aab8c0" }}>{s.artist}</span>
+                    {s.notes && <div style={{ color: "#5a7a8a", fontSize: 10, marginTop: 2 }}>{s.notes}</div>}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setSongDay(String(s.flightDay));
+                      setSongTitle(s.title);
+                      setSongArtist(s.artist);
+                      setSongNotes(s.notes ?? "");
+                    }}
+                    style={{
+                      padding: "2px 8px",
+                      background: "none",
+                      border: "1px solid rgba(0,229,255,0.2)",
+                      borderRadius: 3,
+                      color: "#5a7a8a",
+                      fontSize: 9,
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      flexShrink: 0,
+                    }}
+                  >
+                    Edit
+                  </button>
                 </div>
               ))}
             </div>

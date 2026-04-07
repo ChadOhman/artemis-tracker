@@ -1,6 +1,7 @@
 "use client";
+import { useState, useEffect } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
-import { WAKEUP_SONGS } from "@/lib/wakeup-songs";
+import { WAKEUP_SONGS, type WakeupSong } from "@/lib/wakeup-songs";
 import { useLocale } from "@/context/LocaleContext";
 
 export function WakeupSongsPanel() {
@@ -9,8 +10,27 @@ export function WakeupSongsPanel() {
   const subtitle = t("wakeupSongs.subtitle");
   const fdLabel = t("wakeupSongs.flightDay");
 
+  // Merge static songs with runtime additions from admin API
+  const [allSongs, setAllSongs] = useState<WakeupSong[]>([...WAKEUP_SONGS]);
+  useEffect(() => {
+    fetch("/api/admin/wakeup-song")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.songs || data.songs.length === 0) return;
+        // Merge: runtime songs override static ones by flight day
+        const merged = [...WAKEUP_SONGS];
+        for (const rs of data.songs) {
+          const idx = merged.findIndex((s) => s.flightDay === rs.flightDay);
+          if (idx >= 0) merged[idx] = { ...merged[idx], ...rs };
+          else merged.push(rs);
+        }
+        setAllSongs(merged);
+      })
+      .catch(() => { /* use defaults */ });
+  }, []);
+
   // Show most recent first
-  const sorted = [...WAKEUP_SONGS].sort((a, b) => b.flightDay - a.flightDay);
+  const sorted = [...allSongs].sort((a, b) => b.flightDay - a.flightDay);
 
   return (
     <PanelFrame title={title} icon="🎵" accentColor="var(--accent-purple)">
