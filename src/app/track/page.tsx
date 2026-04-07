@@ -653,7 +653,7 @@ export default function TrackPage() {
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 24,
-          padding: "24px 24px 0",
+          padding: "24px 24px 24px",
           alignItems: "start",
         }}
       >
@@ -713,6 +713,169 @@ export default function TrackPage() {
                   }) + " km"
                 : "—"}
             </Card>
+
+            <Card label="Speed">
+              {payload
+                ? payload.telemetry.speedKmH.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km/h"
+                : "—"}
+            </Card>
+
+            {/* Signal delay from observer */}
+            <Card label="Signal Delay" subtitle="One-way light time from you">
+              {topo
+                ? `${(topo.range / 299792).toFixed(2)}s`
+                : payload
+                ? `${(payload.telemetry.earthDistKm / 299792).toFixed(2)}s (geocentric)`
+                : "—"}
+            </Card>
+
+            {/* Closest ground point distance */}
+            {observer && subPoint && (
+              <Card label="Ground Distance" subtitle="Great-circle distance to sub-point">
+                {(() => {
+                  const R = 6371;
+                  const dLat = (subPoint.lat - observer.lat) * Math.PI / 180;
+                  const dLon = (subPoint.lon - observer.lon) * Math.PI / 180;
+                  const a = Math.sin(dLat / 2) ** 2 + Math.cos(observer.lat * Math.PI / 180) * Math.cos(subPoint.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+                  const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                  return dist.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " km";
+                })()}
+              </Card>
+            )}
+
+            {/* Sun-Earth-Orion angle (phase angle) */}
+            {payload && (() => {
+              const sv = payload.stateVector.position;
+              const r = Math.sqrt(sv.x ** 2 + sv.y ** 2 + sv.z ** 2);
+              if (r === 0) return null;
+              // Sun direction (simplified): opposite of Earth's position around the Sun
+              const dJ2000 = (Date.now() - Date.UTC(2000, 0, 1, 12, 0, 0)) / 86400000;
+              const meanAnom = (357.5291 + 0.98560028 * dJ2000) * Math.PI / 180;
+              const eclLon = (280.4600 + 0.98564736 * dJ2000 + 1.9148 * Math.sin(meanAnom)) * Math.PI / 180;
+              const sunX = Math.cos(eclLon);
+              const sunY = Math.sin(eclLon);
+              // Phase angle: angle at Orion between Sun and Earth
+              // Sun→Orion direction = sunDir - orionDir (approx)
+              // Earth→Orion direction = orion position (geocentric)
+              const orionUnit = { x: sv.x / r, y: sv.y / r, z: sv.z / r };
+              // Sun-Earth-Orion elongation (angle at Earth between Sun and Orion)
+              const dotSO = sunX * orionUnit.x + sunY * orionUnit.y;
+              const elongation = Math.acos(Math.max(-1, Math.min(1, dotSO))) * (180 / Math.PI);
+              return (
+                <Card label="Solar Elongation" subtitle="Sun-Earth-Orion angle">
+                  <span>{elongation.toFixed(1)}°</span>
+                  <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
+                    {elongation > 90 ? "Good viewing (away from Sun)" : elongation > 30 ? "Moderate (Sun nearby)" : "Poor (near Sun glare)"}
+                  </span>
+                </Card>
+              );
+            })()}
+
+            {/* Constellation */}
+            {topo && (() => {
+              // Determine constellation from RA/Dec using rough boundaries
+              const raH = ((topo.ra % 24) + 24) % 24;
+              const dec = topo.dec;
+              // Simplified constellation lookup
+              let constellation = "unknown";
+              if (dec > 60) constellation = raH > 12 ? "Draco" : "Ursa Major";
+              else if (dec > 30) {
+                if (raH < 3) constellation = "Andromeda";
+                else if (raH < 6) constellation = "Perseus";
+                else if (raH < 9) constellation = "Lynx";
+                else if (raH < 12) constellation = "Leo Minor";
+                else if (raH < 15) constellation = "Boötes";
+                else if (raH < 18) constellation = "Hercules";
+                else if (raH < 21) constellation = "Cygnus";
+                else constellation = "Pegasus";
+              } else if (dec > 0) {
+                if (raH < 2) constellation = "Pisces";
+                else if (raH < 4) constellation = "Aries";
+                else if (raH < 6) constellation = "Taurus";
+                else if (raH < 8) constellation = "Gemini";
+                else if (raH < 10) constellation = "Cancer";
+                else if (raH < 12) constellation = "Leo";
+                else if (raH < 14) constellation = "Virgo";
+                else if (raH < 16) constellation = "Libra";
+                else if (raH < 17) constellation = "Serpens";
+                else if (raH < 19) constellation = "Ophiuchus";
+                else if (raH < 20) constellation = "Sagittarius";
+                else if (raH < 22) constellation = "Aquarius";
+                else constellation = "Pisces";
+              } else if (dec > -30) {
+                if (raH < 2) constellation = "Cetus";
+                else if (raH < 4) constellation = "Eridanus";
+                else if (raH < 6) constellation = "Orion";
+                else if (raH < 8) constellation = "Monoceros";
+                else if (raH < 10) constellation = "Hydra";
+                else if (raH < 12) constellation = "Corvus";
+                else if (raH < 14) constellation = "Virgo";
+                else if (raH < 16) constellation = "Libra";
+                else if (raH < 18) constellation = "Scorpius";
+                else if (raH < 20) constellation = "Sagittarius";
+                else if (raH < 22) constellation = "Capricornus";
+                else constellation = "Aquarius";
+              } else {
+                if (raH < 4) constellation = "Eridanus";
+                else if (raH < 8) constellation = "Canis Major";
+                else if (raH < 12) constellation = "Hydra";
+                else if (raH < 16) constellation = "Centaurus";
+                else if (raH < 20) constellation = "Sagittarius";
+                else constellation = "Piscis Austrinus";
+              }
+              return (
+                <Card label="Constellation" subtitle="Current location in the sky">
+                  {constellation}
+                </Card>
+              );
+            })()}
+
+            {/* Earth-Moon-Orion geometry diagram */}
+            {payload && payload.moonPosition && (
+              <Card label="Geometry" subtitle="Earth-Moon-Orion (not to scale)">
+                <svg viewBox="0 0 200 80" style={{ width: "100%", maxWidth: 300 }}>
+                  {/* Earth */}
+                  <circle cx="20" cy="40" r="10" fill="rgba(80,140,255,0.15)" stroke="rgba(80,140,255,0.4)" strokeWidth="0.5" />
+                  <text x="20" y="60" textAnchor="middle" fontSize="7" fill="rgba(80,140,255,0.7)" fontFamily="monospace">Earth</text>
+
+                  {/* Moon */}
+                  <circle cx="160" cy="40" r="5" fill="rgba(200,200,210,0.15)" stroke="rgba(200,200,210,0.4)" strokeWidth="0.5" />
+                  <text x="160" y="55" textAnchor="middle" fontSize="7" fill="rgba(200,200,210,0.7)" fontFamily="monospace">Moon</text>
+
+                  {/* Earth-Moon line */}
+                  <line x1="30" y1="40" x2="155" y2="40" stroke="rgba(100,100,120,0.2)" strokeWidth="0.5" strokeDasharray="3,3" />
+
+                  {/* Orion position — project onto the line between Earth and Moon */}
+                  {(() => {
+                    const ed = payload.telemetry.earthDistKm;
+                    const md = payload.telemetry.moonDistKm;
+                    const totalDist = 384400;
+                    // X position: fraction along Earth-Moon line
+                    const frac = Math.min(1.1, ed / totalDist);
+                    const ox = 20 + frac * 140;
+                    // Y offset based on whether Orion is above/below the line
+                    const moonMag = Math.sqrt(payload.moonPosition.x ** 2 + payload.moonPosition.y ** 2 + payload.moonPosition.z ** 2);
+                    const orionMag = Math.sqrt(payload.stateVector.position.x ** 2 + payload.stateVector.position.y ** 2 + payload.stateVector.position.z ** 2);
+                    // Cross product Z component gives above/below
+                    const cross = payload.stateVector.position.x * payload.moonPosition.y - payload.stateVector.position.y * payload.moonPosition.x;
+                    const oy = 40 + (cross > 0 ? -12 : 12) * Math.min(1, md / 50000);
+                    return (
+                      <>
+                        {/* Line from Earth to Orion */}
+                        <line x1="20" y1="40" x2={ox} y2={oy} stroke="rgba(0,255,136,0.3)" strokeWidth="0.5" />
+                        {/* Orion dot */}
+                        <circle cx={ox} cy={oy} r="3" fill="#00ff88" />
+                        <text x={ox} y={oy - 6} textAnchor="middle" fontSize="6" fill="#00ff88" fontFamily="monospace">Orion</text>
+                        {/* Distance labels */}
+                        <text x={(20 + ox) / 2} y={oy > 40 ? 25 : 55} textAnchor="middle" fontSize="5" fill="rgba(100,160,255,0.5)" fontFamily="monospace">
+                          {(ed / 1000).toFixed(0)}k km
+                        </text>
+                      </>
+                    );
+                  })()}
+                </svg>
+              </Card>
+            )}
           </div>
         </div>
 
