@@ -107,7 +107,9 @@ const infoButtonStyle: React.CSSProperties = {
   transition: "color 0.15s, border-color 0.15s",
 };
 
-export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility: _barVisibility }: TopBarProps) {
+export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility }: TopBarProps) {
+  // Helper: check if a topbar item should be shown
+  const vis = (id: string) => !barVisibility || barVisibility[id] !== false;
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const { speedUnit } = useMetContext();
@@ -140,7 +142,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
     >
       <style>{`@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       {/* Title + LIVE */}
-      <div className="topbar-pill" style={{ ...pillStyle, gap: 8, paddingLeft: 12, paddingRight: 12 }}>
+      {vis("artemisLive") && <div className="topbar-pill" style={{ ...pillStyle, gap: 8, paddingLeft: 12, paddingRight: 12 }}>
         <span
           style={{
             fontSize: 13,
@@ -204,15 +206,15 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
             {t("common.telemetryDelayed")}
           </span>
         )}
-      </div>
+      </div>}
 
       {/* MET Clock */}
-      <div className="topbar-pill" style={pillStyle}>
+      {vis("met") && <div className="topbar-pill" style={pillStyle}>
         <MetClock metMs={metMs} size="small" showTPlus={false} />
-      </div>
+      </div>}
 
       {/* Phase badge */}
-      <div className="topbar-pill" style={pillStyle}>
+      {vis("phase") && <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>Phase</span>
         <span
           style={{
@@ -225,18 +227,18 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         >
           {timeline.currentPhaseName ?? "—"}
         </span>
-      </div>
+      </div>}
 
       {/* Flight Day */}
-      <div className="topbar-pill" style={pillStyle}>
+      {vis("flightDay") && <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>Day</span>
         <span style={{ ...valueStyle, color: "var(--accent-yellow)" }}>
           {flightDay}
         </span>
-      </div>
+      </div>}
 
       {/* Comms */}
-      <div className="topbar-pill" style={pillStyle}>
+      {vis("dsn") && <div className="topbar-pill" style={pillStyle}>
         <span style={labelStyle}>DSN</span>
         <span
           className={`live-dot ${commsActive ? "" : "inactive"}`}
@@ -245,10 +247,10 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         <span style={{ fontSize: 10, color: commsActive ? "var(--accent-green)" : "var(--text-dim)" }}>
           {activeDish ? activeDish.dish : t("common.noContact")}
         </span>
-      </div>
+      </div>}
 
       {/* Crew */}
-      <button
+      {vis("crew") && <button
         className="topbar-pill topbar-hide-mobile"
         onClick={() => setCrewOpen(true)}
         style={{
@@ -262,33 +264,33 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       >
         <span style={{ fontSize: 10, letterSpacing: 1 }}>🇺🇸🇺🇸🇺🇸🇨🇦</span>
         <span style={{ ...labelStyle, fontSize: 9 }}>{t("topbar.crew")}</span>
-      </button>
+      </button>}
 
       {/* Toilet Status */}
-      <div className="topbar-pill" style={pillStyle} title="Toilet status — ground reported, not live telemetry">
+      {vis("toilet") && <div className="topbar-pill" style={pillStyle} title="Toilet status — ground reported, not live telemetry">
         <span style={labelStyle}>{t("topbar.toilet")}</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
         <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>{t("common.go")}</span>
-      </div>
+      </div>}
 
       {/* Visitor counter */}
-      {visitorCount > 0 && (
+      {vis("visitors") && visitorCount > 0 && (
         <div className="topbar-pill topbar-hide-mobile" style={pillStyle} title={`${visitorCount} people watching`}>
           <span style={{ fontSize: 11 }}>👀</span>
           <span style={{ fontSize: 11, color: "var(--accent-cyan)", fontWeight: 700 }}>{visitorCount}</span>
         </div>
       )}
 
-      {/* Comm Status */}
-      {dsn && !dsn.signalActive && (
+      {/* Comm Status / LOS */}
+      {vis("los") && dsn && !dsn.signalActive && (
         <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(255,61,61,0.3)" }}>
           <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-red)", display: "inline-block", animation: "pulse 1.5s infinite" }} />
           <span style={{ fontSize: 10, color: "var(--accent-red)", fontWeight: 700 }}>{t("common.los")}</span>
         </div>
       )}
 
-      {/* Telemetry: VEL, ALT, EARTH — hidden on mobile (too wide, data is in the Telemetry panel) */}
-      <div className="topbar-pill topbar-hide-mobile" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
+      {/* Telemetry: VEL, ALT — hidden on mobile */}
+      {vis("velAlt") && <div className="topbar-pill topbar-hide-mobile" aria-live="polite" aria-atomic="true" style={{ ...pillStyle, gap: 10 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span style={labelStyle}>{t("topbar.velocity")}</span>
           <span style={valueStyle}>
@@ -304,10 +306,10 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
           </span>
           <span style={unitStyle}>{distUnitLabel(speedUnit)}</span>
         </div>
-      </div>
+      </div>}
 
       {/* Crew sleep countdown */}
-      {(() => {
+      {vis("sleep") && (() => {
         const nextSleep = timeline.raw?.activities.find(
           (a) => a.type === "sleep" && a.startMetMs > metMs
         );
@@ -324,7 +326,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       })()}
 
       {/* Lunar Approach Countdown */}
-      {telemetry && telemetry.moonDistKm < 100000 && (
+      {vis("moon") && telemetry && telemetry.moonDistKm < 100000 && (
         <div className="topbar-pill" style={{ ...pillStyle, borderColor: "rgba(180,185,190,0.3)" }}>
           <span style={labelStyle}>{t("topbar.moon")}</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
@@ -334,7 +336,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       )}
 
       {/* Signal Light-Time Delay */}
-      {telemetry && telemetry.earthDistKm > 1000 && (
+      {vis("delay") && telemetry && telemetry.earthDistKm > 1000 && (
         <div className="topbar-pill topbar-hide-mobile" style={pillStyle} title="One-way signal travel time (speed of light)">
           <span style={labelStyle}>{t("topbar.delay")}</span>
           <span style={{ fontSize: 12, color: "#d0d4d8", fontWeight: 700, fontVariantNumeric: "tabular-nums" }}>
@@ -344,7 +346,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       )}
 
       {/* Info buttons */}
-      <button
+      {vis("vehicle") && <button
         className="topbar-pill topbar-hide-mobile"
         style={infoButtonStyle}
         onClick={() => setVehicleOpen(true)}
@@ -359,10 +361,10 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
         }}
       >
         {t("topbar.vehicle")}
-      </button>
+      </button>}
 
       {/* Next event countdown */}
-      {nextMilestone && countdownMs !== null && (
+      {vis("nextEvent") && nextMilestone && countdownMs !== null && (
         <div className="topbar-pill" style={{ ...pillStyle, gap: 8, marginLeft: "auto", borderColor: "rgba(255,140,0,0.3)" }}>
           <span style={labelStyle}>Next</span>
           <span
