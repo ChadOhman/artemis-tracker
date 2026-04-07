@@ -383,8 +383,7 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Far-side photography session", "science", 5, 2, 30, 5, 2, 45),
   act("Flyby observation period ends", "other", 5, 2, 45, 5, 4, 4),
   act("Crew downlink — post-flyby", "pao", 5, 4, 4, 5, 8, 0),
-  act("Sleep period — Day 6", "sleep", 5, 8, 0, 5, 10, 0),
-  act("Post-flyby science observations", "science", 5, 10, 0, 5, 18, 0),
+  act("Sleep period — Day 6", "sleep", 5, 8, 0, 5, 18, 0),
   // ── FD07: Return Cruise 1 ───────────────────────────────────────────────
   act("Wake & meal — Day 7", "meal", 5, 18, 0, 5, 18, 52),
   act("Exit lunar sphere of influence", "other", 5, 18, 52, 5, 19, 0),
