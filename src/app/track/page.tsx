@@ -233,9 +233,13 @@ export default function TrackPage() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [sseError, setSseError] = useState<string | null>(null);
 
-  // Geolocation
+  // Geolocation + manual override
   const [observer, setObserver] = useState<ObserverLocation | null>(null);
   const [geoStatus, setGeoStatus] = useState<"requesting" | "ok" | "denied">("requesting");
+  const [manualLocation, setManualLocation] = useState(false);
+  const [manualLat, setManualLat] = useState("");
+  const [manualLon, setManualLon] = useState("");
+  const [manualAlt, setManualAlt] = useState("");
 
   // Telescope control
   const [telescopeHost, setTelescopeHost] = useState("192.168.1.100:11111");
@@ -639,16 +643,115 @@ export default function TrackPage() {
 
             <Card
               label="Observer"
-              subtitle="Browser geolocation"
+              subtitle={manualLocation ? "Manual coordinates" : "Browser geolocation"}
             >
-              {geoStatus === "requesting" ? (
+              {observer ? (
+                <div>
+                  <span>{formatLatLon(observer.lat, observer.lon)}</span>
+                  {observer.alt > 0 && <span style={{ color: "#5a7a8a", fontSize: 10, marginLeft: 6 }}>{(observer.alt * 1000).toFixed(0)}m</span>}
+                </div>
+              ) : geoStatus === "requesting" ? (
                 <span style={{ color: "#5a7a8a", fontSize: 13 }}>Requesting…</span>
-              ) : geoStatus === "denied" ? (
-                <span style={{ color: "#5a7a8a", fontSize: 13 }}>Unavailable</span>
-              ) : observer ? (
-                formatLatLon(observer.lat, observer.lon)
               ) : (
-                "—"
+                <span style={{ color: "#5a7a8a", fontSize: 13 }}>Unavailable</span>
+              )}
+              <button
+                onClick={() => setManualLocation((v) => !v)}
+                style={{
+                  marginTop: 6,
+                  background: "none",
+                  border: "1px solid rgba(0,229,255,0.2)",
+                  borderRadius: 3,
+                  color: "#5a7a8a",
+                  fontSize: 9,
+                  padding: "2px 8px",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                {manualLocation ? "Use GPS" : "Set manually"}
+              </button>
+              {manualLocation && (
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      type="number"
+                      step="0.001"
+                      placeholder="Lat (decimal, e.g. 53.54)"
+                      value={manualLat}
+                      onChange={(e) => setManualLat(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "4px 6px",
+                        background: "#1a2332",
+                        border: "1px solid rgba(0,229,255,0.15)",
+                        borderRadius: 3,
+                        color: "#e0e8f0",
+                        fontSize: 11,
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    />
+                    <input
+                      type="number"
+                      step="0.001"
+                      placeholder="Lon (decimal, e.g. -113.49)"
+                      value={manualLon}
+                      onChange={(e) => setManualLon(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "4px 6px",
+                        background: "#1a2332",
+                        border: "1px solid rgba(0,229,255,0.15)",
+                        borderRadius: 3,
+                        color: "#e0e8f0",
+                        fontSize: 11,
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <input
+                      type="number"
+                      step="1"
+                      placeholder="Elevation in meters (e.g. 645)"
+                      value={manualAlt}
+                      onChange={(e) => setManualAlt(e.target.value)}
+                      style={{
+                        flex: 1,
+                        padding: "4px 6px",
+                        background: "#1a2332",
+                        border: "1px solid rgba(0,229,255,0.15)",
+                        borderRadius: 3,
+                        color: "#e0e8f0",
+                        fontSize: 11,
+                        fontFamily: "'JetBrains Mono', monospace",
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        const lat = parseFloat(manualLat);
+                        const lon = parseFloat(manualLon);
+                        const alt = parseFloat(manualAlt) || 0;
+                        if (isFinite(lat) && isFinite(lon) && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180) {
+                          setObserver({ lat, lon, alt: alt / 1000 });
+                          setGeoStatus("ok");
+                        }
+                      }}
+                      style={{
+                        padding: "4px 12px",
+                        background: "var(--accent-cyan, #00e5ff)",
+                        border: "none",
+                        borderRadius: 3,
+                        color: "#001a20",
+                        fontWeight: 700,
+                        fontSize: 10,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Set
+                    </button>
+                  </div>
+                </div>
               )}
             </Card>
           </div>
@@ -678,6 +781,21 @@ export default function TrackPage() {
                 gap: 12,
               }}
             >
+              <div style={{ fontSize: 11, color: "#5a7a8a", lineHeight: 1.5, marginBottom: 4 }}>
+                Compatible with any telescope supporting the{" "}
+                <a href="https://ascom-standards.org/Developer/Alpaca.htm" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
+                  ASCOM Alpaca
+                </a>{" "}
+                REST API. Works with most GoTo mounts via{" "}
+                <a href="https://www.ascom-standards.org/" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
+                  ASCOM Platform
+                </a>{" "}
+                (Windows) or{" "}
+                <a href="https://indigo-astronomy.github.io/indigo_imager/" target="_blank" rel="noopener noreferrer" style={{ color: "#00e5ff", textDecoration: "underline" }}>
+                  INDIGO
+                </a>{" "}
+                (macOS/Linux). Celestron, Meade, Sky-Watcher, iOptron, and PlaneWave mounts are supported.
+              </div>
               {/* Host input + connect/disconnect */}
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <label htmlFor="telescope-host" className="sr-only">
