@@ -202,6 +202,44 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Database Backup */}
+        <div style={{
+          background: "#0d1117",
+          border: "1px solid rgba(0,229,255,0.15)",
+          borderRadius: 8,
+          padding: "24px",
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.14em", color: "#5a7a8a", textTransform: "uppercase", marginBottom: 12 }}>
+            Database Backup
+          </div>
+          <div style={{ fontSize: 11, color: "#5a7a8a", lineHeight: 1.5, marginBottom: 12 }}>
+            Download the full SQLite mission database. Contains all archived
+            telemetry: state vectors, AROW samples (with raw JSON), DSN contacts,
+            and solar activity. Retention: 14 days AROW/DSN/Solar, 28 days state vectors.
+          </div>
+          <button
+            onClick={() => {
+              window.location.href = `/api/admin/backup?token=${encodeURIComponent(token)}`;
+              setMessage("Downloading database backup...");
+            }}
+            style={{
+              padding: "12px 20px",
+              background: "#1a2332",
+              border: "2px solid rgba(0,229,255,0.3)",
+              borderRadius: 6,
+              color: "#00e5ff",
+              fontWeight: 700,
+              fontSize: 12,
+              cursor: "pointer",
+              fontFamily: "'JetBrains Mono', monospace",
+              width: "100%",
+            }}
+          >
+            ⬇ Download artemis.db
+          </button>
+        </div>
+
         {message && (
           <div style={{
             padding: "10px 14px",
