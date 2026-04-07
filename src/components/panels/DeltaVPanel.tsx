@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { useLocale } from "@/context/LocaleContext";
 
@@ -6,7 +7,14 @@ interface DeltaVPanelProps {
   metMs: number;
 }
 
-const BURNS = [
+interface Burn {
+  name: string;
+  metHours: number;
+  dv: number;
+  status: string;
+}
+
+const DEFAULT_BURNS: Burn[] = [
   { name: "PRM", metHours: 0.82, dv: 2.6, status: "executed" },
   { name: "ARB", metHours: 1.79, dv: 140, status: "executed" },
   { name: "TLI", metHours: 25.23, dv: 3180, status: "executed" },
@@ -16,7 +24,7 @@ const BURNS = [
   { name: "RTC-1", metHours: 147, dv: 10, status: "planned" },
   { name: "RTC-2", metHours: 196, dv: 2, status: "planned" },
   { name: "CM Raise", metHours: 217, dv: 5, status: "planned" },
-] as const;
+];
 
 // TLI is provided by ICPS — Orion's own delta-v budget is for post-TLI maneuvers only
 const TOTAL_BUDGET = 1230; // m/s — Orion ESM total usable delta-v
@@ -36,13 +44,33 @@ const STATUS_BG: Record<string, string> = {
 export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
   const { t } = useLocale();
 
+  // Fetch runtime overrides from admin API and merge with defaults
+  const [burns, setBurns] = useState<Burn[]>(DEFAULT_BURNS);
+  useEffect(() => {
+    fetch("/api/admin/burns")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.overrides || data.overrides.length === 0) return;
+        setBurns(DEFAULT_BURNS.map((b) => {
+          const override = data.overrides.find((o: { name: string }) => o.name === b.name);
+          if (!override) return b;
+          return {
+            ...b,
+            status: override.status ?? b.status,
+            dv: override.dv != null ? override.dv : b.dv,
+          };
+        }));
+      })
+      .catch(() => { /* use defaults */ });
+  }, []);
+
   // Cumulative Δ-v since PRM — includes ICPS burns (PRM, ARB, TLI) for context
-  const totalUsed = BURNS.filter(
+  const totalUsed = burns.filter(
     (b) => b.status === "executed" && metMs >= b.metHours * 3600000
   ).reduce((sum, b) => sum + b.dv, 0);
 
   // Orion ESM budget only applies to post-TLI maneuvers
-  const esmUsed = BURNS.filter(
+  const esmUsed = burns.filter(
     (b) =>
       b.metHours > 25.3 &&
       b.status === "executed" &&
@@ -188,7 +216,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
 
       {/* Burns table */}
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {BURNS.map((burn) => {
+        {burns.map((burn) => {
           const isPast = metMs >= burn.metHours * 3600000;
           const isPostTli = burn.metHours > 25.3;
           const statusColor = STATUS_COLORS[burn.status] ?? "var(--text-dim)";
