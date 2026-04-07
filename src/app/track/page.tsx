@@ -82,13 +82,44 @@ function estimateMagnitude(earthDistKm: number, sunlit: boolean): number | null 
 function moonAngularSeparation(
   scPos: { x: number; y: number; z: number },
   moonPos: { x: number; y: number; z: number },
-): number {
+): { degrees: number; direction: string } {
   const scMag = Math.sqrt(scPos.x ** 2 + scPos.y ** 2 + scPos.z ** 2);
   const moonMag = Math.sqrt(moonPos.x ** 2 + moonPos.y ** 2 + moonPos.z ** 2);
-  if (scMag === 0 || moonMag === 0) return 0;
-  // Unit vectors
+  if (scMag === 0 || moonMag === 0) return { degrees: 0, direction: "" };
+
+  // Angular separation
   const dot = (scPos.x * moonPos.x + scPos.y * moonPos.y + scPos.z * moonPos.z) / (scMag * moonMag);
-  return Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
+  const degrees = Math.acos(Math.max(-1, Math.min(1, dot))) * (180 / Math.PI);
+
+  // Position angle: compute RA/Dec for both, then find direction from Moon to Orion
+  // RA = atan2(y, x), Dec = asin(z / r)  (equatorial frame)
+  const scRA = Math.atan2(scPos.y, scPos.x);
+  const scDec = Math.asin(scPos.z / scMag);
+  const moonRA = Math.atan2(moonPos.y, moonPos.x);
+  const moonDec = Math.asin(moonPos.z / moonMag);
+
+  const dRA = scRA - moonRA; // positive = Orion is east of Moon
+  const dDec = scDec - moonDec; // positive = Orion is north of Moon
+
+  // Determine dominant direction
+  let direction = "";
+  if (degrees < 0.1) {
+    direction = "overlapping";
+  } else {
+    const absDRA = Math.abs(dRA) * Math.cos((scDec + moonDec) / 2); // correct for dec
+    const absDDec = Math.abs(dDec);
+    if (absDDec > absDRA * 2) {
+      direction = dDec > 0 ? "above" : "below";
+    } else if (absDRA > absDDec * 2) {
+      direction = dRA > 0 ? "to the left of" : "to the right of";
+    } else {
+      const vert = dDec > 0 ? "above" : "below";
+      const horiz = dRA > 0 ? "left of" : "right of";
+      direction = `${vert} and to the ${horiz}`;
+    }
+  }
+
+  return { degrees, direction };
 }
 
 /**
@@ -778,12 +809,12 @@ export default function TrackPage() {
             {payload && payload.moonPosition && (
               <Card label="Moon Proximity" subtitle="Angular separation from the Moon">
                 {(() => {
-                  const sep = moonAngularSeparation(payload.stateVector.position, payload.moonPosition);
+                  const { degrees: sep, direction } = moonAngularSeparation(payload.stateVector.position, payload.moonPosition);
                   return (
                     <div>
                       <span style={{ color: sep < 5 ? "#ffaa00" : "#a0b0c0" }}>{sep.toFixed(1)}°</span>
                       <span style={{ fontSize: 10, color: "#5a7a8a", marginLeft: 8 }}>
-                        {sep < 0.5 ? "Very close to Moon" : sep < 2 ? "Near the Moon" : sep < 10 ? "Same region as Moon" : "Far from Moon"}
+                        {sep < 0.5 ? "Very close to Moon" : sep < 2 ? `Near the Moon — ${direction} the Moon` : sep < 10 ? `${direction} the Moon` : "Far from Moon"}
                       </span>
                     </div>
                   );
