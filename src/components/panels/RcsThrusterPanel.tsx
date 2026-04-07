@@ -204,10 +204,7 @@ export function RcsThrusterPanel({ arow }: RcsThrusterPanelProps) {
                   fill={fillColor}
                   stroke={strokeColor}
                   strokeWidth="0.3"
-                  suppressHydrationWarning
-                >
-                  <title suppressHydrationWarning>{th.name}: {firing ? t("telemetry.firing") : recent ? "RECENT" : t("telemetry.idle")}</title>
-                </rect>
+                />
                 {/* Label */}
                 <text
                   x={th.cx}
