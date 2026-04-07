@@ -10,9 +10,9 @@ interface StationSchedulePanelProps {
 }
 
 const STATIONS = [
-  { id: "gdscc", name: "Goldstone", lat: 35.426, lon: -116.890, color: "#00e5ff" },
-  { id: "mdscc", name: "Madrid", lat: 40.431, lon: -4.248, color: "#00ff88" },
-  { id: "cdscc", name: "Canberra", lat: -35.402, lon: 148.982, color: "#ffaa00" },
+  { id: "gdscc", name: "🇺🇸 Goldstone", lat: 35.426, lon: -116.890, color: "#00e5ff" },
+  { id: "mdscc", name: "🇪🇸 Madrid", lat: 40.431, lon: -4.248, color: "#00ff88" },
+  { id: "cdscc", name: "🇦🇺 Canberra", lat: -35.402, lon: 148.982, color: "#ffaa00" },
 ] as const;
 
 interface StationElevation {

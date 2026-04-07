@@ -14,7 +14,7 @@ import { computeTopocentric } from "@/lib/topocentric";
 const DSN_STATIONS = [
   {
     id: "gdscc",
-    name: "Goldstone",
+    name: "🇺🇸 Goldstone",
     location: "California, USA",
     lat: 35.426,
     lon: -116.89,
@@ -22,7 +22,7 @@ const DSN_STATIONS = [
   },
   {
     id: "mdscc",
-    name: "Madrid",
+    name: "🇪🇸 Madrid",
     location: "Spain",
     lat: 40.431,
     lon: -3.95,
@@ -30,7 +30,7 @@ const DSN_STATIONS = [
   },
   {
     id: "cdscc",
-    name: "Canberra",
+    name: "🇦🇺 Canberra",
     location: "Australia",
     lat: -35.402,
     lon: 148.98,
