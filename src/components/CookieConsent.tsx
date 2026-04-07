@@ -98,7 +98,7 @@ export function CookieConsent() {
         maxWidth: 600,
       }}>
         This site uses Google Analytics to understand how visitors use the tracker.
-        No personal data is shared with third parties.{" "}
+        If you accept, Google will process your IP address and usage data.{" "}
         <a
           href="https://policies.google.com/technologies/partner-sites"
           target="_blank"
