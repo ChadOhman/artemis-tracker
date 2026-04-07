@@ -472,21 +472,7 @@ export function getSolarSnapshotAt(utcMs: number): {
 }
 
 /** Mission totals for the /stats page. */
-export function getMissionStats(): {
-  maxSpeedKmH: number;
-  maxEarthDistKm: number;
-  minMoonDistKm: number;
-  totalDistanceKm: number;
-  totalDsnDownlinkBytes: number;
-  maxKpIndex: number;
-  solarEventCount: number;
-  dsnHandoffCount: number;
-  stateVectorSamples: number;
-  dsnSamples: number;
-  solarSamples: number;
-  firstSampleTs: string | null;
-  latestSampleTs: string | null;
-} {
+export function getMissionStats() {
   const db = getDb();
 
   const svStats = db.prepare(`
@@ -494,14 +480,14 @@ export function getMissionStats(): {
       MAX(speed_km_h) as maxSpeedKmH,
       MAX(earth_dist_km) as maxEarthDistKm,
       MIN(moon_dist_km) as minMoonDistKm,
+      MAX(g_force) as maxGForce,
       COUNT(*) as stateVectorSamples,
       MIN(timestamp) as firstSampleTs,
       MAX(timestamp) as latestSampleTs
     FROM state_vectors
   `).get() as any;
 
-  // Approximate total distance: integrate speed * delta_t over adjacent rows
-  // For efficiency, use: avg_speed_km_s * total_duration_s
+  // Approximate total distance: avg_speed_km_s * total_duration_s
   const avgDuration = db.prepare(`
     SELECT
       AVG(speed_km_s) as avgSpeedKmS,
@@ -518,25 +504,60 @@ export function getMissionStats(): {
     FROM solar_activity
   `).get() as any;
 
-  // DSN handoff count: count rows where the prime dish changes
-  // Cheap approximation: count rows with active signal
   const dsnStats = db.prepare(`
-    SELECT COUNT(*) as dsnSamples
+    SELECT
+      COUNT(*) as dsnSamples,
+      SUM(CASE WHEN signal_active = 1 THEN 1 ELSE 0 END) as signalActiveSamples
     FROM dsn_contacts
   `).get() as any;
+
+  // DSN signal uptime percentage
+  const dsnSignalUptime = (dsnStats?.dsnSamples ?? 0) > 0
+    ? ((dsnStats?.signalActiveSamples ?? 0) / dsnStats.dsnSamples) * 100
+    : 0;
+
+  // Longest comm blackout: find longest consecutive run of signal_active=0
+  let longestBlackoutSec = 0;
+  try {
+    const dsnRows = db.prepare(`
+      SELECT timestamp, signal_active FROM dsn_contacts ORDER BY timestamp
+    `).all() as Array<{ timestamp: string; signal_active: number }>;
+    let blackoutStart: number | null = null;
+    for (const row of dsnRows) {
+      const ts = new Date(row.timestamp).getTime();
+      if (row.signal_active === 0) {
+        if (blackoutStart === null) blackoutStart = ts;
+      } else {
+        if (blackoutStart !== null) {
+          const dur = (ts - blackoutStart) / 1000;
+          if (dur > longestBlackoutSec) longestBlackoutSec = dur;
+          blackoutStart = null;
+        }
+      }
+    }
+  } catch { /* non-fatal */ }
+
+  // AROW telemetry sample count
+  let arowSamples = 0;
+  try {
+    const arowCount = db.prepare("SELECT COUNT(*) as cnt FROM arow_telemetry").get() as any;
+    arowSamples = arowCount?.cnt ?? 0;
+  } catch { /* non-fatal */ }
 
   return {
     maxSpeedKmH: svStats?.maxSpeedKmH ?? 0,
     maxEarthDistKm: svStats?.maxEarthDistKm ?? 0,
     minMoonDistKm: svStats?.minMoonDistKm ?? 0,
+    maxGForce: svStats?.maxGForce ?? 0,
     totalDistanceKm,
-    totalDsnDownlinkBytes: 0, // TODO: integrate over dsn_contacts when we have rate data
     maxKpIndex: solarStats?.maxKpIndex ?? 0,
     solarEventCount: solarStats?.solarEventCount ?? 0,
-    dsnHandoffCount: 0, // TODO: detect changes in prime station
+    dsnSignalUptime,
+    longestBlackoutSec,
     stateVectorSamples: svStats?.stateVectorSamples ?? 0,
     dsnSamples: dsnStats?.dsnSamples ?? 0,
     solarSamples: solarStats?.solarSamples ?? 0,
+    arowSamples,
     firstSampleTs: svStats?.firstSampleTs ?? null,
     latestSampleTs: svStats?.latestSampleTs ?? null,
   };
