@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import "./globals.css";
 import { LocaleProvider } from "@/context/LocaleContext";
+import { CookieConsent } from "@/components/CookieConsent";
 
 export const metadata: Metadata = {
   title: "Artemis II Tracker — Live Mission Control",
@@ -32,18 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-0LJP2B1KHG"
-          strategy="afterInteractive"
-        />
-        <Script id="gtag-init" strategy="afterInteractive">
-          {`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-0LJP2B1KHG');
-          `}
-        </Script>
+        {/* GA is loaded dynamically by CookieConsent after user accepts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
@@ -54,6 +43,7 @@ export default function RootLayout({
       <body>
         <a href="#main-content" className="skip-nav">Skip to main content</a>
         <LocaleProvider>{children}</LocaleProvider>
+        <CookieConsent />
       </body>
     </html>
   );
