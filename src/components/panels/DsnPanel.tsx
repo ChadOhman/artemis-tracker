@@ -73,7 +73,7 @@ function DishCard({ dish }: { dish: DsnDish }) {
           {dish.dish}
         </span>
         <span style={{ fontSize: 9, color: "var(--text-dim)", marginLeft: "auto" }}>
-          {dish.stationName}
+          {dish.station === "gdscc" ? "🇺🇸" : dish.station === "mdscc" ? "🇪🇸" : dish.station === "cdscc" ? "🇦🇺" : ""} {dish.stationName}
         </span>
       </div>
 
