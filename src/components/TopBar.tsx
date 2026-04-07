@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MetClock } from "./shared/MetClock";
 import { formatMet } from "@/lib/met";
 import type { Telemetry, DsnStatus } from "@/lib/types";
@@ -110,6 +110,24 @@ const infoButtonStyle: React.CSSProperties = {
 export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility }: TopBarProps) {
   // Helper: check if a topbar item should be shown
   const vis = (id: string) => !barVisibility || barVisibility[id] !== false;
+
+  // Poll toilet status from admin API (avoids needing a rebuild to toggle)
+  const [toiletGo, setToiletGo] = useState(true);
+  useEffect(() => {
+    let alive = true;
+    async function poll() {
+      try {
+        const res = await fetch("/api/admin/toilet");
+        if (res.ok) {
+          const data = await res.json();
+          if (alive) setToiletGo(data.status === "GO");
+        }
+      } catch { /* ignore */ }
+    }
+    poll();
+    const id = setInterval(poll, 30000); // check every 30s
+    return () => { alive = false; clearInterval(id); };
+  }, []);
   const [crewOpen, setCrewOpen] = useState(false);
   const [vehicleOpen, setVehicleOpen] = useState(false);
   const { speedUnit } = useMetContext();
@@ -269,8 +287,8 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       {/* Toilet Status */}
       {vis("toilet") && <div className="topbar-pill" style={pillStyle} title="Toilet status — ground reported, not live telemetry">
         <span style={labelStyle}>{t("topbar.toilet")}</span>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent-green)", display: "inline-block" }} />
-        <span style={{ fontSize: 10, color: "var(--accent-green)", fontWeight: 700 }}>{t("common.go")}</span>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: toiletGo ? "var(--accent-green)" : "var(--accent-red)", display: "inline-block" }} />
+        <span style={{ fontSize: 10, color: toiletGo ? "var(--accent-green)" : "var(--accent-red)", fontWeight: 700 }}>{toiletGo ? t("common.go") : t("common.inop")}</span>
       </div>}
 
       {/* Visitor counter */}
