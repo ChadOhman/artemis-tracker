@@ -167,15 +167,31 @@ export default function AdminPage() {
     return () => es.close();
   }, [authed]);
 
-  // Load existing songs (static + runtime) on auth
+  // Load all songs (static from codebase + runtime overrides)
   const fetchSongs = useCallback(async () => {
     try {
-      // Fetch runtime songs
+      // Static songs from the codebase
+      const { WAKEUP_SONGS } = await import("@/lib/wakeup-songs");
+      const staticSongs: WakeupSong[] = WAKEUP_SONGS.map((s) => ({
+        flightDay: s.flightDay,
+        title: s.title,
+        artist: s.artist,
+        notes: s.notes,
+      }));
+
+      // Runtime overrides from admin API
       const res = await fetch("/api/admin/wakeup-song");
-      if (res.ok) {
-        const data = await res.json();
-        setSongs(data.songs ?? []);
+      const runtimeSongs: WakeupSong[] = res.ok ? ((await res.json()).songs ?? []) : [];
+
+      // Merge: runtime overrides static by flight day
+      const merged = [...staticSongs];
+      for (const rs of runtimeSongs) {
+        const idx = merged.findIndex((s) => s.flightDay === rs.flightDay);
+        if (idx >= 0) merged[idx] = { ...merged[idx], ...rs };
+        else merged.push(rs);
       }
+      merged.sort((a, b) => a.flightDay - b.flightDay);
+      setSongs(merged);
     } catch { /* silent */ }
   }, []);
 
@@ -504,10 +520,10 @@ export default function AdminPage() {
           {songs.length > 0 && (
             <div style={{ marginTop: 12, borderTop: "1px solid rgba(0,229,255,0.1)", paddingTop: 12 }}>
               <div style={{ fontSize: 10, color: "#5a7a8a", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-                Runtime Song Overrides
+                All Songs (click Edit to modify)
               </div>
               {songs.length === 0 && (
-                <div style={{ fontSize: 11, color: "#5a7a8a", ...monoStyle }}>None — static songs only</div>
+                <div style={{ fontSize: 11, color: "#5a7a8a", ...monoStyle }}>Loading...</div>
               )}
               {songs.map((s, i) => (
                 <div key={i} style={{
