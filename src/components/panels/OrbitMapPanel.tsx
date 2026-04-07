@@ -106,6 +106,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
   const rafRef = useRef<number | null>(null);
   const [showInset, setShowInset] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [realScale, setRealScale] = useState(false);
   // Trail of recent Orion-relative-to-Moon positions, for the zoom inset.
   // Only grows when new JPL data arrives (deduped by metMs).
   const insetTrailRef = useRef<Array<{ relX: number; relY: number; metMs: number }>>([]);
@@ -211,7 +212,10 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     let lastPastPt: { x: number; y: number } | null = null;
 
     // --- Earth ---
-    const earthR = Math.max(6, Math.min(w, h) * 0.03);
+    // Real scale: Earth radius 6,371 km, Moon radius 1,737 km
+    const earthR = realScale
+      ? Math.max(4, 6371 * pixelsPerKm)
+      : Math.max(6, Math.min(w, h) * 0.03);
     const earthGrad = ctx.createRadialGradient(
       earthPx.x - earthR * 0.3, earthPx.y - earthR * 0.3, 0,
       earthPx.x, earthPx.y, earthR
@@ -339,7 +343,9 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     ctx.restore();
 
     // --- Moon ---
-    const moonR = Math.max(3, Math.min(w, h) * 0.015);
+    const moonR = realScale
+      ? Math.max(2, 1737 * pixelsPerKm)
+      : Math.max(3, Math.min(w, h) * 0.015);
     const moonGrad = ctx.createRadialGradient(
       moonPx.x - moonR * 0.25, moonPx.y - moonR * 0.25, 0,
       moonPx.x, moonPx.y, moonR
@@ -851,7 +857,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
         }
       }
     }
-  }, [stateVector, moonPosition, metMs, telemetry, showInset]);
+  }, [stateVector, moonPosition, metMs, telemetry, showInset, realScale]);
 
   // Animation loop
   useEffect(() => {
@@ -1001,6 +1007,31 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
           aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
         >
           {isFullscreen ? "✕ EXIT" : "⛶ FULL"}
+        </button>
+
+        {/* Real scale toggle */}
+        <button
+          onClick={() => setRealScale((v) => !v)}
+          style={{
+            position: "absolute",
+            top: 8,
+            left: 80,
+            padding: "4px 10px",
+            background: realScale ? "rgba(0,229,255,0.15)" : "rgba(6,11,20,0.8)",
+            border: "1px solid rgba(0,229,255,0.3)",
+            borderRadius: 4,
+            color: "var(--accent-cyan)",
+            fontSize: 9,
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            fontFamily: "'JetBrains Mono', monospace",
+            cursor: "pointer",
+            zIndex: 11,
+          }}
+          aria-label={realScale ? "Show exaggerated scale" : "Show real scale"}
+        >
+          {realScale ? "⊕ NORMAL" : "⊕ SCALE"}
         </button>
       </div>
     </PanelFrame>
