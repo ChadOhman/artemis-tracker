@@ -52,3 +52,4 @@ docs/superpowers/
 data/artemis.db
 data/artemis.db-shm
 data/artemis.db-wal
+data/splashdown.json
