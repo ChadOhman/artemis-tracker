@@ -45,6 +45,10 @@ data/telemetry-history.json
 
 # Brainstorming
 .superpowers/
+docs/superpowers/
+
+# Worktrees
+.worktrees/
 data/artemis.db
 data/artemis.db-shm
 data/artemis.db-wal
