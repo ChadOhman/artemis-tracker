@@ -13,9 +13,10 @@ import {
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPageViews, getPageViews } from "@/lib/db";
 import { getLastCompactJson } from "@/lib/pollers/arow";
+import { getSplashdownTriggered } from "@/lib/splashdown";
 
 export const cache = new TelemetryCache();
-const sseManager = new SseManager();
+export const sseManager = new SseManager();
 let jplTimer: ReturnType<typeof setInterval> | null = null;
 let dsnTimer: ReturnType<typeof setInterval> | null = null;
 let visitorTimer: ReturnType<typeof setInterval> | null = null;
@@ -107,6 +108,10 @@ export async function GET(): Promise<Response> {
       }
       if (latestSolar) {
         controller.enqueue(encoder.encode(SseManager.encodeEvent("solar", latestSolar)));
+      }
+      // Send splashdown state if triggered (for clients connecting after the event)
+      if (getSplashdownTriggered()) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("splashdown", { triggered: true })));
       }
       if (!latest) {
         // Data not yet available — retry every 2 s for up to 30 s so the first
