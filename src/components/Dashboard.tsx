@@ -44,6 +44,7 @@ import {
   type StoredPresetsState,
 } from "@/lib/dashboard-layout-presets";
 import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
+import SplashdownModal from "@/components/SplashdownModal";
 
 const MemoOrbitMap = memo(OrbitMapPanel);
 const MemoTimeline = memo(TimelinePanel);
@@ -237,7 +238,28 @@ function DashboardInner() {
     reconnecting,
     lastUpdate,
     visitorCount,
+    splashdownTriggered,
   } = useTelemetryStream();
+
+  // Splashdown modal — dismiss persists to localStorage
+  const [showSplashdown, setShowSplashdown] = useState(false);
+
+  useEffect(() => {
+    if (splashdownTriggered) {
+      const dismissed = localStorage.getItem("splashdown-dismissed");
+      if (!dismissed) {
+        setShowSplashdown(true);
+      }
+    } else {
+      // Admin retracted — close for everyone
+      setShowSplashdown(false);
+    }
+  }, [splashdownTriggered]);
+
+  function handleDismissSplashdown() {
+    setShowSplashdown(false);
+    localStorage.setItem("splashdown-dismissed", "1");
+  }
 
   // SIM-mode historical fetch — returns full snapshots from /api/snapshot
   const {
@@ -391,6 +413,10 @@ function DashboardInner() {
         columns={panelColumns}
         onColumnChange={handleColumnChange}
       />
+        <SplashdownModal
+          isOpen={showSplashdown}
+          onDismiss={handleDismissSplashdown}
+        />
     </div>
   );
 }
