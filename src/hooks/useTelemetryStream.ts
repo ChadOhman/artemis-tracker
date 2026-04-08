@@ -13,6 +13,7 @@ interface TelemetryStreamState {
   reconnecting: boolean;
   lastUpdate: number | null;
   visitorCount: number;
+  splashdownTriggered: boolean;
 }
 
 const INITIAL_STATE: TelemetryStreamState = {
@@ -26,6 +27,7 @@ const INITIAL_STATE: TelemetryStreamState = {
   reconnecting: false,
   lastUpdate: null,
   visitorCount: 0,
+  splashdownTriggered: false,
 };
 
 /**
@@ -115,6 +117,16 @@ export function useTelemetryStream(): TelemetryStreamState {
         } catch {
           // ignore
         }
+      });
+
+      es.addEventListener("splashdown", (event: MessageEvent) => {
+        if (unmounted) return;
+        setState((prev) => ({ ...prev, splashdownTriggered: true }));
+      });
+
+      es.addEventListener("splashdown-dismiss", (event: MessageEvent) => {
+        if (unmounted) return;
+        setState((prev) => ({ ...prev, splashdownTriggered: false }));
       });
 
       es.addEventListener("error", () => {
