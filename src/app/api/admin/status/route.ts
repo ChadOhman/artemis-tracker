@@ -31,6 +31,9 @@ export async function GET(request: Request): Promise<Response> {
     dbStats.arowTelemetry = (db.prepare("SELECT COUNT(*) as c FROM arow_telemetry").get() as any)?.c ?? 0;
     dbStats.dsnContacts = (db.prepare("SELECT COUNT(*) as c FROM dsn_contacts").get() as any)?.c ?? 0;
     dbStats.solarActivity = (db.prepare("SELECT COUNT(*) as c FROM solar_activity").get() as any)?.c ?? 0;
+    try {
+      (dbStats as any).subscribers = (db.prepare("SELECT COUNT(*) as c FROM subscribers").get() as any)?.c ?? 0;
+    } catch { /* table may not exist yet */ }
     db.close();
   } catch { /* non-fatal */ }
 

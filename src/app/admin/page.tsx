@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useAdminAction } from "@/components/AdminConfirmDialog";
 
 interface StatusData {
   db?: {
@@ -10,6 +11,7 @@ interface StatusData {
       arowTelemetry?: number;
       dsnContacts?: number;
       solarActivity?: number;
+      subscribers?: number;
     };
   };
   uptime?: {
@@ -129,6 +131,9 @@ export default function AdminPage() {
     "CM Raise": "5",
   }));
 
+  const { confirm, showSuccess, showError, ConfirmDialog, FeedbackBanner } = useAdminAction();
+  const [splashdownTriggered, setSplashdownTriggered] = useState(false);
+
   const fetchStatus = useCallback(async () => {
     if (!token) return;
     try {
@@ -206,6 +211,11 @@ export default function AdminPage() {
       .catch(() => {});
     fetchStatus();
     fetchSongs();
+    // Also fetch splashdown state
+    fetch(`/api/admin/splashdown?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((d) => setSplashdownTriggered(d.triggered === true))
+      .catch(() => {});
   }, [authed, token, fetchStatus, fetchSongs]);
 
   async function handleLogin() {
@@ -222,97 +232,129 @@ export default function AdminPage() {
     }
   }
 
-  async function setToilet(s: "GO" | "INOP") {
-    try {
-      const res = await fetch(`/api/admin/toilet?token=${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: s }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setToiletStatus(data.status);
-        setMessage(`Toilet set to ${data.status}`);
-      } else {
-        setMessage("Failed — check token.");
+  async function handleSplashdown(trigger: boolean) {
+    confirm(
+      trigger
+        ? "Are you sure? This will show the celebration modal to all connected viewers."
+        : "Are you sure? This will dismiss the celebration modal for all viewers.",
+      async () => {
+        try {
+          const res = await fetch(`/api/admin/splashdown?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ triggered: trigger }),
+          });
+          if (res.ok) {
+            setSplashdownTriggered(trigger);
+            showSuccess(trigger ? "Splashdown celebration sent!" : "Celebration dismissed.");
+          } else {
+            showError("Failed to update splashdown state.");
+          }
+        } catch {
+          showError("Connection error.");
+        }
       }
-    } catch {
-      setMessage("Connection error.");
-    }
+    );
+  }
+
+  async function setToilet(s: "GO" | "INOP") {
+    confirm(`Set toilet status to ${s}?`, async () => {
+      try {
+        const res = await fetch(`/api/admin/toilet?token=${encodeURIComponent(token)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: s }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setToiletStatus(data.status);
+          showSuccess(`Toilet set to ${data.status}`);
+        } else {
+          showError("Failed — check token.");
+        }
+      } catch {
+        showError("Connection error.");
+      }
+    });
   }
 
   async function handleAddSong() {
     if (!songDay || !songTitle || !songArtist) {
-      setMessage("Flight day, title, and artist are required.");
+      showError("Flight day, title, and artist are required.");
       return;
     }
-    try {
-      const res = await fetch(`/api/admin/wakeup-song?token=${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          flightDay: Number(songDay),
-          title: songTitle,
-          artist: songArtist,
-          notes: songNotes || undefined,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMessage(`Added wake-up song for Flight Day ${songDay}`);
-        setSongDay("");
-        setSongTitle("");
-        setSongArtist("");
-        setSongNotes("");
-        if (data.songs) setSongs(data.songs);
-        else fetchStatus();
-      } else {
-        setMessage("Failed to add song — check token.");
+    confirm(`Add wake-up song for Flight Day ${songDay}?`, async () => {
+      try {
+        const res = await fetch(`/api/admin/wakeup-song?token=${encodeURIComponent(token)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            flightDay: Number(songDay),
+            title: songTitle,
+            artist: songArtist,
+            notes: songNotes || undefined,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          showSuccess(`Added wake-up song for Flight Day ${songDay}`);
+          setSongDay("");
+          setSongTitle("");
+          setSongArtist("");
+          setSongNotes("");
+          if (data.songs) setSongs(data.songs);
+          else fetchStatus();
+        } else {
+          showError("Failed to add song — check token.");
+        }
+      } catch {
+        showError("Connection error.");
       }
-    } catch {
-      setMessage("Connection error.");
-    }
+    });
   }
 
   async function handleForcePoll() {
-    try {
-      setMessage("Forcing JPL poll...");
-      const res = await fetch(`/api/admin/force-poll?token=${encodeURIComponent(token)}`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const ts = data.orionTimestamp || data.timestamp || "unknown";
-        const dist = data.earthDist ?? data.earth_dist ?? "unknown";
-        setMessage(`JPL poll complete — Orion timestamp: ${ts}, Earth dist: ${dist} km`);
-      } else {
-        setMessage("Force poll failed — check token.");
+    confirm("Force a JPL Horizons poll now?", async () => {
+      try {
+        const res = await fetch(`/api/admin/force-poll?token=${encodeURIComponent(token)}`, {
+          method: "POST",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const ts = data.orionTimestamp || data.timestamp || "unknown";
+          const dist = data.earthDist ?? data.earth_dist ?? "unknown";
+          showSuccess(`JPL poll complete — Orion timestamp: ${ts}, Earth dist: ${dist} km`);
+        } else {
+          showError("Force poll failed — check token.");
+        }
+      } catch {
+        showError("Connection error.");
       }
-    } catch {
-      setMessage("Connection error.");
-    }
+    });
   }
 
   async function handleBurnUpdate(burnName: string) {
-    try {
-      const res = await fetch(`/api/admin/burns?token=${encodeURIComponent(token)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: burnName,
-          status: burnStatuses[burnName],
-          dv: burnDeltaVs[burnName] || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage(`Burn ${burnName} updated to ${burnStatuses[burnName]}`);
-      } else {
-        setMessage(`Failed to update burn ${burnName}: ${data.error ?? res.status}`);
+    confirm(`Update burn status for ${burnName}?`, async () => {
+      try {
+        const res = await fetch(`/api/admin/burns?token=${encodeURIComponent(token)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: burnName,
+            status: burnStatuses[burnName],
+            dv: burnDeltaVs[burnName] || undefined,
+          }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showSuccess(`Burn ${burnName} updated to ${burnStatuses[burnName]}`);
+        } else {
+          showError(`Failed to update burn ${burnName}: ${data.error ?? res.status}`);
+        }
+      } catch {
+        showError("Connection error.");
       }
-    } catch {
-      setMessage("Connection error.");
-    }
+    });
   }
 
   function arowColor(s?: string) {
@@ -474,8 +516,10 @@ export default function AdminPage() {
           </div>
           <button
             onClick={() => {
-              window.location.href = `/api/admin/backup?token=${encodeURIComponent(token)}`;
-              setMessage("Downloading database backup...");
+              confirm("Download the full SQLite mission database?", async () => {
+                window.location.href = `/api/admin/backup?token=${encodeURIComponent(token)}`;
+                showSuccess("Downloading database backup...");
+              });
             }}
             style={btnStyle}
           >
@@ -606,6 +650,10 @@ export default function AdminPage() {
               <div>
                 <span style={{ color: "#5a7a8a" }}>Solar Activity:</span>{" "}
                 <span style={{ color: "#e0e8f0" }}>{status.db?.rows?.solarActivity?.toLocaleString() ?? "—"}</span>
+              </div>
+              <div>
+                <span style={{ color: "#5a7a8a" }}>Email Subscribers:</span>{" "}
+                <span style={{ color: "#00ff88", fontWeight: 700 }}>{(status.db?.rows as any)?.subscribers?.toLocaleString() ?? "—"}</span>
               </div>
             </div>
           ) : (
@@ -755,19 +803,43 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {message && (
-          <div style={{
-            padding: "10px 14px",
-            background: "rgba(0,229,255,0.08)",
-            border: "1px solid rgba(0,229,255,0.2)",
-            borderRadius: 4,
-            fontSize: 12,
-            color: "#00e5ff",
-            fontFamily: "'JetBrains Mono', monospace",
-          }}>
-            {message}
+        {/* Splashdown Celebration */}
+        <div style={cardStyle}>
+          <div style={labelStyle}>Splashdown Celebration</div>
+          <div style={{ fontSize: 11, color: "#5a7a8a", lineHeight: 1.5, marginBottom: 12 }}>
+            {splashdownTriggered
+              ? "The celebration modal is currently ACTIVE for all viewers."
+              : "Trigger the celebration modal for all connected viewers."}
           </div>
-        )}
+          {!splashdownTriggered ? (
+            <button
+              onClick={() => handleSplashdown(true)}
+              style={{
+                ...btnStyle,
+                background: "rgba(0, 255, 136, 0.1)",
+                border: "2px solid rgba(0, 255, 136, 0.4)",
+                color: "#00ff88",
+              }}
+            >
+              Trigger Splashdown Celebration
+            </button>
+          ) : (
+            <button
+              onClick={() => handleSplashdown(false)}
+              style={{
+                ...btnStyle,
+                background: "rgba(255, 68, 85, 0.1)",
+                border: "2px solid rgba(255, 68, 85, 0.4)",
+                color: "#ff4455",
+              }}
+            >
+              Cancel Splashdown
+            </button>
+          )}
+        </div>
+
+        <FeedbackBanner />
+        <ConfirmDialog />
       </div>
     </main>
   );
