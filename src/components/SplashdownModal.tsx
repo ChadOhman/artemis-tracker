@@ -127,7 +127,7 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
             fontStyle: "italic",
           }}
         >
-          Thank you for following along with us.
+          Thank you for following along with us for this historic mission around the Moon.
         </p>
 
         {/* Email signup */}
