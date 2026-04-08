@@ -33,26 +33,26 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
     const colors = ["#00e5ff", "#00ff88", "#ffffff", "#ffaa00", "#ff4455"];
     const defaults = { colors, zIndex: 10000, ticks: 300 };
     // Big opening salvo from both sides
-    confetti({ ...defaults, particleCount: 150, spread: 80, origin: { x: 0.15, y: 0.6 }, angle: 60 });
-    confetti({ ...defaults, particleCount: 150, spread: 80, origin: { x: 0.85, y: 0.6 }, angle: 120 });
+    confetti({ ...defaults, particleCount: 300, spread: 80, origin: { x: 0.15, y: 0.6 }, angle: 60 });
+    confetti({ ...defaults, particleCount: 300, spread: 80, origin: { x: 0.85, y: 0.6 }, angle: 120 });
     // Center burst
     setTimeout(() => {
-      confetti({ ...defaults, particleCount: 100, spread: 100, origin: { x: 0.5, y: 0.35 } });
+      confetti({ ...defaults, particleCount: 200, spread: 100, origin: { x: 0.5, y: 0.35 } });
     }, 250);
     // Second wave — wider spread
     setTimeout(() => {
-      confetti({ ...defaults, particleCount: 80, spread: 120, origin: { x: 0.3, y: 0.5 }, angle: 70 });
-      confetti({ ...defaults, particleCount: 80, spread: 120, origin: { x: 0.7, y: 0.5 }, angle: 110 });
+      confetti({ ...defaults, particleCount: 160, spread: 120, origin: { x: 0.3, y: 0.5 }, angle: 70 });
+      confetti({ ...defaults, particleCount: 160, spread: 120, origin: { x: 0.7, y: 0.5 }, angle: 110 });
     }, 600);
     // Third wave — big finale
     setTimeout(() => {
-      confetti({ ...defaults, particleCount: 120, spread: 140, origin: { x: 0.5, y: 0.5 }, startVelocity: 45 });
-      confetti({ ...defaults, particleCount: 60, spread: 60, origin: { x: 0.1, y: 0.7 }, angle: 45 });
-      confetti({ ...defaults, particleCount: 60, spread: 60, origin: { x: 0.9, y: 0.7 }, angle: 135 });
+      confetti({ ...defaults, particleCount: 240, spread: 140, origin: { x: 0.5, y: 0.5 }, startVelocity: 45 });
+      confetti({ ...defaults, particleCount: 120, spread: 60, origin: { x: 0.1, y: 0.7 }, angle: 45 });
+      confetti({ ...defaults, particleCount: 120, spread: 60, origin: { x: 0.9, y: 0.7 }, angle: 135 });
     }, 1000);
     // Lingering sparkle
     setTimeout(() => {
-      confetti({ ...defaults, particleCount: 50, spread: 160, origin: { x: 0.5, y: 0.3 }, startVelocity: 30, gravity: 0.6 });
+      confetti({ ...defaults, particleCount: 100, spread: 160, origin: { x: 0.5, y: 0.3 }, startVelocity: 30, gravity: 0.6 });
     }, 1500);
   }, [visible]);
 
