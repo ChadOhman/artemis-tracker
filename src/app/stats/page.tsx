@@ -23,6 +23,7 @@ interface MissionStats {
   dsnSignalUptime: number;
   longestBlackoutSec: number;
   arowSamples: number;
+  totalPageViews: number;
 }
 
 const MISSION_PHASE_KEYS = [
@@ -799,6 +800,12 @@ export default function StatsPage() {
               value={fmtNum(stats.arowSamples)}
               color="#b388ff"
               subtext={t("stats.cards.arowSamplesSubtext")}
+            />
+            <StatCard
+              label={t("stats.cards.pageViews")}
+              value={fmtNum(stats.totalPageViews)}
+              color="#00e5ff"
+              subtext={t("stats.cards.pageViewsSubtext")}
             />
             <StatCard
               label={t("stats.cards.trackingSince")}

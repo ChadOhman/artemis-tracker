@@ -11,7 +11,7 @@ import {
   DSN_POLL_INTERVAL_MS,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
-import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData } from "@/lib/db";
+import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData, incrementPageViews, getPageViews } from "@/lib/db";
 import { getLastCompactJson } from "@/lib/pollers/arow";
 
 export const cache = new TelemetryCache();
@@ -28,7 +28,7 @@ let initialized = false;
 let arowArchiveCounter = 0;
 
 function broadcastVisitors(): void {
-  sseManager.broadcast("visitors", { count: sseManager.clientCount });
+  sseManager.broadcast("visitors", { count: sseManager.clientCount, totalPageViews: getPageViews() });
 }
 
 async function pollJpl(): Promise<void> {
@@ -86,7 +86,8 @@ export async function GET(): Promise<Response> {
     start(controller) {
       const encoder = new TextEncoder();
       const cleanup = sseManager.addClient(controller);
-      // Notify everyone a new viewer joined (includes the new client)
+      // Count this page view and notify everyone a new viewer joined
+      try { incrementPageViews(); } catch { /* db error — non-fatal */ }
       setTimeout(broadcastVisitors, 100);
       const latest = cache.getLatest();
       if (latest) {

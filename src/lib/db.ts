@@ -174,6 +174,19 @@ function runMigrations(db: Database.Database): void {
     db.pragma("user_version = 4");
     console.log("[db] migration 4 applied: added raw_params_json column");
   }
+
+  // Migration 5: Page view counter — simple server-side analytics, no cookies/PII.
+  if (currentVersion < 5) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS page_views (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        count INTEGER NOT NULL DEFAULT 0
+      );
+      INSERT OR IGNORE INTO page_views (id, count) VALUES (1, 625000);
+    `);
+    db.pragma("user_version = 5");
+    console.log("[db] migration 5 applied: added page_views counter");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -561,6 +574,22 @@ export function getMissionStats() {
     firstSampleTs: svStats?.firstSampleTs ?? null,
     latestSampleTs: svStats?.latestSampleTs ?? null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Page view counter
+// ---------------------------------------------------------------------------
+
+export function incrementPageViews(): number {
+  const db = getDb();
+  const row = db.prepare("UPDATE page_views SET count = count + 1 WHERE id = 1 RETURNING count").get() as { count: number };
+  return row.count;
+}
+
+export function getPageViews(): number {
+  const db = getDb();
+  const row = db.prepare("SELECT count FROM page_views WHERE id = 1").get() as { count: number } | undefined;
+  return row?.count ?? 0;
 }
 
 /** Delete data older than the given number of days. */

@@ -155,6 +155,7 @@ export default function AdminPage() {
 
   // Viewer count via SSE
   const [viewerCount, setViewerCount] = useState<number | null>(null);
+  const [totalPageViews, setTotalPageViews] = useState<number | null>(null);
   useEffect(() => {
     if (!authed) return;
     const es = new EventSource("/api/telemetry/stream");
@@ -162,6 +163,7 @@ export default function AdminPage() {
       try {
         const data = JSON.parse(e.data);
         setViewerCount(data.count);
+        if (data.totalPageViews != null) setTotalPageViews(data.totalPageViews);
       } catch { /* ignore */ }
     });
     return () => es.close();
@@ -669,7 +671,7 @@ export default function AdminPage() {
 
         {/* Viewer Count */}
         <div style={cardStyle}>
-          <div style={labelStyle}>Viewer Count</div>
+          <div style={labelStyle}>Viewers &amp; Page Views</div>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#00e5ff", ...monoStyle }}>
             {viewerCount != null ? (
               <>{viewerCount.toLocaleString()} <span style={{ fontSize: 12, color: "#5a7a8a", fontWeight: 400 }}>connected via SSE</span></>
@@ -677,6 +679,11 @@ export default function AdminPage() {
               <span style={{ fontSize: 12, color: "#5a7a8a", fontWeight: 400 }}>Connecting to SSE stream...</span>
             )}
           </div>
+          {totalPageViews != null && (
+            <div style={{ fontSize: 20, fontWeight: 700, color: "#00ff88", marginTop: 8, ...monoStyle }}>
+              {totalPageViews.toLocaleString()} <span style={{ fontSize: 12, color: "#5a7a8a", fontWeight: 400 }}>total page views</span>
+            </div>
+          )}
         </div>
 
         {/* Burn Status Updater */}
