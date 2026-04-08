@@ -143,13 +143,16 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
         {/* Partner acknowledgment */}
         <div
           style={{
-            fontSize: 12,
-            color: "#5a7a8a",
+            fontSize: 13,
+            color: "#8a9aaa",
             margin: "16px 0 24px 0",
-            lineHeight: 1.6,
+            lineHeight: 2.2,
           }}
         >
-          NASA &bull; CSA &bull; ESA &bull; JAXA &bull; and international partners
+          <div style={{ fontSize: 22, letterSpacing: "0.15em", marginBottom: 6 }}>
+            🇺🇸 🇨🇦 🇪🇺 🇩🇪 🇮🇹 🇳🇱 🇪🇸 🇫🇷
+          </div>
+          NASA &bull; CSA &bull; ESA &bull; DLR &bull; ASI &bull; Airbus NL &bull; INTA &bull; CNES
         </div>
 
         {/* Thank you */}
