@@ -177,7 +177,7 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
                 marginBottom: 12,
               }}
             >
-              Get notified about future mission trackers.
+              Get notified about future mission trackers and about the historical archiving of this mission.
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
               <input
@@ -219,6 +219,9 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
             {error && (
               <div style={{ color: "#ff4455", fontSize: 12, marginTop: 8 }}>{error}</div>
             )}
+            <div style={{ fontSize: 11, color: "#5a7a8a", marginTop: 8 }}>
+              Max two emails in 2026, unsubscribe anytime.
+            </div>
           </form>
         ) : (
           <div
