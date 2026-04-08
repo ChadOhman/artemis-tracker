@@ -187,6 +187,18 @@ function runMigrations(db: Database.Database): void {
     db.pragma("user_version = 5");
     console.log("[db] migration 5 applied: added page_views counter");
   }
+
+  // Migration 6: subscribers table for email signups
+  if (currentVersion < 6) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS subscribers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )
+    `);
+    db.pragma("user_version = 6");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -590,6 +602,28 @@ export function getPageViews(): number {
   const db = getDb();
   const row = db.prepare("SELECT count FROM page_views WHERE id = 1").get() as { count: number } | undefined;
   return row?.count ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Email subscribers
+// ---------------------------------------------------------------------------
+
+/** Returns true if newly added, false if already existed. */
+export function addSubscriber(email: string): boolean {
+  const db = getDb();
+  try {
+    db.prepare("INSERT INTO subscribers (email) VALUES (?)").run(email);
+    return true;
+  } catch {
+    // UNIQUE constraint violation — email already exists
+    return false;
+  }
+}
+
+export function getSubscriberCount(): number {
+  const db = getDb();
+  const row = db.prepare("SELECT COUNT(*) as count FROM subscribers").get() as { count: number };
+  return row.count;
 }
 
 /** Delete data older than the given number of days. */
