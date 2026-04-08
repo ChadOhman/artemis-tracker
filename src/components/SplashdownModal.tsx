@@ -31,17 +31,29 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
     confettiFired.current = true;
 
     const colors = ["#00e5ff", "#00ff88", "#ffffff", "#ffaa00", "#ff4455"];
-    // Initial big burst from both sides
-    confetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.6 }, colors, zIndex: 10000 });
-    confetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.6 }, colors, zIndex: 10000 });
-    // Staggered follow-up bursts
+    const defaults = { colors, zIndex: 10000, ticks: 300 };
+    // Big opening salvo from both sides
+    confetti({ ...defaults, particleCount: 150, spread: 80, origin: { x: 0.15, y: 0.6 }, angle: 60 });
+    confetti({ ...defaults, particleCount: 150, spread: 80, origin: { x: 0.85, y: 0.6 }, angle: 120 });
+    // Center burst
     setTimeout(() => {
-      confetti({ particleCount: 40, spread: 90, origin: { x: 0.5, y: 0.4 }, colors, zIndex: 10000 });
-    }, 300);
+      confetti({ ...defaults, particleCount: 100, spread: 100, origin: { x: 0.5, y: 0.35 } });
+    }, 250);
+    // Second wave — wider spread
     setTimeout(() => {
-      confetti({ particleCount: 30, spread: 60, origin: { x: 0.3, y: 0.5 }, colors, zIndex: 10000 });
-      confetti({ particleCount: 30, spread: 60, origin: { x: 0.7, y: 0.5 }, colors, zIndex: 10000 });
-    }, 700);
+      confetti({ ...defaults, particleCount: 80, spread: 120, origin: { x: 0.3, y: 0.5 }, angle: 70 });
+      confetti({ ...defaults, particleCount: 80, spread: 120, origin: { x: 0.7, y: 0.5 }, angle: 110 });
+    }, 600);
+    // Third wave — big finale
+    setTimeout(() => {
+      confetti({ ...defaults, particleCount: 120, spread: 140, origin: { x: 0.5, y: 0.5 }, startVelocity: 45 });
+      confetti({ ...defaults, particleCount: 60, spread: 60, origin: { x: 0.1, y: 0.7 }, angle: 45 });
+      confetti({ ...defaults, particleCount: 60, spread: 60, origin: { x: 0.9, y: 0.7 }, angle: 135 });
+    }, 1000);
+    // Lingering sparkle
+    setTimeout(() => {
+      confetti({ ...defaults, particleCount: 50, spread: 160, origin: { x: 0.5, y: 0.3 }, startVelocity: 30, gravity: 0.6 });
+    }, 1500);
   }, [visible]);
 
   if (!isOpen) return null;
