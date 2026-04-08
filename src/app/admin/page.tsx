@@ -470,7 +470,7 @@ export default function AdminPage() {
           <div style={{ fontSize: 11, color: "#5a7a8a", lineHeight: 1.5, marginBottom: 12 }}>
             Download the full SQLite mission database. Contains all archived
             telemetry: state vectors, AROW samples (with raw JSON), DSN contacts,
-            and solar activity. Retention: 14 days AROW/DSN/Solar, 28 days state vectors.
+            and solar activity. Full mission archive — no data pruning.
           </div>
           <button
             onClick={() => {

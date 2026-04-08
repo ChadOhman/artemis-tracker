@@ -11,7 +11,7 @@ import {
   DSN_POLL_INTERVAL_MS,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
-import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, pruneOldData, incrementPageViews, getPageViews } from "@/lib/db";
+import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPageViews, getPageViews } from "@/lib/db";
 import { getLastCompactJson } from "@/lib/pollers/arow";
 
 export const cache = new TelemetryCache();
@@ -60,7 +60,6 @@ export function ensurePollers(): void {
   if (initialized) return;
   initialized = true;
   cache.loadFromDisk();
-  try { pruneOldData(); } catch { /* non-fatal */ }
   pollJpl();
   pollDsn();
   jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);
