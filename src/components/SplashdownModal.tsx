@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import confetti from "canvas-confetti";
 
 interface SplashdownModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const confettiFired = useRef(false);
 
   // Animate in
   const [visible, setVisible] = useState(false);
@@ -19,8 +21,28 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
       requestAnimationFrame(() => setVisible(true));
     } else {
       setVisible(false);
+      confettiFired.current = false;
     }
   }, [isOpen]);
+
+  // Fire confetti burst when modal becomes visible
+  useEffect(() => {
+    if (!visible || confettiFired.current) return;
+    confettiFired.current = true;
+
+    const colors = ["#00e5ff", "#00ff88", "#ffffff", "#ffaa00", "#ff4455"];
+    // Initial big burst from both sides
+    confetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.6 }, colors, zIndex: 10000 });
+    confetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.6 }, colors, zIndex: 10000 });
+    // Staggered follow-up bursts
+    setTimeout(() => {
+      confetti({ particleCount: 40, spread: 90, origin: { x: 0.5, y: 0.4 }, colors, zIndex: 10000 });
+    }, 300);
+    setTimeout(() => {
+      confetti({ particleCount: 30, spread: 60, origin: { x: 0.3, y: 0.5 }, colors, zIndex: 10000 });
+      confetti({ particleCount: 30, spread: 60, origin: { x: 0.7, y: 0.5 }, colors, zIndex: 10000 });
+    }, 700);
+  }, [visible]);
 
   if (!isOpen) return null;
 
