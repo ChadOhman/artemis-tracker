@@ -92,15 +92,6 @@ const btnStyle: React.CSSProperties = {
 };
 
 export default function AdminPage() {
-  // The dashboard sets overflow:hidden on html/body — admin page needs scrolling
-  useEffect(() => {
-    document.documentElement.style.overflow = "auto";
-    document.body.style.overflow = "auto";
-    return () => {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-    };
-  }, []);
   const [token, setToken] = useState("");
   const [authed, setAuthed] = useState(false);
   const [toiletStatus, setToiletStatus] = useState<"GO" | "INOP">("GO");
@@ -439,11 +430,9 @@ export default function AdminPage() {
   return (
     <main style={{
       minHeight: "100vh",
-      height: "auto",
       background: "#060a10",
       fontFamily: "system-ui, sans-serif",
       padding: "40px 20px",
-      overflow: "auto",
     }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>
