@@ -259,6 +259,7 @@ export const TRANSLATIONS = {
       flightDay: "FD",
       noSongs: "No songs yet",
       search: "Search for this song",
+      requestedBy: "Requested by",
     },
     activityTypes: {
       sleep: "SLEEP",
@@ -777,6 +778,7 @@ export const TRANSLATIONS = {
       flightDay: "JV",
       noSongs: "Aucune chanson encore",
       search: "Rechercher cette chanson",
+      requestedBy: "Demandée par",
     },
     activityTypes: {
       sleep: "SOMMEIL",

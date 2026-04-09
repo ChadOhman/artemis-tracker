@@ -18,6 +18,7 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     flightDay: 2,
     title: "Sleepyhead",
     artist: "Young and Sick",
+    dedication: "Christina Koch",
     notes: "Early morning wake-up call to end the first sleep period.",
   },
   {
@@ -39,6 +40,7 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     title: "Pink Pony Club",
     artist: "Chappell Roan",
     year: 2020,
+    dedication: "Reid Wiseman",
     notes: "Mission control famously cut the audio after 'heels' — Commander Wiseman quipped 'We were all eagerly awaiting the chorus.'",
   },
   {
@@ -51,6 +53,23 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     flightDay: 6,
     title: "Good Morning",
     artist: "Mandisa & TobyMac",
+    dedication: "Victor Glover",
     notes: "Woke the crew on lunar flyby day. Accompanied by a congratulatory message from the late Jim Lovell (Apollo 8/13), who congratulated the crew on breaking his distance record and expressed pride in passing the torch to Artemis II.",
+  },
+  {
+    flightDay: 7,
+    title: "Tokyo Drifting",
+    artist: "Denzel Curry & Glass Animals",
+    year: 2020,
+    dedication: "Reid Wiseman",
+    notes: "A fitting choice as the crew drifted away from the Moon on the return leg.",
+  },
+  {
+    flightDay: 8,
+    title: "Under Pressure",
+    artist: "Queen & David Bowie",
+    year: 1981,
+    dedication: "Jeremy Hansen",
+    notes: "A nod to the cabin depressurization and repressurization test scheduled for the day.",
   },
 ];

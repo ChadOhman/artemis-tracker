@@ -236,6 +236,28 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
           </div>
         )}
 
+        {/* Support link */}
+        <a
+          href="https://buymeacoffee.com/chadohman"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            marginTop: 24,
+            padding: "10px 24px",
+            background: "rgba(255, 200, 0, 0.12)",
+            border: "1px solid rgba(255, 200, 0, 0.35)",
+            borderRadius: 6,
+            color: "#ffcc00",
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
+          ☕ Support more projects like this!
+        </a>
+
         {/* Dismiss */}
         <button
           onClick={onDismiss}

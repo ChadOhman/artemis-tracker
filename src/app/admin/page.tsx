@@ -92,6 +92,15 @@ const btnStyle: React.CSSProperties = {
 };
 
 export default function AdminPage() {
+  // The dashboard sets overflow:hidden on html/body — admin page needs scrolling
+  useEffect(() => {
+    document.documentElement.style.overflow = "auto";
+    document.body.style.overflow = "auto";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
   const [token, setToken] = useState("");
   const [authed, setAuthed] = useState(false);
   const [toiletStatus, setToiletStatus] = useState<"GO" | "INOP">("GO");
@@ -115,7 +124,7 @@ export default function AdminPage() {
     "OTC-1": "cancelled",
     "OTC-2": "cancelled",
     "OTC-3": "executed",
-    "RTC-1": "planned",
+    "RTC-1": "executed",
     "RTC-2": "planned",
     "CM Raise": "planned",
   }));
@@ -126,7 +135,7 @@ export default function AdminPage() {
     "OTC-1": "0",
     "OTC-2": "0",
     "OTC-3": "3",
-    "RTC-1": "10",
+    "RTC-1": "0.4",
     "RTC-2": "2",
     "CM Raise": "5",
   }));
@@ -430,9 +439,11 @@ export default function AdminPage() {
   return (
     <main style={{
       minHeight: "100vh",
+      height: "auto",
       background: "#060a10",
       fontFamily: "system-ui, sans-serif",
       padding: "40px 20px",
+      overflow: "auto",
     }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 32 }}>

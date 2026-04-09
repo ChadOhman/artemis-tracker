@@ -111,6 +111,7 @@ export function WakeupSongsPanel() {
               >
                 {song.artist}
                 {song.year && ` · ${song.year}`}
+                {song.dedication && ` · ${t("wakeupSongs.requestedBy")} ${song.dedication}`}
               </div>
               {song.notes && (
                 <div
