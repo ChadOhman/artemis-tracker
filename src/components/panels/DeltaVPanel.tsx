@@ -22,7 +22,7 @@ const DEFAULT_BURNS: Burn[] = [
   { name: "OTC-2", metHours: 73, dv: 0, status: "cancelled" },
   { name: "OTC-3", metHours: 100, dv: 3, status: "executed" },
   { name: "RTC-1", metHours: 147, dv: 0.4, status: "executed" },
-  { name: "RTC-2", metHours: 196, dv: 2, status: "planned" },
+  { name: "RTC-2", metHours: 196.3, dv: 2, status: "planned" },
   { name: "CM Raise", metHours: 217, dv: 5, status: "planned" },
 ];
 

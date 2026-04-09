@@ -121,7 +121,7 @@ const RAW_MILESTONES: Milestone[] = [
   {
     name: "RTC-2",
     description: "Second return trajectory correction burn",
-    metMs: Math.round(196.48 * 3600 * 1000), // metHours=196.48 → ~8d 04h 29m
+    metMs: Math.round(196.30 * 3600 * 1000), // metHours=196.30 → ~8d 04h 18m
   },
   {
     name: "CM/SM Separation",
@@ -146,7 +146,7 @@ const RAW_MILESTONES: Milestone[] = [
   {
     name: "Splashdown",
     description: "Orion crew module splashes down in the Pacific Ocean",
-    metMs: Math.round(217.51 * 3600 * 1000), // metHours=217.51 → ~9d 01h 31m
+    metMs: Math.round(217.53 * 3600 * 1000), // metHours=217.53 → ~9d 01h 32m
   },
   {
     name: "Recovery",
@@ -397,11 +397,11 @@ const ACTIVITIES: TimelineActivity[] = [
   act("CSA downlink — Day 8", "pao", 7, 0, 34, 7, 6, 0),
   act("Sleep period — Day 8", "sleep", 7, 6, 0, 7, 18, 0),
   // ── FD09: Pre-Entry Day ─────────────────────────────────────────────────
-  act("Wake & meal — Day 9", "meal", 7, 18, 0, 7, 23, 23),
+  act("Wake & meal — Day 9", "meal", 7, 17, 12, 7, 23, 23),
   act("Crew news conference", "pao", 7, 23, 23, 8, 1, 19),
   act("Crew downlink — final full day", "pao", 8, 1, 19, 8, 2, 0),
   act("Orthostatic garment fit check", "science", 8, 2, 0, 8, 4, 29),
-  act("Return trajectory correction burn #2", "maneuver", 8, 4, 29, 8, 5, 0),
+  act("Return trajectory correction burn #2", "maneuver", 8, 4, 18, 8, 5, 0),
   act("Sleep period — Day 9", "sleep", 8, 6, 0, 8, 8, 0),
   act("Equipment stow begins", "config", 8, 8, 0, 8, 14, 0),
   // ── FD10: Entry & Recovery Day ──────────────────────────────────────────
