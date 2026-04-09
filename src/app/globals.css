@@ -63,7 +63,7 @@ html,
 body {
   height: 100%;
   width: 100%;
-  overflow: auto;
+  overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace,
