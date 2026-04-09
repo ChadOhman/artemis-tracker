@@ -72,4 +72,10 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     dedication: "Jeremy Hansen",
     notes: "A nod to the cabin depressurization and repressurization test scheduled for the day. Accompanied by a special message from the Canadian Space Agency.",
   },
+  {
+    flightDay: 9,
+    title: "Lonesome Drifter",
+    artist: "Charley Crockett",
+    notes: "Another drifting theme as Orion continues its long coast back to Earth.",
+  },
 ];
