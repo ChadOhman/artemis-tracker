@@ -179,6 +179,10 @@ SSE keepalives every 30s for Cloudflare Tunnel compatibility.
 - **[Brian Brown](https://github.com/briangbrown)** — Real ephemeris trajectory from JPL Horizons + NASA/JSC OEM
 - **[agmccar](https://github.com/agmccar)** — Panel visibility modal with layout presets
 
+## License
+
+[MIT](LICENSE)
+
 ## Land Acknowledgement
 
 This tracker is hosted on servers located in Edmonton, Alberta, Canada — Treaty 6 territory and the traditional and ancestral lands of the Cree, Dene, Blackfoot, Saulteaux, Nakota Sioux, and Metis peoples.
