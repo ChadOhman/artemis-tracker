@@ -12,9 +12,12 @@ export interface RadiationEstimate {
 }
 
 const GCR_RATE_MSV_PER_DAY = 0.7;  // average GCR in cislunar space
-const BELT_DOSE_MSV = 5.0;          // estimated Van Allen belt transit dose
-const BELT_START_MET_MS = 0;        // belt exposure starts at launch
-const BELT_END_MET_MS = 2 * 3600 * 1000; // ~2 hours in belts
+const BELT_DOSE_OUTBOUND_MSV = 5.0;       // estimated outbound Van Allen belt transit dose
+const BELT_OUTBOUND_START_MS = 0;         // belt exposure starts at launch
+const BELT_OUTBOUND_END_MS = 2 * 3600 * 1000; // ~2 hours in belts (slower, higher dose)
+const BELT_DOSE_RETURN_MSV = 2.0;         // return transit — faster pass, less exposure
+const BELT_RETURN_START_MS = 216.5 * 3600 * 1000; // ~MET 216.5h, approaching entry interface
+const BELT_RETURN_END_MS = 217 * 3600 * 1000;     // ~30 min transit at re-entry speed
 const NASA_ANNUAL_LIMIT_MSV = 500;
 
 /**
@@ -30,11 +33,14 @@ export function estimateRadiation(metMs: number, proton10MeV: number): Radiation
   // GCR: constant rate throughout mission
   const missionDoseGcr = missionDays * GCR_RATE_MSV_PER_DAY;
 
-  // Van Allen belt: fixed dose during first ~2 hours
-  const beltFraction = Math.min(1, Math.max(0,
-    (Math.min(metMs, BELT_END_MET_MS) - BELT_START_MET_MS) / (BELT_END_MET_MS - BELT_START_MET_MS)
+  // Van Allen belts: outbound (launch, ~2h) and return (re-entry, ~30min)
+  const outboundFraction = Math.min(1, Math.max(0,
+    (Math.min(metMs, BELT_OUTBOUND_END_MS) - BELT_OUTBOUND_START_MS) / (BELT_OUTBOUND_END_MS - BELT_OUTBOUND_START_MS)
   ));
-  const missionDoseBelt = BELT_DOSE_MSV * beltFraction;
+  const returnFraction = Math.min(1, Math.max(0,
+    (Math.min(metMs, BELT_RETURN_END_MS) - BELT_RETURN_START_MS) / (BELT_RETURN_END_MS - BELT_RETURN_START_MS)
+  ));
+  const missionDoseBelt = (BELT_DOSE_OUTBOUND_MSV * outboundFraction) + (BELT_DOSE_RETURN_MSV * returnFraction);
 
   // SEP: derived from proton flux
   // At 10 pfu (S1 minor storm): ~0.1 mSv/hr additional
