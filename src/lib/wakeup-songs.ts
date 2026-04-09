@@ -70,6 +70,6 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     artist: "Queen & David Bowie",
     year: 1981,
     dedication: "Jeremy Hansen",
-    notes: "A nod to the cabin depressurization and repressurization test scheduled for the day.",
+    notes: "A nod to the cabin depressurization and repressurization test scheduled for the day. Accompanied by a special message from the Canadian Space Agency.",
   },
 ];
