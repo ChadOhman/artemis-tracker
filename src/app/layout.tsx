@@ -7,9 +7,6 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://artemis.canadianspace.ca"),
   title: "Artemis II Tracker — Live Mission Control",
   description: "Real-time mission control dashboard tracking NASA's Artemis II crewed lunar flyby. Live telemetry, DSN comms, orbit visualization, and crew activities.",
-  icons: {
-    icon: "/icon.png",
-  },
   openGraph: {
     title: "Artemis II Tracker — Live Mission Control",
     description: "Real-time mission control dashboard tracking NASA's Artemis II crewed lunar flyby. Live telemetry, DSN comms, orbit visualization, and crew activities.",
