@@ -27,7 +27,25 @@ const DEFAULT_BURNS: Burn[] = [
 ];
 
 // TLI is provided by ICPS — Orion's own delta-v budget is for post-TLI maneuvers only
-const TOTAL_BUDGET = 1230; // m/s — Orion ESM total usable delta-v
+
+// ── ESM Propellant & Δv from Tsiolkovsky ──────────────────────────────────
+// Source: NASA press conference post-RTC-1 (2026-04-08)
+const PROPELLANT_TOTAL_LBS = 7248;     // lbs loaded for Artemis II
+const PROPELLANT_CONSUMED_LBS = 2964;  // lbs consumed (all burns + RCS station-keeping)
+const PROPELLANT_REMAINING_LBS = 4284; // lbs remaining
+
+// Tsiolkovsky: Δv = Isp × g₀ × ln(m_wet / m_dry)
+const LBS_TO_KG = 0.453592;
+const ESM_ISP = 316;                   // seconds — OMS-E main engine
+const G0 = 9.80665;                    // m/s²
+// Orion dry mass (public estimates): CM ~10,400 kg + ESM structure ~6,185 kg + crew/consumables ~350 kg
+const DRY_MASS_KG = 16935;
+
+const propellantTotalKg = PROPELLANT_TOTAL_LBS * LBS_TO_KG;
+const propellantRemainingKg = PROPELLANT_REMAINING_LBS * LBS_TO_KG;
+const MISSION_BUDGET_DV = ESM_ISP * G0 * Math.log((DRY_MASS_KG + propellantTotalKg) / DRY_MASS_KG);
+const REMAINING_DV = ESM_ISP * G0 * Math.log((DRY_MASS_KG + propellantRemainingKg) / DRY_MASS_KG);
+const USED_DV = MISSION_BUDGET_DV - REMAINING_DV;
 
 const STATUS_COLORS: Record<string, string> = {
   executed: "var(--accent-cyan)",
@@ -69,17 +87,12 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
     (b) => b.status === "executed" && metMs >= b.metHours * 3600000
   ).reduce((sum, b) => sum + b.dv, 0);
 
-  // Orion ESM budget only applies to post-TLI maneuvers
-  const esmUsed = burns.filter(
-    (b) =>
-      b.metHours > 25.3 &&
-      b.status === "executed" &&
-      metMs >= b.metHours * 3600000
-  ).reduce((sum, b) => sum + b.dv, 0);
-
-  const remaining = TOTAL_BUDGET - esmUsed;
-  const usedPercent = Math.min(100, Math.max(0, (esmUsed / TOTAL_BUDGET) * 100));
+  // ESM budget from Tsiolkovsky + NASA propellant data (includes RCS station-keeping)
+  const esmUsed = USED_DV;
+  const remaining = REMAINING_DV;
+  const usedPercent = Math.min(100, Math.max(0, (esmUsed / MISSION_BUDGET_DV) * 100));
   const isOverBudget = remaining < 0;
+  const fuelPercent = (PROPELLANT_CONSUMED_LBS / PROPELLANT_TOTAL_LBS) * 100;
 
   return (
     <PanelFrame title={t("deltaV.title")} icon="🚀" accentColor="var(--accent-cyan)">
@@ -151,7 +164,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               marginBottom: 2,
             }}
           >
-            {t("deltaV.sincePRM")}
+            {t("deltaV.propellant")}
           </div>
           <div
             style={{
@@ -161,9 +174,9 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
               fontFamily: "var(--font-mono)",
             }}
           >
-            {totalUsed.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--text-dim)" }}>m/s</span>
+            {PROPELLANT_REMAINING_LBS.toLocaleString()} <span style={{ fontSize: 10, fontWeight: 400, color: "var(--text-dim)" }}>lbs</span>
           </div>
-          <div style={{ fontSize: 8, color: "var(--text-dim)", marginTop: 1 }}>{t("deltaV.inclICPS")}</div>
+          <div style={{ fontSize: 8, color: "var(--text-dim)", marginTop: 1 }}>{fuelPercent.toFixed(1)}% {t("deltaV.consumed")}</div>
         </div>
       </div>
 
@@ -210,7 +223,7 @@ export function DeltaVPanel({ metMs }: DeltaVPanelProps) {
           }}
         >
           <span>0</span>
-          <span>{TOTAL_BUDGET} m/s</span>
+          <span>{Math.round(MISSION_BUDGET_DV)} m/s</span>
         </div>
       </div>
 
