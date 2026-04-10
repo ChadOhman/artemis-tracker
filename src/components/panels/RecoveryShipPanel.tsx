@@ -10,6 +10,14 @@ import { PanelFrame } from "@/components/shared/PanelFrame";
 const SPLASHDOWN_LAT = 31.0;
 const SPLASHDOWN_LON = -117.5;
 
+// Reference landmarks for the map
+const LANDMARKS: Array<{ lat: number; lon: number; label: string }> = [
+  { lat: 32.7157, lon: -117.1611, label: "San Diego" },
+  { lat: 32.6623, lon: -117.2412, label: "NAB Coronado" },
+  { lat: 34.0522, lon: -118.2437, label: "Los Angeles" },
+  { lat: 32.5149, lon: -117.0382, label: "Tijuana" },
+];
+
 interface RecoveryShipData {
   name: string;
   hull: string;
@@ -91,7 +99,7 @@ export function RecoveryShipPanel() {
 
       map = L.map(mapContainerRef.current, {
         center: [SPLASHDOWN_LAT, SPLASHDOWN_LON],
-        zoom: 6,
+        zoom: 7,
         zoomControl: false,
         attributionControl: false,
         dragging: false,
@@ -102,6 +110,7 @@ export function RecoveryShipPanel() {
         touchZoom: false,
       });
 
+      // Base map with city/place labels built in
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
         {
@@ -110,20 +119,43 @@ export function RecoveryShipPanel() {
         }
       ).addTo(map);
 
-      // Splashdown target crosshair
+      // Reference landmarks — small dots with labels so users know what they're looking at
+      for (const lm of LANDMARKS) {
+        L.circleMarker([lm.lat, lm.lon], {
+          radius: 3,
+          color: "#8aa0b0",
+          fillColor: "#8aa0b0",
+          fillOpacity: 1,
+          weight: 1,
+        })
+          .addTo(map)
+          .bindTooltip(lm.label, {
+            permanent: true,
+            direction: "right",
+            offset: [6, 0],
+            className: "recovery-map-label",
+          });
+      }
+
+      // Splashdown target ring + label
       splashdownMarker = L.circleMarker([SPLASHDOWN_LAT, SPLASHDOWN_LON], {
-        radius: 6,
+        radius: 8,
         color: "#ff6644",
         fillColor: "#ff6644",
-        fillOpacity: 0.5,
+        fillOpacity: 0.35,
         weight: 2,
       })
         .addTo(map)
-        .bindTooltip("Splashdown Target", { permanent: false });
+        .bindTooltip("Splashdown Target", {
+          permanent: true,
+          direction: "bottom",
+          offset: [0, 8],
+          className: "recovery-map-label-target",
+        });
 
       // Inner dot for splashdown
       L.circleMarker([SPLASHDOWN_LAT, SPLASHDOWN_LON], {
-        radius: 1.5,
+        radius: 2,
         color: "#ff6644",
         fillColor: "#ff6644",
         fillOpacity: 1,
@@ -131,14 +163,19 @@ export function RecoveryShipPanel() {
       }).addTo(map);
 
       shipMarker = L.circleMarker([SPLASHDOWN_LAT, SPLASHDOWN_LON], {
-        radius: 7,
+        radius: 8,
         color: "#00d4e8",
         fillColor: "#00d4e8",
         fillOpacity: 0.9,
         weight: 2,
       })
         .addTo(map)
-        .bindTooltip("USS John P. Murtha", { permanent: false });
+        .bindTooltip("USS John P. Murtha", {
+          permanent: true,
+          direction: "top",
+          offset: [0, -8],
+          className: "recovery-map-label-ship",
+        });
 
       mapHandleRef.current = {
         updateShip(lat: number, lon: number, isLive: boolean) {
@@ -148,12 +185,14 @@ export function RecoveryShipPanel() {
             color: isLive ? "#00ff88" : "#ffaa00",
             fillColor: isLive ? "#00ff88" : "#ffaa00",
           });
-          // Fit to show both ship and target
-          const bounds = L.latLngBounds([
+          // Fit to show ship, target, and all landmarks so context is always visible
+          const points: [number, number][] = [
             [lat, lon],
             [SPLASHDOWN_LAT, SPLASHDOWN_LON],
-          ]);
-          map.fitBounds(bounds, { padding: [20, 20], maxZoom: 8, animate: false });
+            ...LANDMARKS.map((lm) => [lm.lat, lm.lon] as [number, number]),
+          ];
+          const bounds = L.latLngBounds(points);
+          map.fitBounds(bounds, { padding: [18, 18], maxZoom: 8, animate: false });
         },
         destroy() {
           if (map) {

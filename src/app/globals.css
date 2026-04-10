@@ -117,6 +117,34 @@ body {
   100% { opacity: 1; transform: scale(1); }
 }
 
+/* ── Recovery Ship Map Labels ── */
+.recovery-map-label,
+.recovery-map-label-target,
+.recovery-map-label-ship {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: "JetBrains Mono", monospace !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.04em !important;
+  padding: 0 !important;
+  text-shadow: 0 0 3px #000, 0 0 3px #000, 0 0 3px #000;
+  color: #c0cad0 !important;
+  white-space: nowrap !important;
+}
+.recovery-map-label-target {
+  color: #ff8866 !important;
+}
+.recovery-map-label-ship {
+  color: #00e5ff !important;
+}
+.recovery-map-label::before,
+.recovery-map-label-target::before,
+.recovery-map-label-ship::before {
+  display: none !important;
+}
+
 .dashboard-topbar {
   grid-area: topbar;
   background: var(--bg-secondary);
