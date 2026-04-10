@@ -5,9 +5,27 @@ import confetti from "canvas-confetti";
 interface SplashdownModalProps {
   isOpen: boolean;
   onDismiss: () => void;
+  metMs: number;
 }
 
-export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalProps) {
+// Splashdown is MET 217.53h; recovery stages are offsets from that moment.
+const SPLASHDOWN_MET_MS = 217.53 * 3600 * 1000;
+
+interface RecoveryStage {
+  label: string;
+  detail: string;
+  startMin: number; // minutes after splashdown
+}
+
+const RECOVERY_STAGES: RecoveryStage[] = [
+  { label: "Capsule spotted",     detail: "Recovery helicopter visual contact", startMin: 0 },
+  { label: "Divers deployed",     detail: "Navy divers jump from helicopter",    startMin: 5 },
+  { label: "Flotation collar",    detail: "Stabilizing collar attached to capsule", startMin: 15 },
+  { label: "Crew egress",         detail: "Astronauts exit into the life raft",  startMin: 30 },
+  { label: "On deck USS Murtha",  detail: "Crew aboard the recovery ship",        startMin: 60 },
+];
+
+export default function SplashdownModal({ isOpen, onDismiss, metMs }: SplashdownModalProps) {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
@@ -24,6 +42,16 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
       confettiFired.current = false;
     }
   }, [isOpen]);
+
+  // Compute minutes since splashdown and current active stage
+  const minutesSinceSplashdown = Math.max(0, (metMs - SPLASHDOWN_MET_MS) / 60000);
+  const activeStageIndex = (() => {
+    let idx = -1;
+    for (let i = 0; i < RECOVERY_STAGES.length; i++) {
+      if (minutesSinceSplashdown >= RECOVERY_STAGES[i].startMin) idx = i;
+    }
+    return idx;
+  })();
 
   // Fire confetti burst when modal becomes visible
   useEffect(() => {
@@ -160,12 +188,122 @@ export default function SplashdownModal({ isOpen, onDismiss }: SplashdownModalPr
           style={{
             fontSize: 16,
             color: "#e0e8f0",
-            margin: "0 0 32px 0",
+            margin: "0 0 24px 0",
             fontStyle: "italic",
           }}
         >
           Thank you for following along with us for this historic mission around the Moon.
         </p>
+
+        {/* Recovery sequence */}
+        <div
+          style={{
+            background: "rgba(0, 0, 0, 0.3)",
+            border: "1px solid rgba(0, 229, 255, 0.15)",
+            borderRadius: 8,
+            padding: "14px 18px",
+            margin: "0 0 24px 0",
+            textAlign: "left",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "#5a7a8a",
+              marginBottom: 10,
+              textAlign: "center",
+            }}
+          >
+            Recovery Sequence
+          </div>
+          {RECOVERY_STAGES.map((stage, i) => {
+            const isDone = i < activeStageIndex;
+            const isActive = i === activeStageIndex;
+            const isFuture = i > activeStageIndex;
+            const nextStart = RECOVERY_STAGES[i + 1]?.startMin;
+            const inRange = nextStart == null || minutesSinceSplashdown < nextStart;
+            return (
+              <div
+                key={stage.label}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "6px 0",
+                  opacity: isFuture ? 0.4 : 1,
+                  transition: "opacity 0.4s",
+                }}
+              >
+                <div
+                  style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: "50%",
+                    background: isDone
+                      ? "#00ff88"
+                      : isActive
+                      ? "rgba(0, 229, 255, 0.25)"
+                      : "transparent",
+                    border: `2px solid ${
+                      isDone ? "#00ff88" : isActive ? "#00e5ff" : "rgba(255,255,255,0.2)"
+                    }`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10,
+                    color: "#001a20",
+                    fontWeight: 800,
+                    flexShrink: 0,
+                    animation: isActive && inRange ? "recovery-stage-pulse 2s infinite" : "none",
+                  }}
+                >
+                  {isDone ? "✓" : ""}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: isDone || isActive ? "#e0e8f0" : "#8a9aaa",
+                    }}
+                  >
+                    {stage.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#5a7a8a" }}>{stage.detail}</div>
+                </div>
+                <div
+                  style={{
+                    fontSize: 10,
+                    color: "#5a7a8a",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  T+{String(stage.startMin).padStart(2, "0")}:00
+                </div>
+              </div>
+            );
+          })}
+          {activeStageIndex >= 0 && activeStageIndex < RECOVERY_STAGES.length && (
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 10,
+                color: "#5a7a8a",
+                marginTop: 10,
+                paddingTop: 10,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+                fontFamily: "'JetBrains Mono', monospace",
+              }}
+            >
+              T+{Math.floor(minutesSinceSplashdown)}:{String(Math.floor((minutesSinceSplashdown % 1) * 60)).padStart(2, "0")} since splashdown
+            </div>
+          )}
+        </div>
 
         {/* Email signup */}
         {!submitted ? (

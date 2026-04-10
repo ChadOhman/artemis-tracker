@@ -116,6 +116,10 @@ body {
   0% { opacity: 0; transform: scale(0.96); }
   100% { opacity: 1; transform: scale(1); }
 }
+@keyframes recovery-stage-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 229, 255, 0); }
+}
 
 /* ── Recovery Ship Map Labels ── */
 .recovery-map-label,

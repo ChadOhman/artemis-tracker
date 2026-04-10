@@ -467,6 +467,7 @@ function DashboardInner() {
         <SplashdownModal
           isOpen={showSplashdown}
           onDismiss={handleDismissSplashdown}
+          metMs={metMs}
         />
     </div>
   );
