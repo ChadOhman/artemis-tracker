@@ -29,6 +29,7 @@ import { useSimTelemetry } from "@/hooks/useSimTelemetry";
 import { useTimeline } from "@/hooks/useTimeline";
 import { MetProvider, useMetContext } from "@/context/MetContext";
 import { defaultPanelVisibility, defaultPanelColumns, isTypingTarget, type PanelId, type PanelColumn } from "@/lib/panel-visibility";
+import { lerpTelemetry } from "@/lib/telemetry/lerp";
 import { defaultTopBarVisibility, type TopBarItemId } from "@/lib/topbar-visibility";
 import {
   readStoredPresetsState,
@@ -286,10 +287,19 @@ function DashboardInner() {
   // Note: AROW position (params 2003-2005) is in a different reference frame than
   // JPL Horizons and produces a ~6,000 km offset, so we do NOT use it for distance
   // calculations. JPL-derived distances update every 5 minutes which is sufficient.
-  const telemetry = mode === "SIM" ? (simTelemetry ?? liveTelemetry) : liveTelemetry;
+  const rawTelemetry = mode === "SIM" ? (simTelemetry ?? liveTelemetry) : liveTelemetry;
   const prevTelemetry = mode === "SIM" ? null : livePrevTelemetry;
   const stateVector = mode === "SIM" ? (simStateVector ?? liveStateVector) : liveStateVector;
   const moonPosition = mode === "SIM" ? (simMoonPosition ?? liveMoonPosition) : liveMoonPosition;
+
+  // Interpolate telemetry at 2 Hz — quantize metMs to 500ms buckets
+  const quantizedMetMs = Math.floor(metMs / 500) * 500;
+  const telemetry = useMemo(() => {
+    if (prevTelemetry && rawTelemetry) {
+      return lerpTelemetry(prevTelemetry, rawTelemetry, quantizedMetMs);
+    }
+    return rawTelemetry;
+  }, [prevTelemetry, rawTelemetry, quantizedMetMs]);
   const dsnData = mode === "SIM" ? (simDsn ?? dsn) : dsn;
   const solarData = mode === "SIM" ? (simSolar ?? solar) : solar;
 
@@ -321,7 +331,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-left">
         {show("orbitMap", "left") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "left") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} prevTelemetry={prevTelemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} metMs={metMs} />)}
+        {show("telemetry", "left") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
         {show("rcsThrusters", "left") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "left") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "left") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
@@ -342,7 +352,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-center">
         {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} prevTelemetry={prevTelemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} metMs={metMs} />)}
+        {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
         {show("rcsThrusters", "center") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "center") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "center") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
@@ -360,7 +370,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-right">
         {show("orbitMap", "right") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "right") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} prevTelemetry={prevTelemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} metMs={metMs} />)}
+        {show("telemetry", "right") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
         {show("rcsThrusters", "right") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "right") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "right") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}

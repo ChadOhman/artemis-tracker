@@ -1,5 +1,4 @@
 "use client";
-import { useMemo } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { useMetContext } from "@/context/MetContext";
 import type { Telemetry, ArowTelemetry } from "@/lib/types";
@@ -15,32 +14,8 @@ import { Sparkline } from "@/components/shared/Sparkline";
 
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
-  prevTelemetry: Telemetry | null;
   timeline: TimelineState;
   arow: ArowTelemetry | null;
-  metMs?: number;
-}
-
-/** Linearly interpolate/extrapolate scalar telemetry fields from two snapshots.
- *  When metMs is beyond b.metMs, continues projecting forward at the same rate. */
-function lerpTelemetry(a: Telemetry, b: Telemetry, metMs: number): Telemetry {
-  const dt = b.metMs - a.metMs;
-  if (dt <= 0) return b;
-  // Clamp lower bound but allow extrapolation beyond b (client clock ahead of last poll)
-  const f = Math.max(0, (metMs - a.metMs) / dt);
-  const lerp = (v0: number, v1: number) => v0 + (v1 - v0) * f;
-  return {
-    metMs,
-    speedKmS: lerp(a.speedKmS, b.speedKmS),
-    speedKmH: lerp(a.speedKmH, b.speedKmH),
-    moonRelSpeedKmH: lerp(a.moonRelSpeedKmH, b.moonRelSpeedKmH),
-    altitudeKm: lerp(a.altitudeKm, b.altitudeKm),
-    earthDistKm: lerp(a.earthDistKm, b.earthDistKm),
-    moonDistKm: lerp(a.moonDistKm, b.moonDistKm),
-    periapsisKm: lerp(a.periapsisKm, b.periapsisKm),
-    apoapsisKm: lerp(a.apoapsisKm, b.apoapsisKm),
-    gForce: lerp(a.gForce, b.gForce),
-  };
 }
 
 function fmt(n: number | undefined, decimals = 1): string {
@@ -184,20 +159,10 @@ function TelemRow({
   );
 }
 
-export function TelemetryPanel({ telemetry, prevTelemetry, timeline, arow, metMs }: TelemetryPanelProps) {
+export function TelemetryPanel({ telemetry, timeline, arow }: TelemetryPanelProps) {
+  const t = telemetry;
   const phaseName = timeline.currentPhaseName ?? "Unknown";
   const { speedUnit } = useMetContext();
-
-  // Quantize metMs to 2 Hz so the panel only updates twice per second
-  const quantizedMetMs = metMs != null ? Math.floor(metMs / 500) * 500 : metMs;
-
-  // Linearly interpolate scalar telemetry between the two most recent snapshots
-  const t = useMemo(() => {
-    if (prevTelemetry && telemetry && quantizedMetMs != null) {
-      return lerpTelemetry(prevTelemetry, telemetry, quantizedMetMs);
-    }
-    return telemetry;
-  }, [prevTelemetry, telemetry, quantizedMetMs]);
   const { t: tr } = useLocale();
 
   return (
