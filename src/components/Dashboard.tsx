@@ -241,6 +241,7 @@ function DashboardInner() {
   const {
     telemetry: liveTelemetry,
     stateVector: liveStateVector,
+    prevStateVector: livePrevStateVector,
     moonPosition: liveMoonPosition,
     dsn,
     arow,
@@ -287,6 +288,7 @@ function DashboardInner() {
   // calculations. JPL-derived distances update every 5 minutes which is sufficient.
   const telemetry = mode === "SIM" ? (simTelemetry ?? liveTelemetry) : liveTelemetry;
   const stateVector = mode === "SIM" ? (simStateVector ?? liveStateVector) : liveStateVector;
+  const prevStateVector = mode === "SIM" ? null : livePrevStateVector;
   const moonPosition = mode === "SIM" ? (simMoonPosition ?? liveMoonPosition) : liveMoonPosition;
   const dsnData = mode === "SIM" ? (simDsn ?? dsn) : dsn;
   const solarData = mode === "SIM" ? (simSolar ?? solar) : solar;
@@ -319,7 +321,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-left">
         {show("orbitMap", "left") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "left") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("telemetry", "left") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} stateVector={stateVector} prevStateVector={prevStateVector} moonPosition={moonPosition} metMs={metMs} />)}
         {show("rcsThrusters", "left") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "left") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "left") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
@@ -340,7 +342,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-center">
         {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} stateVector={stateVector} prevStateVector={prevStateVector} moonPosition={moonPosition} metMs={metMs} />)}
         {show("rcsThrusters", "center") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "center") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "center") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
@@ -358,7 +360,7 @@ function DashboardInner() {
       </div>
       <div className="dashboard-right">
         {show("orbitMap", "right") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
-        {show("telemetry", "right") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
+        {show("telemetry", "right") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} stateVector={stateVector} prevStateVector={prevStateVector} moonPosition={moonPosition} metMs={metMs} />)}
         {show("rcsThrusters", "right") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
         {show("dsn", "right") && safe("DSN", <MemoDsn dsn={dsnData} />)}
         {show("stationSchedule", "right") && safe("Station Schedule", <MemoStationSchedule stateVector={stateVector} />)}
