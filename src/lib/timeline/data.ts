@@ -400,10 +400,10 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Wake & meal — Day 9", "meal", 7, 17, 12, 7, 23, 23),
   act("Crew news conference", "pao", 7, 23, 23, 8, 1, 19),
   act("Crew downlink — final full day", "pao", 8, 1, 19, 8, 2, 0),
-  act("Orthostatic garment fit check", "science", 8, 2, 0, 8, 4, 29),
+  act("Orthostatic garment fit check", "science", 8, 2, 0, 8, 4, 18),
   act("Return trajectory correction burn #2", "maneuver", 8, 4, 18, 8, 5, 0),
-  act("Sleep period — Day 9", "sleep", 8, 6, 0, 8, 8, 0),
-  act("Equipment stow begins", "config", 8, 8, 0, 8, 14, 0),
+  act("Equipment stow begins", "config", 8, 5, 0, 8, 6, 0),
+  act("Sleep period — Day 9", "sleep", 8, 6, 0, 8, 14, 0),
   // ── FD10: Entry & Recovery Day ──────────────────────────────────────────
   act("Wake — landing day", "other", 8, 14, 0, 8, 17, 50),
   act("Final stow & cabin prep", "config", 8, 17, 50, 8, 20, 0),
@@ -413,8 +413,8 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Entry interface", "maneuver", 9, 1, 0, 9, 1, 6),
   act("Re-entry communications blackout", "other", 9, 1, 6, 9, 1, 18),
   act("Drogue parachute deploy", "maneuver", 9, 1, 18, 9, 1, 24),
-  act("Main parachute deploy", "maneuver", 9, 1, 24, 9, 1, 31),
-  act("Splashdown", "maneuver", 9, 1, 31, 9, 2, 0),
+  act("Main parachute deploy", "maneuver", 9, 1, 24, 9, 1, 32),
+  act("Splashdown", "maneuver", 9, 1, 32, 9, 2, 0),
 ];
 
 // ---------------------------------------------------------------------------
