@@ -78,4 +78,11 @@ export const WAKEUP_SONGS: WakeupSong[] = [
     artist: "Charley Crockett",
     notes: "Another drifting theme as Orion continues its long coast back to Earth.",
   },
+  {
+    flightDay: 10,
+    title: "Run to the Water",
+    artist: "Live",
+    year: 1997,
+    notes: "A fitting choice for landing day — the crew heading home to a Pacific Ocean splashdown.",
+  },
 ];
