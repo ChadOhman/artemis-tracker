@@ -30,6 +30,8 @@ let lastPosition: RecoveryShipPosition | null = null;
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let shuttingDown = false;
+let reconnectAttempts = 0;
+let poisoned = false; // set if we keep hitting message floods — gives up entirely
 
 const AIS_STREAM_URL = "wss://stream.aisstream.io/v0/stream";
 const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
@@ -64,15 +66,25 @@ export function startRecoveryShipPoller(): void {
 
   if (ws) return; // Already connected
   if (shuttingDown) return;
+  if (poisoned) return; // Safety: stop reconnecting if we keep hitting message floods
 
   try {
     ws = new WebSocket(AIS_STREAM_URL);
 
     ws.on("open", () => {
-      // Subscribe to position messages for the target MMSI
+      // Subscribe to position messages for the target MMSI.
+      // CRITICAL: use a tight bounding box around the Pacific recovery zone
+      // instead of a global box. A global subscription receives ~300 msg/s
+      // worldwide which will melt the event loop. aisstream.io's MMSI filter
+      // is applied AFTER the bounding-box filter on the server side.
+      //
+      // Box: roughly the California + Baja + Pacific coast transit corridor
+      // from San Diego (~32.7°N) south/west to the splashdown zone
+      // (~28°N 120°W) and north back to LA. Covers any plausible Murtha
+      // transit but drops global traffic.
       const subscribe = {
         APIKey: apiKey,
-        BoundingBoxes: [[[-90, -180], [90, 180]]], // global — server-side filter by MMSI
+        BoundingBoxes: [[[25.0, -125.0], [35.0, -115.0]]],
         FiltersShipMMSI: [RECOVERY_SHIP_MMSI],
         FilterMessageTypes: ["PositionReport"],
       };
@@ -80,12 +92,45 @@ export function startRecoveryShipPoller(): void {
       console.log(`[AIS] Connected and subscribed to MMSI ${RECOVERY_SHIP_MMSI}`);
     });
 
+    // Safety throttle: if we ever get a flood of messages, tear down the
+    // connection and back off rather than melting the event loop.
+    let msgCountInWindow = 0;
+    let windowStart = Date.now();
+    const MAX_MSG_PER_SEC = 20;
+
     ws.on("message", (data: WebSocket.Data) => {
+      // Rate-limit check
+      const now = Date.now();
+      if (now - windowStart >= 1000) {
+        msgCountInWindow = 0;
+        windowStart = now;
+      }
+      msgCountInWindow++;
+      if (msgCountInWindow > MAX_MSG_PER_SEC) {
+        if (msgCountInWindow === MAX_MSG_PER_SEC + 1) {
+          reconnectAttempts++;
+          console.error(`[AIS] Message flood detected (>${MAX_MSG_PER_SEC}/s) — closing connection (attempt ${reconnectAttempts})`);
+          if (reconnectAttempts >= 3) {
+            console.error("[AIS] Giving up after 3 flood events — recovery ship tracking disabled for this session");
+            poisoned = true;
+          }
+          ws?.close();
+        }
+        return; // Drop any message over the limit
+      }
+
       try {
         const msg = JSON.parse(data.toString());
         if (msg.MessageType !== "PositionReport") return;
         const report = msg.Message?.PositionReport;
         if (!report) return;
+
+        // Sanity check: the MMSI filter is supposed to handle this but
+        // verify anyway so we never accept data for the wrong ship.
+        const reportedMmsi = String(
+          msg.MetaData?.MMSI ?? msg.Message?.MetaData?.MMSI ?? ""
+        );
+        if (reportedMmsi && reportedMmsi !== RECOVERY_SHIP_MMSI) return;
 
         lastPosition = {
           lat: report.Latitude,
