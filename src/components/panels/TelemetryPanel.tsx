@@ -21,11 +21,13 @@ interface TelemetryPanelProps {
   metMs?: number;
 }
 
-/** Linearly interpolate all scalar telemetry fields between two snapshots */
+/** Linearly interpolate/extrapolate scalar telemetry fields from two snapshots.
+ *  When metMs is beyond b.metMs, continues projecting forward at the same rate. */
 function lerpTelemetry(a: Telemetry, b: Telemetry, metMs: number): Telemetry {
   const dt = b.metMs - a.metMs;
   if (dt <= 0) return b;
-  const f = Math.max(0, Math.min(1, (metMs - a.metMs) / dt));
+  // Clamp lower bound but allow extrapolation beyond b (client clock ahead of last poll)
+  const f = Math.max(0, (metMs - a.metMs) / dt);
   const lerp = (v0: number, v1: number) => v0 + (v1 - v0) * f;
   return {
     metMs,
