@@ -977,7 +977,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ectx.fillText("Orion", oEIx + 7, oEIy - 7);
             ectx.font = "9px monospace";
             ectx.fillStyle = "rgba(0,255,136,0.75)";
-            ectx.fillText(fmtDistCanvas(earthDistKm, unitRef.current), oEIx + 7, oEIy + 6);
+            ectx.fillText(fmtDistCanvas(telemetry.altitudeKm, unitRef.current), oEIx + 7, oEIy + 6);
             // Ground track label
             const groundLabel = getGroundTrackLabel(stateVector.position, metMs);
             ectx.font = "7px monospace";
@@ -1006,7 +1006,7 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
             ectx.fillStyle = "rgba(0,255,136,0.7)";
             ectx.textAlign = "center";
             ectx.fillText(
-              `Orion · ${fmtDistCanvas(earthDistKm, unitRef.current)}`,
+              `Orion · ${fmtDistCanvas(telemetry.altitudeKm, unitRef.current)}`,
               earthCx, earthCy + Math.min(eiw, eih) / 2 - 4,
             );
             ectx.restore();
