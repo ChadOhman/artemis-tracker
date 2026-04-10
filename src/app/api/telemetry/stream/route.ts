@@ -92,9 +92,11 @@ export async function GET(): Promise<Response> {
       const latest = cache.getLatest();
       if (latest) {
         const prev = cache.getSecondLatest();
+        // Disk-loaded entries have zeroed telemetry — only send prev if it's real
+        const prevTelemetry = prev && prev.telemetry.speedKmS > 0 ? prev.telemetry : undefined;
         const payload: SsePayload = {
           telemetry: latest.telemetry,
-          prevTelemetry: prev?.telemetry ?? undefined,
+          prevTelemetry,
           stateVector: latest.stateVector,
           moonPosition: latest.moonPosition,
           dsn: latestDsn,
