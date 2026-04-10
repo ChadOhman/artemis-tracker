@@ -133,12 +133,14 @@ export function OrbitMapPanel({ stateVector, moonPosition, metMs, telemetry }: O
     }
   }, [telemetry?.moonDistKm != null && telemetry.moonDistKm < 60000]);
 
-  // Auto-enable Earth inset when within 60,000 km of Earth (re-entry approach)
+  // Auto-enable Earth inset when within 60,000 km of Earth OR in re-entry window
   useEffect(() => {
-    if (telemetry && telemetry.earthDistKm < 60000) {
+    const closeToEarth = telemetry && telemetry.earthDistKm < 60000;
+    const inReentryWindow = metMs >= 213 * 3600 * 1000 && metMs < 218 * 3600 * 1000;
+    if (closeToEarth || inReentryWindow) {
       setShowEarthInset(true);
     }
-  }, [telemetry?.earthDistKm != null && telemetry.earthDistKm < 60000]);
+  }, [telemetry?.earthDistKm != null && telemetry.earthDistKm < 60000, metMs >= 213 * 3600 * 1000 && metMs < 218 * 3600 * 1000]);
 
 
   const draw = useCallback(() => {

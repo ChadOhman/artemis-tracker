@@ -46,6 +46,7 @@ import {
 } from "@/lib/dashboard-layout-presets";
 import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
 import SplashdownModal from "@/components/SplashdownModal";
+import { EdlPanel } from "./panels/EdlPanel";
 
 const MemoOrbitMap = memo(OrbitMapPanel);
 const MemoTimeline = memo(TimelinePanel);
@@ -53,6 +54,11 @@ const MemoTelemetry = memo(TelemetryPanel);
 const MemoDsn = memo(DsnPanel);
 const MemoSolar = memo(SolarPanel);
 const MemoDeltaV = memo(DeltaVPanel);
+const MemoEdl = memo(EdlPanel);
+
+// Re-entry mode window: activates 4h before entry interface, ends at recovery
+const REENTRY_MODE_START_MS = 213 * 3600 * 1000;
+const REENTRY_MODE_END_MS = 218 * 3600 * 1000;
 
 const MemoStationSchedule = memo(StationSchedulePanel);
 const MemoDsnBandwidth = memo(DsnBandwidthPanel);
@@ -314,8 +320,14 @@ function DashboardInner() {
     <PanelErrorBoundary panelName={name}>{node}</PanelErrorBoundary>
   );
 
+  const isReentryMode = metMs >= REENTRY_MODE_START_MS && metMs < REENTRY_MODE_END_MS;
+
   return (
-    <div id="main-content" role="main" className="dashboard-grid">
+    <div
+      id="main-content"
+      role="main"
+      className={`dashboard-grid${isReentryMode ? " reentry-mode" : ""}`}
+    >
       <div className="dashboard-topbar">
         <TopBar
           metMs={metMs}
@@ -351,6 +363,7 @@ function DashboardInner() {
         {panelVisibility.timeline && safe("Timeline", <MemoTimeline metMs={metMs} timeline={timeline} />)}
       </div>
       <div className="dashboard-center">
+        {isReentryMode && safe("EDL", <MemoEdl metMs={metMs} telemetry={telemetry} />)}
         {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
         {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
         {show("rcsThrusters", "center") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}

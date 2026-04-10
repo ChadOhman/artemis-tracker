@@ -93,6 +93,22 @@ body {
   overflow: hidden;
 }
 
+/* ── Re-Entry Mode Theme ── */
+.dashboard-grid.reentry-mode {
+  --accent-cyan: #00d4e8;
+  --accent-warm: #ff8866;
+}
+.dashboard-grid.reentry-mode .panel-header-title::after {
+  content: " ◉";
+  color: #ff6644;
+  animation: reentry-pulse 2s ease-in-out infinite;
+  font-size: 0.85em;
+}
+@keyframes reentry-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
 .dashboard-topbar {
   grid-area: topbar;
   background: var(--bg-secondary);
