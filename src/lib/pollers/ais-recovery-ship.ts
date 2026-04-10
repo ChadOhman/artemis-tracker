@@ -26,31 +26,50 @@ export interface RecoveryShipPosition {
   source: "ais" | "staging";
 }
 
-let lastPosition: RecoveryShipPosition | null = null;
-let ws: WebSocket | null = null;
-let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-let shuttingDown = false;
-let reconnectAttempts = 0;
-let poisoned = false; // set if we keep hitting message floods — gives up entirely
+// Singleton state on globalThis so Next.js dev HMR doesn't leak old connections.
+// Each HMR cycle re-evaluates this module; using globalThis means we reuse the
+// same state across reloads instead of spawning a new WebSocket every time.
+interface AisSingleton {
+  lastPosition: RecoveryShipPosition | null;
+  ws: WebSocket | null;
+  reconnectTimer: ReturnType<typeof setTimeout> | null;
+  shuttingDown: boolean;
+  reconnectAttempts: number;
+  poisoned: boolean;
+  started: boolean;
+}
+
+const aisGlobal = globalThis as unknown as { __aisState?: AisSingleton };
+
+if (!aisGlobal.__aisState) {
+  aisGlobal.__aisState = {
+    lastPosition: null,
+    ws: null,
+    reconnectTimer: null,
+    shuttingDown: false,
+    reconnectAttempts: 0,
+    poisoned: false,
+    started: false,
+  };
+}
+const s: AisSingleton = aisGlobal.__aisState!;
 
 const AIS_STREAM_URL = "wss://stream.aisstream.io/v0/stream";
 const STALE_THRESHOLD_MS = 60 * 60 * 1000; // 1 hour
 
 export function getRecoveryShipPosition(): RecoveryShipPosition {
-  // Check freshness
-  if (lastPosition && lastPosition.source === "ais") {
-    const age = Date.now() - new Date(lastPosition.timestamp).getTime();
+  if (s.lastPosition && s.lastPosition.source === "ais") {
+    const age = Date.now() - new Date(s.lastPosition.timestamp).getTime();
     if (age < STALE_THRESHOLD_MS) {
-      return { ...lastPosition, isLive: true };
+      return { ...s.lastPosition, isLive: true };
     }
   }
-  // Stale or missing — return staging area
   return {
     lat: RECOVERY_STAGING_LAT,
     lon: RECOVERY_STAGING_LON,
     speedKnots: null,
     courseDeg: null,
-    timestamp: lastPosition?.timestamp ?? new Date().toISOString(),
+    timestamp: s.lastPosition?.timestamp ?? new Date().toISOString(),
     isLive: false,
     source: "staging",
   };
@@ -64,42 +83,36 @@ export function startRecoveryShipPoller(): void {
     return;
   }
 
-  if (ws) return; // Already connected
-  if (shuttingDown) return;
-  if (poisoned) return; // Safety: stop reconnecting if we keep hitting message floods
+  // Idempotent: survives HMR reloads because `started` lives on globalThis
+  if (s.started) return;
+  if (s.ws) return;
+  if (s.shuttingDown) return;
+  if (s.poisoned) return;
+  s.started = true;
 
   try {
-    ws = new WebSocket(AIS_STREAM_URL);
+    s.ws = new WebSocket(AIS_STREAM_URL);
 
-    ws.on("open", () => {
-      // Subscribe to position messages for the target MMSI.
-      // CRITICAL: use a tight bounding box around the Pacific recovery zone
-      // instead of a global box. A global subscription receives ~300 msg/s
-      // worldwide which will melt the event loop. aisstream.io's MMSI filter
-      // is applied AFTER the bounding-box filter on the server side.
-      //
-      // Box: roughly the California + Baja + Pacific coast transit corridor
-      // from San Diego (~32.7°N) south/west to the splashdown zone
-      // (~28°N 120°W) and north back to LA. Covers any plausible Murtha
-      // transit but drops global traffic.
+    s.ws.on("open", () => {
+      // Tight bounding box around the Pacific recovery zone. A global box
+      // would receive ~300 msg/s worldwide.
       const subscribe = {
         APIKey: apiKey,
         BoundingBoxes: [[[25.0, -125.0], [35.0, -115.0]]],
         FiltersShipMMSI: [RECOVERY_SHIP_MMSI],
         FilterMessageTypes: ["PositionReport"],
       };
-      ws?.send(JSON.stringify(subscribe));
+      s.ws?.send(JSON.stringify(subscribe));
       console.log(`[AIS] Connected and subscribed to MMSI ${RECOVERY_SHIP_MMSI}`);
     });
 
-    // Safety throttle: if we ever get a flood of messages, tear down the
-    // connection and back off rather than melting the event loop.
+    // Rate limiter: drop messages above 20/sec; close the connection if we
+    // see sustained bursts. This protects against event-loop starvation.
     let msgCountInWindow = 0;
     let windowStart = Date.now();
     const MAX_MSG_PER_SEC = 20;
 
-    ws.on("message", (data: WebSocket.Data) => {
-      // Rate-limit check
+    s.ws.on("message", (data: WebSocket.Data) => {
       const now = Date.now();
       if (now - windowStart >= 1000) {
         msgCountInWindow = 0;
@@ -108,15 +121,17 @@ export function startRecoveryShipPoller(): void {
       msgCountInWindow++;
       if (msgCountInWindow > MAX_MSG_PER_SEC) {
         if (msgCountInWindow === MAX_MSG_PER_SEC + 1) {
-          reconnectAttempts++;
-          console.error(`[AIS] Message flood detected (>${MAX_MSG_PER_SEC}/s) — closing connection (attempt ${reconnectAttempts})`);
-          if (reconnectAttempts >= 3) {
-            console.error("[AIS] Giving up after 3 flood events — recovery ship tracking disabled for this session");
-            poisoned = true;
+          s.reconnectAttempts++;
+          console.error(
+            `[AIS] Message flood detected (>${MAX_MSG_PER_SEC}/s) — closing connection (attempt ${s.reconnectAttempts})`
+          );
+          if (s.reconnectAttempts >= 3) {
+            console.error("[AIS] Giving up after 3 flood events — tracking disabled");
+            s.poisoned = true;
           }
-          ws?.close();
+          s.ws?.close();
         }
-        return; // Drop any message over the limit
+        return;
       }
 
       try {
@@ -125,14 +140,12 @@ export function startRecoveryShipPoller(): void {
         const report = msg.Message?.PositionReport;
         if (!report) return;
 
-        // Sanity check: the MMSI filter is supposed to handle this but
-        // verify anyway so we never accept data for the wrong ship.
         const reportedMmsi = String(
           msg.MetaData?.MMSI ?? msg.Message?.MetaData?.MMSI ?? ""
         );
         if (reportedMmsi && reportedMmsi !== RECOVERY_SHIP_MMSI) return;
 
-        lastPosition = {
+        s.lastPosition = {
           lat: report.Latitude,
           lon: report.Longitude,
           speedKnots: report.Sog ?? null,
@@ -149,32 +162,34 @@ export function startRecoveryShipPoller(): void {
       }
     });
 
-    ws.on("close", () => {
+    s.ws.on("close", () => {
       console.log("[AIS] Connection closed, reconnecting in 30s...");
-      ws = null;
-      if (!shuttingDown) {
-        reconnectTimer = setTimeout(startRecoveryShipPoller, 30_000);
+      s.ws = null;
+      s.started = false;
+      if (!s.shuttingDown && !s.poisoned) {
+        s.reconnectTimer = setTimeout(startRecoveryShipPoller, 30_000);
       }
     });
 
-    ws.on("error", (err: Error) => {
+    s.ws.on("error", (err: Error) => {
       console.error("[AIS] WebSocket error:", err.message);
-      // The 'close' handler will fire and handle reconnect
     });
   } catch (err) {
     console.error("[AIS] Failed to connect:", err);
-    reconnectTimer = setTimeout(startRecoveryShipPoller, 30_000);
+    s.started = false;
+    s.reconnectTimer = setTimeout(startRecoveryShipPoller, 30_000);
   }
 }
 
 export function stopRecoveryShipPoller(): void {
-  shuttingDown = true;
-  if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
+  s.shuttingDown = true;
+  s.started = false;
+  if (s.reconnectTimer) {
+    clearTimeout(s.reconnectTimer);
+    s.reconnectTimer = null;
   }
-  if (ws) {
-    ws.close();
-    ws = null;
+  if (s.ws) {
+    s.ws.close();
+    s.ws = null;
   }
 }

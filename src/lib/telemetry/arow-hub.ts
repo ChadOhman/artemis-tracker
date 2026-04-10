@@ -47,4 +47,10 @@ class ArowHub {
   }
 }
 
-export const arowHub = new ArowHub();
+// Survive Next.js dev HMR by storing the single hub instance on globalThis.
+// In prod this is a one-time no-op since the module only loads once.
+const arowGlobal = globalThis as unknown as { __arowHub?: ArowHub };
+if (!arowGlobal.__arowHub) {
+  arowGlobal.__arowHub = new ArowHub();
+}
+export const arowHub: ArowHub = arowGlobal.__arowHub!;

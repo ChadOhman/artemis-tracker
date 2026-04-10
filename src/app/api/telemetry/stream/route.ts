@@ -17,18 +17,51 @@ import { startRecoveryShipPoller } from "@/lib/pollers/ais-recovery-ship";
 import { getSplashdownTriggered } from "@/lib/splashdown";
 import { getStateC } from "@/lib/state-c";
 
-export const cache = new TelemetryCache();
-export const sseManager = new SseManager();
-let jplTimer: ReturnType<typeof setInterval> | null = null;
-let dsnTimer: ReturnType<typeof setInterval> | null = null;
-let visitorTimer: ReturnType<typeof setInterval> | null = null;
-export let latestDsn: DsnStatus = { timestamp: new Date().toISOString(), dishes: [], signalActive: false };
-let solarTimer: ReturnType<typeof setInterval> | null = null;
-/** Latest AROW telemetry — mirrored from arowHub so REST endpoints can read it. */
-export let latestArow: ArowTelemetry | null = null;
-export let latestSolar: SolarActivity | null = null;
-let initialized = false;
-let arowArchiveCounter = 0;
+// Singleton state on globalThis so Next.js dev HMR doesn't spawn duplicate
+// pollers, WebSockets, and intervals each time a file reloads. In prod this
+// is a one-time no-op since the module only loads once.
+interface TelemetryGlobalState {
+  cache: TelemetryCache;
+  sseManager: SseManager;
+  jplTimer: ReturnType<typeof setInterval> | null;
+  dsnTimer: ReturnType<typeof setInterval> | null;
+  visitorTimer: ReturnType<typeof setInterval> | null;
+  solarTimer: ReturnType<typeof setInterval> | null;
+  latestDsn: DsnStatus;
+  latestArow: ArowTelemetry | null;
+  latestSolar: SolarActivity | null;
+  initialized: boolean;
+  arowArchiveCounter: number;
+}
+
+const telemetryGlobal = globalThis as unknown as { __telemetryState?: TelemetryGlobalState };
+
+if (!telemetryGlobal.__telemetryState) {
+  telemetryGlobal.__telemetryState = {
+    cache: new TelemetryCache(),
+    sseManager: new SseManager(),
+    jplTimer: null,
+    dsnTimer: null,
+    visitorTimer: null,
+    solarTimer: null,
+    latestDsn: { timestamp: new Date().toISOString(), dishes: [], signalActive: false },
+    latestArow: null,
+    latestSolar: null,
+    initialized: false,
+    arowArchiveCounter: 0,
+  };
+}
+const tState = telemetryGlobal.__telemetryState!;
+
+// Re-export the shared instances so other files see the same objects
+export const cache = tState.cache;
+export const sseManager = tState.sseManager;
+
+// Getters so external modules read through the singleton and stay in sync
+// across HMR reloads (previously these were module-level `export let`).
+export function getLatestDsn(): DsnStatus { return tState.latestDsn; }
+export function getLatestArow(): ArowTelemetry | null { return tState.latestArow; }
+export function getLatestSolar(): SolarActivity | null { return tState.latestSolar; }
 
 function broadcastVisitors(): void {
   sseManager.broadcast("visitors", { count: sseManager.clientCount, totalPageViews: getPageViews() });
@@ -40,44 +73,44 @@ async function pollJpl(): Promise<void> {
   const latest = cache.getLatest();
   const telemetry = transformStateVector(orion, moonPosition, latest?.stateVector, moonVelocity);
   cache.push(orion, telemetry, moonPosition);
-  const payload: SsePayload = { telemetry, stateVector: orion, moonPosition, dsn: latestDsn };
+  const payload: SsePayload = { telemetry, stateVector: orion, moonPosition, dsn: tState.latestDsn };
   sseManager.broadcast("telemetry", payload);
   try { archiveStateVector(orion, moonPosition, telemetry); } catch { /* db error — non-fatal */ }
 }
 
 async function pollDsn(): Promise<void> {
-  latestDsn = await pollDsnNow();
-  sseManager.broadcast("dsn", latestDsn);
-  try { archiveDsn(latestDsn); } catch { /* db error — non-fatal */ }
+  tState.latestDsn = await pollDsnNow();
+  sseManager.broadcast("dsn", tState.latestDsn);
+  try { archiveDsn(tState.latestDsn); } catch { /* db error — non-fatal */ }
 }
 
 async function pollSolar(): Promise<void> {
   const solar = await pollSolarActivity();
   if (!solar) return;
-  latestSolar = solar;
+  tState.latestSolar = solar;
   sseManager.broadcast("solar", solar);
   try { archiveSolar(solar); } catch { /* db error — non-fatal */ }
 }
 
 export function ensurePollers(): void {
-  if (initialized) return;
-  initialized = true;
+  if (tState.initialized) return;
+  tState.initialized = true;
   cache.loadFromDisk();
   pollJpl();
   pollDsn();
-  jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);
-  dsnTimer = setInterval(pollDsn, DSN_POLL_INTERVAL_MS);
+  tState.jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);
+  tState.dsnTimer = setInterval(pollDsn, DSN_POLL_INTERVAL_MS);
   // AROW is handled by the shared hub — subscribe once for broadcast + archive.
   arowHub.subscribe((arow) => {
-    latestArow = arow;
+    tState.latestArow = arow;
     sseManager.broadcast("arow", arow);
-    if (++arowArchiveCounter % 10 === 0) {
+    if (++tState.arowArchiveCounter % 10 === 0) {
       try { archiveArow(arow, getLastCompactJson()); } catch { /* db error — non-fatal */ }
     }
   });
   pollSolar();
-  solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
-  visitorTimer = setInterval(broadcastVisitors, 5000);
+  tState.solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
+  tState.visitorTimer = setInterval(broadcastVisitors, 5000);
   startRecoveryShipPoller();
 }
 
@@ -110,19 +143,19 @@ export async function GET(): Promise<Response> {
           prevTelemetry,
           stateVector: latest.stateVector,
           moonPosition: latest.moonPosition,
-          dsn: latestDsn,
+          dsn: tState.latestDsn,
         };
         controller.enqueue(encoder.encode(SseManager.encodeEvent("telemetry", payload)));
       }
       // Send all cached data immediately on connect
-      if (latestDsn.signalActive || latestDsn.dishes.length > 0) {
-        controller.enqueue(encoder.encode(SseManager.encodeEvent("dsn", latestDsn)));
+      if (tState.latestDsn.signalActive || tState.latestDsn.dishes.length > 0) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("dsn", tState.latestDsn)));
       }
-      if (latestArow) {
-        controller.enqueue(encoder.encode(SseManager.encodeEvent("arow", latestArow)));
+      if (tState.latestArow) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("arow", tState.latestArow)));
       }
-      if (latestSolar) {
-        controller.enqueue(encoder.encode(SseManager.encodeEvent("solar", latestSolar)));
+      if (tState.latestSolar) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("solar", tState.latestSolar)));
       }
       // Send splashdown state if triggered (for clients connecting after the event)
       if (getSplashdownTriggered()) {
@@ -144,7 +177,7 @@ export async function GET(): Promise<Response> {
               telemetry: data.telemetry,
               stateVector: data.stateVector,
               moonPosition: data.moonPosition,
-              dsn: latestDsn,
+              dsn: tState.latestDsn,
             };
             try {
               controller.enqueue(encoder.encode(SseManager.encodeEvent("telemetry", payload)));

@@ -1,5 +1,5 @@
 // src/app/api/all/route.ts
-import { ensurePollers, cache, latestDsn, latestSolar } from "@/app/api/telemetry/stream/route";
+import { ensurePollers, cache, getLatestDsn, getLatestSolar } from "@/app/api/telemetry/stream/route";
 import { arowHub } from "@/lib/telemetry/arow-hub";
 
 export const dynamic = "force-dynamic";
@@ -12,8 +12,8 @@ export async function GET(): Promise<Response> {
     telemetry: latest?.telemetry ?? null,
     stateVector: latest?.stateVector ?? null,
     moonPosition: latest?.moonPosition ?? null,
-    dsn: latestDsn,
+    dsn: getLatestDsn(),
     arow: arowHub.latest,
-    solar: latestSolar,
+    solar: getLatestSolar(),
   });
 }
