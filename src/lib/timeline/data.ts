@@ -403,9 +403,9 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Orthostatic garment fit check", "science", 8, 2, 0, 8, 4, 18),
   act("Return trajectory correction burn #2", "maneuver", 8, 4, 18, 8, 5, 0),
   act("Equipment stow begins", "config", 8, 5, 0, 8, 8, 0),
-  act("Sleep period — Day 9", "sleep", 8, 8, 0, 8, 14, 0),
+  act("Sleep period — Day 9", "sleep", 8, 8, 0, 8, 17, 0),
   // ── FD10: Entry & Recovery Day ──────────────────────────────────────────
-  act("Wake — landing day", "other", 8, 14, 0, 8, 17, 50),
+  act("Wake — landing day", "other", 8, 17, 0, 8, 17, 50),
   act("Final stow & cabin prep", "config", 8, 17, 50, 8, 20, 0),
   act("Crew dons spacesuits", "config", 8, 20, 0, 8, 22, 0),
   act("Re-entry coverage begins", "pao", 8, 22, 0, 9, 0, 30),
