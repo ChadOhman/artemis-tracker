@@ -13,6 +13,7 @@ import {
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity, Telemetry } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPageViews, getPageViews } from "@/lib/db";
 import { getLastCompactJson } from "@/lib/pollers/arow";
+import { startRecoveryShipPoller } from "@/lib/pollers/ais-recovery-ship";
 import { getSplashdownTriggered } from "@/lib/splashdown";
 
 export const cache = new TelemetryCache();
@@ -76,6 +77,7 @@ export function ensurePollers(): void {
   pollSolar();
   solarTimer = setInterval(pollSolar, 60_000); // every 60 seconds
   visitorTimer = setInterval(broadcastVisitors, 5000);
+  startRecoveryShipPoller();
 }
 
 export const dynamic = "force-dynamic";

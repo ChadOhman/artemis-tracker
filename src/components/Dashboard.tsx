@@ -47,6 +47,7 @@ import {
 import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
 import SplashdownModal from "@/components/SplashdownModal";
 import { EdlPanel } from "./panels/EdlPanel";
+import { RecoveryShipPanel } from "./panels/RecoveryShipPanel";
 import { ReentryBanner } from "./ReentryBanner";
 import { BlackoutOverlay } from "./BlackoutOverlay";
 
@@ -57,6 +58,7 @@ const MemoDsn = memo(DsnPanel);
 const MemoSolar = memo(SolarPanel);
 const MemoDeltaV = memo(DeltaVPanel);
 const MemoEdl = memo(EdlPanel);
+const MemoRecoveryShip = memo(RecoveryShipPanel);
 
 // Re-entry mode window: activates 4h before entry interface, ends at recovery
 const REENTRY_MODE_START_MS = 213 * 3600 * 1000;
@@ -369,10 +371,13 @@ function DashboardInner() {
       </div>
       <div className="dashboard-center">
         {isReentryMode && (
-          <div style={{ position: "relative" }}>
-            {safe("EDL", <MemoEdl metMs={metMs} telemetry={telemetry} />)}
-            <BlackoutOverlay arowLastUpdate={arowLastUpdate} isReentryMode={isReentryMode} />
-          </div>
+          <>
+            <div style={{ position: "relative" }}>
+              {safe("EDL", <MemoEdl metMs={metMs} telemetry={telemetry} />)}
+              <BlackoutOverlay arowLastUpdate={arowLastUpdate} isReentryMode={isReentryMode} />
+            </div>
+            {safe("Recovery Ship", <MemoRecoveryShip />)}
+          </>
         )}
         {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
         {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
