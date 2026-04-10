@@ -124,24 +124,34 @@ const RAW_MILESTONES: Milestone[] = [
     metMs: Math.round(196.30 * 3600 * 1000), // metHours=196.30 → ~8d 04h 18m
   },
   {
+    name: "RTC-3",
+    description: "Third return trajectory correction burn — 1.3 m/s",
+    metMs: Math.round(211.30 * 3600 * 1000), // metHours=211.30 → ~8d 19h 18m
+  },
+  {
     name: "CM/SM Separation",
     description: "Service module jettisoned before atmospheric entry",
-    metMs: Math.round(216.5 * 3600 * 1000), // metHours=216.5 → ~9d 00h 30m
+    metMs: Math.round(216.96 * 3600 * 1000), // metHours=216.96 → ~9d 00h 57m
+  },
+  {
+    name: "CM Raise",
+    description: "Crew module raise burn to establish proper entry attitude",
+    metMs: Math.round(217.03 * 3600 * 1000), // metHours=217.03 → ~9d 01h 02m
   },
   {
     name: "Entry Interface",
     description: "Orion hits Earth's atmosphere at ~40,000 km/h",
-    metMs: Math.round(217 * 3600 * 1000), // metHours=217 → ~9d 01h 00m
+    metMs: Math.round(217.30 * 3600 * 1000), // metHours=217.30 → ~9d 01h 18m
   },
   {
     name: "Drogue Chutes",
     description: "Drogue parachutes deploy to stabilize the crew module",
-    metMs: Math.round(217.30 * 3600 * 1000), // metHours=217.30 → ~9d 01h 18m
+    metMs: Math.round(217.46 * 3600 * 1000), // metHours=217.46 → ~9d 01h 27m
   },
   {
     name: "Main Chutes",
     description: "Three main parachutes deploy — slowing Orion to ~20 mph",
-    metMs: Math.round(217.40 * 3600 * 1000), // metHours=217.40 → ~9d 01h 24m
+    metMs: Math.round(217.48 * 3600 * 1000), // metHours=217.48 → ~9d 01h 29m
   },
   {
     name: "Splashdown",
@@ -402,18 +412,20 @@ const ACTIVITIES: TimelineActivity[] = [
   act("Crew downlink — final full day", "pao", 8, 1, 19, 8, 2, 0),
   act("Orthostatic garment fit check", "science", 8, 2, 0, 8, 4, 18),
   act("Return trajectory correction burn #2", "maneuver", 8, 4, 18, 8, 5, 0),
-  act("Equipment stow begins", "config", 8, 5, 0, 8, 8, 0),
-  act("Sleep period — Day 9", "sleep", 8, 8, 0, 8, 17, 0),
+  act("Equipment stow begins", "config", 8, 8, 0, 8, 8, 30),
+  act("Sleep period — Day 9", "sleep", 8, 8, 30, 8, 17, 0),
   // ── FD10: Entry & Recovery Day ──────────────────────────────────────────
-  act("Wake — landing day", "other", 8, 17, 0, 8, 17, 50),
-  act("Final stow & cabin prep", "config", 8, 17, 50, 8, 20, 0),
-  act("Crew dons spacesuits", "config", 8, 20, 0, 8, 22, 0),
-  act("Re-entry coverage begins", "pao", 8, 22, 0, 9, 0, 30),
-  act("Service module separation", "maneuver", 9, 0, 30, 9, 1, 0),
-  act("Entry interface", "maneuver", 9, 1, 0, 9, 1, 6),
-  act("Re-entry communications blackout", "other", 9, 1, 6, 9, 1, 18),
-  act("Drogue parachute deploy", "maneuver", 9, 1, 18, 9, 1, 24),
-  act("Main parachute deploy", "maneuver", 9, 1, 24, 9, 1, 32),
+  act("Wake — landing day", "other", 8, 17, 0, 8, 19, 15),
+  act("Final stow & cabin prep", "config", 8, 19, 15, 8, 19, 18),
+  act("Return trajectory correction burn #3", "maneuver", 8, 19, 18, 8, 20, 0),
+  act("Crew dons spacesuits", "config", 8, 20, 0, 8, 23, 55),
+  act("Re-entry coverage begins", "pao", 8, 23, 55, 9, 0, 57),
+  act("Service module separation", "maneuver", 9, 0, 57, 9, 1, 2),
+  act("Crew module raise burn", "maneuver", 9, 1, 2, 9, 1, 18),
+  act("Entry interface", "maneuver", 9, 1, 18, 9, 1, 24),
+  act("Re-entry communications blackout", "other", 9, 1, 18, 9, 1, 27),
+  act("Drogue parachute deploy", "maneuver", 9, 1, 27, 9, 1, 29),
+  act("Main parachute deploy", "maneuver", 9, 1, 29, 9, 1, 32),
   act("Splashdown", "maneuver", 9, 1, 32, 9, 2, 0),
 ];
 

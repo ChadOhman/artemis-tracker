@@ -23,7 +23,8 @@ const DEFAULT_BURNS: Burn[] = [
   { name: "OTC-3", metHours: 100, dv: 3, status: "executed" },
   { name: "RTC-1", metHours: 147, dv: 0.4, status: "executed" },
   { name: "RTC-2", metHours: 196.3, dv: 1.6, status: "executed" },
-  { name: "CM Raise", metHours: 217, dv: 5, status: "planned" },
+  { name: "RTC-3", metHours: 211.3, dv: 1.3, status: "executed" },
+  { name: "CM Raise", metHours: 217.03, dv: 5, status: "planned" },
 ];
 
 // TLI is provided by ICPS — Orion's own delta-v budget is for post-TLI maneuvers only

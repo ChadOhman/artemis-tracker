@@ -41,6 +41,7 @@ const BURNS = [
   "OTC-3",
   "RTC-1",
   "RTC-2",
+  "RTC-3",
   "CM Raise",
 ] as const;
 
@@ -117,6 +118,7 @@ export default function AdminPage() {
     "OTC-3": "executed",
     "RTC-1": "executed",
     "RTC-2": "executed",
+    "RTC-3": "executed",
     "CM Raise": "planned",
   }));
   const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(() => ({
@@ -128,6 +130,7 @@ export default function AdminPage() {
     "OTC-3": "3",
     "RTC-1": "0.4",
     "RTC-2": "1.6",
+    "RTC-3": "1.3",
     "CM Raise": "5",
   }));
 
