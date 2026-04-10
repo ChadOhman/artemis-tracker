@@ -442,14 +442,14 @@ export function getStateSnapshotAt(metMs: number): {
   vel_x: number; vel_y: number; vel_z: number;
   moon_x: number | null; moon_y: number | null; moon_z: number | null;
   earth_dist_km: number; moon_dist_km: number;
-  speed_km_s: number; speed_km_h: number; altitude_km: number;
+  speed_km_s: number; speed_km_h: number; moon_rel_speed_km_h: number | null; altitude_km: number;
   periapsis_km: number; apoapsis_km: number; g_force: number;
 } | null {
   const db = getDb();
   return db.prepare(`
     SELECT timestamp, met_ms, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z,
            moon_x, moon_y, moon_z, earth_dist_km, moon_dist_km,
-           speed_km_s, speed_km_h, altitude_km, periapsis_km, apoapsis_km, g_force
+           speed_km_s, speed_km_h, moon_rel_speed_km_h, altitude_km, periapsis_km, apoapsis_km, g_force
     FROM state_vectors
     WHERE met_ms <= ?
     ORDER BY met_ms DESC

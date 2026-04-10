@@ -39,7 +39,7 @@ export async function GET(request: Request): Promise<Response> {
           metMs: sv.met_ms,
           speedKmS: sv.speed_km_s,
           speedKmH: sv.speed_km_h,
-          moonRelSpeedKmH: 0, // not available in historical snapshots
+          moonRelSpeedKmH: sv.moon_rel_speed_km_h ?? 0,
           altitudeKm: sv.altitude_km,
           earthDistKm: sv.earth_dist_km,
           moonDistKm: sv.moon_dist_km,
