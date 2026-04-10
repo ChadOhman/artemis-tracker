@@ -4,8 +4,8 @@ import type { Telemetry, StateVector, DsnStatus, ArowTelemetry, SolarActivity } 
 
 interface TelemetryStreamState {
   telemetry: Telemetry | null;
+  prevTelemetry: Telemetry | null;
   stateVector: StateVector | null;
-  prevStateVector: StateVector | null;
   moonPosition: { x: number; y: number; z: number } | null;
   dsn: DsnStatus | null;
   arow: ArowTelemetry | null;
@@ -19,8 +19,8 @@ interface TelemetryStreamState {
 
 const INITIAL_STATE: TelemetryStreamState = {
   telemetry: null,
+  prevTelemetry: null,
   stateVector: null,
-  prevStateVector: null,
   moonPosition: null,
   dsn: null,
   arow: null,
@@ -69,8 +69,8 @@ export function useTelemetryStream(): TelemetryStreamState {
           const payload = JSON.parse(event.data);
           setState((prev) => ({
             ...prev,
+            prevTelemetry: payload.prevTelemetry ?? prev.telemetry,
             telemetry: payload.telemetry ?? prev.telemetry,
-            prevStateVector: payload.prevStateVector ?? prev.stateVector,
             stateVector: payload.stateVector ?? prev.stateVector,
             moonPosition: payload.moonPosition ?? prev.moonPosition,
             connected: true,

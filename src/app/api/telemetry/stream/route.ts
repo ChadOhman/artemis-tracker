@@ -94,8 +94,8 @@ export async function GET(): Promise<Response> {
         const prev = cache.getSecondLatest();
         const payload: SsePayload = {
           telemetry: latest.telemetry,
+          prevTelemetry: prev?.telemetry ?? undefined,
           stateVector: latest.stateVector,
-          prevStateVector: prev?.stateVector ?? undefined,
           moonPosition: latest.moonPosition,
           dsn: latestDsn,
         };

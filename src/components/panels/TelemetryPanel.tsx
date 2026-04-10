@@ -2,14 +2,12 @@
 import { useMemo } from "react";
 import { PanelFrame } from "@/components/shared/PanelFrame";
 import { useMetContext } from "@/context/MetContext";
-import type { Telemetry, ArowTelemetry, StateVector } from "@/lib/types";
+import type { Telemetry, ArowTelemetry } from "@/lib/types";
 import type { TimelineState } from "@/hooks/useTimeline";
 import { AttitudeIndicator } from "@/components/AttitudeIndicator";
 import { SawEfficiencyBar, computeSawEfficiency } from "@/components/SawIndicator";
 import { useLocale } from "@/context/LocaleContext";
 import { Sparkline } from "@/components/shared/Sparkline";
-import { interpolateStateVector } from "@/lib/interpolation";
-import { transformStateVector } from "@/lib/telemetry/transformer";
 
 // NOTE: ICPS upper stage deorbited after TLI — no longer tracked on the
 // dashboard. AROW parser and archive still accept ICPS fields for historical
@@ -17,12 +15,30 @@ import { transformStateVector } from "@/lib/telemetry/transformer";
 
 interface TelemetryPanelProps {
   telemetry: Telemetry | null;
+  prevTelemetry: Telemetry | null;
   timeline: TimelineState;
   arow: ArowTelemetry | null;
-  stateVector?: StateVector | null;
-  prevStateVector?: StateVector | null;
-  moonPosition?: { x: number; y: number; z: number } | null;
   metMs?: number;
+}
+
+/** Linearly interpolate all scalar telemetry fields between two snapshots */
+function lerpTelemetry(a: Telemetry, b: Telemetry, metMs: number): Telemetry {
+  const dt = b.metMs - a.metMs;
+  if (dt <= 0) return b;
+  const f = Math.max(0, Math.min(1, (metMs - a.metMs) / dt));
+  const lerp = (v0: number, v1: number) => v0 + (v1 - v0) * f;
+  return {
+    metMs,
+    speedKmS: lerp(a.speedKmS, b.speedKmS),
+    speedKmH: lerp(a.speedKmH, b.speedKmH),
+    moonRelSpeedKmH: lerp(a.moonRelSpeedKmH, b.moonRelSpeedKmH),
+    altitudeKm: lerp(a.altitudeKm, b.altitudeKm),
+    earthDistKm: lerp(a.earthDistKm, b.earthDistKm),
+    moonDistKm: lerp(a.moonDistKm, b.moonDistKm),
+    periapsisKm: lerp(a.periapsisKm, b.periapsisKm),
+    apoapsisKm: lerp(a.apoapsisKm, b.apoapsisKm),
+    gForce: lerp(a.gForce, b.gForce),
+  };
 }
 
 function fmt(n: number | undefined, decimals = 1): string {
@@ -164,24 +180,17 @@ function TelemRow({
   );
 }
 
-export function TelemetryPanel({ telemetry, timeline, arow, stateVector, prevStateVector, moonPosition, metMs }: TelemetryPanelProps) {
+export function TelemetryPanel({ telemetry, prevTelemetry, timeline, arow, metMs }: TelemetryPanelProps) {
   const phaseName = timeline.currentPhaseName ?? "Unknown";
   const { speedUnit } = useMetContext();
 
-  // Interpolate between the two most recent state vectors for smooth updates
+  // Linearly interpolate scalar telemetry between the two most recent snapshots
   const t = useMemo(() => {
-    if (prevStateVector && stateVector && moonPosition && metMs != null) {
-      const interp = interpolateStateVector(prevStateVector, stateVector, metMs);
-      const sv: StateVector = {
-        ...stateVector,
-        position: interp.position,
-        velocity: interp.velocity,
-        metMs,
-      };
-      return transformStateVector(sv, moonPosition, prevStateVector);
+    if (prevTelemetry && telemetry && metMs != null) {
+      return lerpTelemetry(prevTelemetry, telemetry, metMs);
     }
     return telemetry;
-  }, [prevStateVector, stateVector, moonPosition, metMs, telemetry]);
+  }, [prevTelemetry, telemetry, metMs]);
   const { t: tr } = useLocale();
 
   return (

@@ -54,8 +54,8 @@ export type CommStatus =
 
 export interface SsePayload {
   telemetry: Telemetry;
+  prevTelemetry?: Telemetry;
   stateVector: StateVector;
-  prevStateVector?: StateVector;
   moonPosition: { x: number; y: number; z: number };
   dsn: DsnStatus;
   arow?: ArowTelemetry;
