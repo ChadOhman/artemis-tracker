@@ -121,6 +121,25 @@ body {
   50% { box-shadow: 0 0 0 6px rgba(0, 229, 255, 0); }
 }
 
+/* ── Override mode ── */
+/* Applied to .dashboard-grid when the admin toggles the internal flag.
+   Desaturates the entire dashboard and kills all celebratory animations. */
+.dashboard-grid.state-c-mode {
+  filter: grayscale(0.85) brightness(0.85);
+  transition: filter 2s ease-out;
+}
+.dashboard-grid.state-c-mode .panel-header-title::after {
+  display: none !important;
+  animation: none !important;
+}
+.dashboard-grid.state-c-mode * {
+  animation-play-state: paused !important;
+}
+.dashboard-grid.state-c-mode [class*="pulse"],
+.dashboard-grid.state-c-mode [style*="animation"] {
+  animation: none !important;
+}
+
 /* ── Recovery Ship Map Labels ── */
 .recovery-map-label,
 .recovery-map-label-target,

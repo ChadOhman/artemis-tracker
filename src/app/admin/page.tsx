@@ -133,6 +133,8 @@ export default function AdminPage() {
 
   const { confirm, showSuccess, showError, ConfirmDialog, FeedbackBanner } = useAdminAction();
   const [splashdownTriggered, setSplashdownTriggered] = useState(false);
+  const [overrideActive, setOverrideActive] = useState(false);
+  const [overrideConfirm, setOverrideConfirm] = useState("");
 
   const fetchStatus = useCallback(async () => {
     if (!token) return;
@@ -216,6 +218,11 @@ export default function AdminPage() {
       .then((r) => r.json())
       .then((d) => setSplashdownTriggered(d.triggered === true))
       .catch(() => {});
+    // Override flag
+    fetch(`/api/admin/state-c?token=${encodeURIComponent(token)}`)
+      .then((r) => r.json())
+      .then((d) => setOverrideActive(d.active === true))
+      .catch(() => {});
   }, [authed, token, fetchStatus, fetchSongs]);
 
   async function handleLogin() {
@@ -249,6 +256,38 @@ export default function AdminPage() {
             showSuccess(trigger ? "Splashdown celebration sent!" : "Celebration dismissed.");
           } else {
             showError("Failed to update splashdown state.");
+          }
+        } catch {
+          showError("Connection error.");
+        }
+      }
+    );
+  }
+
+  async function handleOverride(activate: boolean) {
+    const expectedPhrase = activate ? "ACTIVATE MEMORIAL" : "RETRACT MEMORIAL";
+    if (overrideConfirm !== expectedPhrase) {
+      showError(`Type "${expectedPhrase}" in the confirmation field to proceed.`);
+      return;
+    }
+    confirm(
+      activate
+        ? "Activate the contingency override? Every viewer will see the override modal and the dashboard will enter override mode. Proceed?"
+        : "Retract the override? The dashboard will return to normal.",
+      async () => {
+        try {
+          const res = await fetch(`/api/admin/state-c?token=${encodeURIComponent(token)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ active: activate, confirm: overrideConfirm }),
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setOverrideActive(activate);
+            setOverrideConfirm("");
+            showSuccess(activate ? "Override activated." : "Override retracted.");
+          } else {
+            showError(data.error ?? "Failed to update override state.");
           }
         } catch {
           showError("Connection error.");
@@ -834,6 +873,82 @@ export default function AdminPage() {
               }}
             >
               Cancel Splashdown
+            </button>
+          )}
+        </div>
+
+        {/* Contingency Override — do not use casually */}
+        <div
+          style={{
+            ...cardStyle,
+            borderColor: overrideActive ? "rgba(200, 200, 210, 0.4)" : "rgba(200, 200, 210, 0.2)",
+          }}
+        >
+          <div style={{ ...labelStyle, color: overrideActive ? "#c8ccd0" : "#5a7a8a" }}>
+            ✦ Contingency Override
+          </div>
+          <div
+            style={{
+              fontSize: 11,
+              color: "#5a7a8a",
+              lineHeight: 1.6,
+              marginBottom: 14,
+            }}
+          >
+            {overrideActive
+              ? "Override is ACTIVE. Dashboard is in override mode for all viewers."
+              : "Reserved for contingency. Applies override mode to the dashboard, suppresses the splashdown celebration, and shows the override modal to every viewer. Requires typing the exact confirmation phrase below to proceed."}
+          </div>
+
+          <input
+            type="text"
+            placeholder={overrideActive ? "Type: RETRACT MEMORIAL" : "Type: ACTIVATE MEMORIAL"}
+            value={overrideConfirm}
+            onChange={(e) => setOverrideConfirm(e.target.value)}
+            style={{
+              ...inputStyle,
+              borderColor: "rgba(200, 200, 210, 0.3)",
+              marginBottom: 10,
+              letterSpacing: "0.1em",
+            }}
+          />
+
+          {!overrideActive ? (
+            <button
+              onClick={() => handleOverride(true)}
+              disabled={overrideConfirm !== "ACTIVATE MEMORIAL"}
+              style={{
+                ...btnStyle,
+                background: "rgba(200, 200, 210, 0.05)",
+                border: "1px solid rgba(200, 200, 210, 0.3)",
+                color: "#c8ccd0",
+                opacity: overrideConfirm === "ACTIVATE MEMORIAL" ? 1 : 0.35,
+                cursor:
+                  overrideConfirm === "ACTIVATE MEMORIAL" ? "pointer" : "not-allowed",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontSize: 11,
+              }}
+            >
+              Activate Override
+            </button>
+          ) : (
+            <button
+              onClick={() => handleOverride(false)}
+              disabled={overrideConfirm !== "RETRACT MEMORIAL"}
+              style={{
+                ...btnStyle,
+                background: "rgba(0, 229, 255, 0.08)",
+                border: "1px solid rgba(0, 229, 255, 0.3)",
+                color: "#00e5ff",
+                opacity: overrideConfirm === "RETRACT MEMORIAL" ? 1 : 0.35,
+                cursor: overrideConfirm === "RETRACT MEMORIAL" ? "pointer" : "not-allowed",
+                letterSpacing: "0.14em",
+                textTransform: "uppercase",
+                fontSize: 11,
+              }}
+            >
+              Retract Override
             </button>
           )}
         </div>

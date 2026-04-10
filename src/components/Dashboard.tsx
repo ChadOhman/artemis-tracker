@@ -44,9 +44,16 @@ import {
   type DashboardLayoutSnapshot,
   type StoredPresetsState,
 } from "@/lib/dashboard-layout-presets";
+import dynamic from "next/dynamic";
 import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
 import SplashdownModal from "@/components/SplashdownModal";
 import { EdlPanel } from "./panels/EdlPanel";
+
+// Code-split: this chunk is only downloaded when the state actually activates.
+const StateCModal = dynamic(() => import("@/components/StateCModal"), {
+  ssr: false,
+  loading: () => null,
+});
 import { RecoveryShipPanel } from "./panels/RecoveryShipPanel";
 import { ReentryBanner } from "./ReentryBanner";
 import { BlackoutOverlay } from "./BlackoutOverlay";
@@ -263,6 +270,8 @@ function DashboardInner() {
     lastUpdate,
     visitorCount,
     splashdownTriggered,
+    stateCActive,
+    stateCTriggeredAt,
   } = useTelemetryStream();
 
   // Splashdown modal — dismiss is scoped to the current trigger event.
@@ -290,6 +299,28 @@ function DashboardInner() {
   function handleDismissSplashdown() {
     setShowSplashdown(false);
     localStorage.setItem("splashdown-dismissed", "1");
+  }
+
+  // Overlay state — takes precedence over other overlays when active
+  const [showStateC, setShowStateC] = useState(false);
+  const lastStateCRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (stateCActive && !lastStateCRef.current) {
+      localStorage.removeItem("sc-dismissed");
+      setShowStateC(true);
+    } else if (stateCActive) {
+      const dismissed = localStorage.getItem("sc-dismissed");
+      if (!dismissed) setShowStateC(true);
+    } else {
+      setShowStateC(false);
+    }
+    lastStateCRef.current = stateCActive;
+  }, [stateCActive]);
+
+  function handleDismissStateC() {
+    setShowStateC(false);
+    localStorage.setItem("sc-dismissed", "1");
   }
 
   // SIM-mode historical fetch — returns full snapshots from /api/snapshot
@@ -332,13 +363,15 @@ function DashboardInner() {
     <PanelErrorBoundary panelName={name}>{node}</PanelErrorBoundary>
   );
 
-  const isReentryMode = metMs >= REENTRY_MODE_START_MS && metMs < REENTRY_MODE_END_MS;
+  // The override suppresses re-entry celebrations and applies a subdued theme.
+  const isReentryMode =
+    !stateCActive && metMs >= REENTRY_MODE_START_MS && metMs < REENTRY_MODE_END_MS;
 
   return (
     <div
       id="main-content"
       role="main"
-      className={`dashboard-grid${isReentryMode ? " reentry-mode" : ""}`}
+      className={`dashboard-grid${isReentryMode ? " reentry-mode" : ""}${stateCActive ? " state-c-mode" : ""}`}
     >
       <div className="dashboard-topbar">
         <TopBar
@@ -472,10 +505,17 @@ function DashboardInner() {
         onColumnChange={handleColumnChange}
       />
         <SplashdownModal
-          isOpen={showSplashdown}
+          isOpen={showSplashdown && !stateCActive}
           onDismiss={handleDismissSplashdown}
           metMs={metMs}
         />
+        {stateCActive && (
+          <StateCModal
+            isOpen={showStateC}
+            triggeredAt={stateCTriggeredAt}
+            onDismiss={handleDismissStateC}
+          />
+        )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPag
 import { getLastCompactJson } from "@/lib/pollers/arow";
 import { startRecoveryShipPoller } from "@/lib/pollers/ais-recovery-ship";
 import { getSplashdownTriggered } from "@/lib/splashdown";
+import { getStateC } from "@/lib/state-c";
 
 export const cache = new TelemetryCache();
 export const sseManager = new SseManager();
@@ -126,6 +127,11 @@ export async function GET(): Promise<Response> {
       // Send splashdown state if triggered (for clients connecting after the event)
       if (getSplashdownTriggered()) {
         controller.enqueue(encoder.encode(SseManager.encodeEvent("splashdown", { triggered: true })));
+      }
+      // Send state-c to late joiners if active
+      const stateC = getStateC();
+      if (stateC.active) {
+        controller.enqueue(encoder.encode(SseManager.encodeEvent("state-c", stateC)));
       }
       if (!latest) {
         // Data not yet available — retry every 2 s for up to 30 s so the first

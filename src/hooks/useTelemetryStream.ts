@@ -16,6 +16,8 @@ interface TelemetryStreamState {
   lastUpdate: number | null;
   visitorCount: number;
   splashdownTriggered: boolean;
+  stateCActive: boolean;
+  stateCTriggeredAt: string | null;
 }
 
 const INITIAL_STATE: TelemetryStreamState = {
@@ -32,6 +34,8 @@ const INITIAL_STATE: TelemetryStreamState = {
   lastUpdate: null,
   visitorCount: 0,
   splashdownTriggered: false,
+  stateCActive: false,
+  stateCTriggeredAt: null,
 };
 
 /**
@@ -132,6 +136,20 @@ export function useTelemetryStream(): TelemetryStreamState {
       es.addEventListener("splashdown-dismiss", (event: MessageEvent) => {
         if (unmounted) return;
         setState((prev) => ({ ...prev, splashdownTriggered: false }));
+      });
+
+      es.addEventListener("state-c", (event: MessageEvent) => {
+        if (unmounted) return;
+        try {
+          const payload = JSON.parse(event.data);
+          setState((prev) => ({
+            ...prev,
+            stateCActive: payload.active === true,
+            stateCTriggeredAt: payload.triggeredAt ?? null,
+          }));
+        } catch {
+          // malformed payload — ignore
+        }
       });
 
       es.addEventListener("error", () => {
