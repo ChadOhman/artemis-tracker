@@ -226,11 +226,12 @@ export function BottomBar({ milestones, lastUpdate }: BottomBarProps) {
       {/* Center: MET */}
       <div
         style={{
-          flex: isLive ? 1 : undefined,
+          flexGrow: isLive ? 1 : 0,
+          flexShrink: 0,
+          flexBasis: "auto",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          flexShrink: 0,
         }}
       >
         <MetClock metMs={metMs} size="small" showTPlus={false} />
