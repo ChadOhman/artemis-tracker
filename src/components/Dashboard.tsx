@@ -194,6 +194,17 @@ function useLayoutPresets() {
 
 function DashboardInner() {
   useBuildCheck();
+
+  // Dashboard is a fixed grid — prevent body scroll (Brave, etc.)
+  useEffect(() => {
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const { metMs, mode, simMetMs } = useMetContext();
 
   // Layout / panel visibility
