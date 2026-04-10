@@ -188,13 +188,16 @@ export function TelemetryPanel({ telemetry, prevTelemetry, timeline, arow, metMs
   const phaseName = timeline.currentPhaseName ?? "Unknown";
   const { speedUnit } = useMetContext();
 
+  // Quantize metMs to 2 Hz so the panel only updates twice per second
+  const quantizedMetMs = metMs != null ? Math.floor(metMs / 500) * 500 : metMs;
+
   // Linearly interpolate scalar telemetry between the two most recent snapshots
   const t = useMemo(() => {
-    if (prevTelemetry && telemetry && metMs != null) {
-      return lerpTelemetry(prevTelemetry, telemetry, metMs);
+    if (prevTelemetry && telemetry && quantizedMetMs != null) {
+      return lerpTelemetry(prevTelemetry, telemetry, quantizedMetMs);
     }
     return telemetry;
-  }, [prevTelemetry, telemetry, metMs]);
+  }, [prevTelemetry, telemetry, quantizedMetMs]);
   const { t: tr } = useLocale();
 
   return (
