@@ -122,12 +122,16 @@ export default function SplashdownModal({ isOpen, onDismiss, metMs }: Splashdown
         backdropFilter: "blur(8px)",
         opacity: visible ? 1 : 0,
         transition: "opacity 0.6s ease-out",
+        overflowY: "auto",
+        padding: "20px",
       }}
     >
       <div
         style={{
           maxWidth: 520,
-          width: "90%",
+          width: "100%",
+          maxHeight: "calc(100vh - 40px)",
+          overflowY: "auto",
           background: "linear-gradient(180deg, #0a1628 0%, #060a10 100%)",
           border: "1px solid rgba(0, 229, 255, 0.2)",
           borderRadius: 16,
