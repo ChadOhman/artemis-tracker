@@ -10,7 +10,7 @@ import {
   JPL_POLL_INTERVAL_MS,
   DSN_POLL_INTERVAL_MS,
 } from "@/lib/constants";
-import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity } from "@/lib/types";
+import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity, Telemetry } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPageViews, getPageViews } from "@/lib/db";
 import { getLastCompactJson } from "@/lib/pollers/arow";
 import { getSplashdownTriggered } from "@/lib/splashdown";
@@ -92,8 +92,16 @@ export async function GET(): Promise<Response> {
       const latest = cache.getLatest();
       if (latest) {
         const prev = cache.getSecondLatest();
-        // Disk-loaded entries have zeroed telemetry — only send prev if it's real
-        const prevTelemetry = prev && prev.telemetry.speedKmS > 0 ? prev.telemetry : undefined;
+        // Disk-loaded entries have zeroed telemetry — recompute from the raw
+        // state vector using the latest moonPosition (close enough for lerp)
+        let prevTelemetry: Telemetry | undefined;
+        if (prev) {
+          if (prev.telemetry.speedKmS > 0) {
+            prevTelemetry = prev.telemetry;
+          } else {
+            prevTelemetry = transformStateVector(prev.stateVector, latest.moonPosition);
+          }
+        }
         const payload: SsePayload = {
           telemetry: latest.telemetry,
           prevTelemetry,
