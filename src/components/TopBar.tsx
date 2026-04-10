@@ -153,7 +153,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       style={{
         display: "flex",
         alignItems: "center",
-        height: "100%",
+        minHeight: 48,
         padding: "0 8px",
         gap: 6,
         background: "var(--bg-secondary)",
