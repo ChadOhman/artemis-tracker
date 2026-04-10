@@ -374,6 +374,28 @@ export default function SplashdownModal({ isOpen, onDismiss, metMs }: Splashdown
           </div>
         )}
 
+        {/* ISS Tracker promo */}
+        <a
+          href="https://iss.cdnspace.ca"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "inline-block",
+            marginTop: 24,
+            padding: "10px 24px",
+            background: "rgba(0, 229, 255, 0.1)",
+            border: "1px solid rgba(0, 229, 255, 0.35)",
+            borderRadius: 6,
+            color: "#00e5ff",
+            fontWeight: 700,
+            fontSize: 13,
+            textDecoration: "none",
+            cursor: "pointer",
+          }}
+        >
+          🛰 Track the ISS next →
+        </a>
+
         {/* Support link */}
         <a
           href="https://buymeacoffee.com/chadohman"
