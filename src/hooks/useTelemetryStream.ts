@@ -9,6 +9,7 @@ interface TelemetryStreamState {
   moonPosition: { x: number; y: number; z: number } | null;
   dsn: DsnStatus | null;
   arow: ArowTelemetry | null;
+  arowLastUpdate: number | null;
   solar: SolarActivity | null;
   connected: boolean;
   reconnecting: boolean;
@@ -24,6 +25,7 @@ const INITIAL_STATE: TelemetryStreamState = {
   moonPosition: null,
   dsn: null,
   arow: null,
+  arowLastUpdate: null,
   solar: null,
   connected: false,
   reconnecting: false,
@@ -96,7 +98,7 @@ export function useTelemetryStream(): TelemetryStreamState {
         if (unmounted) return;
         try {
           const arow: ArowTelemetry = JSON.parse(event.data);
-          setState((prev) => ({ ...prev, arow }));
+          setState((prev) => ({ ...prev, arow, arowLastUpdate: Date.now() }));
         } catch {
           // malformed payload — ignore
         }

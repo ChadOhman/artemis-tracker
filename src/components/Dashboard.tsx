@@ -47,6 +47,8 @@ import {
 import { PanelVisibilityModal } from "./modals/PanelVisibilityModal";
 import SplashdownModal from "@/components/SplashdownModal";
 import { EdlPanel } from "./panels/EdlPanel";
+import { ReentryBanner } from "./ReentryBanner";
+import { BlackoutOverlay } from "./BlackoutOverlay";
 
 const MemoOrbitMap = memo(OrbitMapPanel);
 const MemoTimeline = memo(TimelinePanel);
@@ -252,6 +254,7 @@ function DashboardInner() {
     moonPosition: liveMoonPosition,
     dsn,
     arow,
+    arowLastUpdate,
     solar,
     connected,
     reconnecting,
@@ -340,6 +343,7 @@ function DashboardInner() {
           visitorCount={visitorCount}
           barVisibility={topBarVisibility}
         />
+        {isReentryMode && <ReentryBanner metMs={metMs} />}
       </div>
       <div className="dashboard-left">
         {show("orbitMap", "left") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
@@ -363,7 +367,12 @@ function DashboardInner() {
         {panelVisibility.timeline && safe("Timeline", <MemoTimeline metMs={metMs} timeline={timeline} />)}
       </div>
       <div className="dashboard-center">
-        {isReentryMode && safe("EDL", <MemoEdl metMs={metMs} telemetry={telemetry} />)}
+        {isReentryMode && (
+          <div style={{ position: "relative" }}>
+            {safe("EDL", <MemoEdl metMs={metMs} telemetry={telemetry} />)}
+            <BlackoutOverlay arowLastUpdate={arowLastUpdate} isReentryMode={isReentryMode} />
+          </div>
+        )}
         {show("orbitMap", "center") && safe("Orbit Map", <MemoOrbitMap stateVector={stateVector} moonPosition={moonPosition} metMs={metMs} telemetry={telemetry} />)}
         {show("telemetry", "center") && safe("Telemetry", <MemoTelemetry telemetry={telemetry} timeline={timeline} arow={mode === "LIVE" ? arow : null} />)}
         {show("rcsThrusters", "center") && safe("RCS Thrusters", <MemoRcsThrusters arow={mode === "LIVE" ? arow : null} />)}
