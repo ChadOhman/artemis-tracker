@@ -62,17 +62,17 @@ function fmtDeg(n: number | undefined, decimals = 1): string {
 /** Convert km/h to the selected speed unit and format */
 function fmtSpeed(kmh: number, unit: string): string {
   const fmt = (v: number) =>
-    v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   switch (unit) {
     case "mph": return fmt(kmh * 0.621371);
     case "kn":  return fmt(kmh * 0.539957);
-    case "m/s": return (kmh / 3.6).toFixed(2);
+    case "m/s": return fmt(kmh / 3.6);
     default:    return fmt(kmh);
   }
 }
 
 /** Convert km to the distance unit matching the selected speed unit */
-function fmtDist(km: number, unit: string, decimals = 1): string {
+function fmtDist(km: number, unit: string, decimals = 2): string {
   let val: number;
   switch (unit) {
     case "mph": val = km * 0.621371; break;
