@@ -70,7 +70,7 @@ export function useTelemetryStream(): TelemetryStreamState {
           setState((prev) => ({
             ...prev,
             telemetry: payload.telemetry ?? prev.telemetry,
-            prevStateVector: prev.stateVector,
+            prevStateVector: payload.prevStateVector ?? prev.stateVector,
             stateVector: payload.stateVector ?? prev.stateVector,
             moonPosition: payload.moonPosition ?? prev.moonPosition,
             connected: true,

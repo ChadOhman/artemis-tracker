@@ -33,6 +33,11 @@ export class TelemetryCache {
     return this.entries[this.entries.length - 1];
   }
 
+  getSecondLatest(): CacheEntry | null {
+    if (this.entries.length < 2) return null;
+    return this.entries[this.entries.length - 2];
+  }
+
   getHistory(fromMetMs: number, toMetMs: number): StateVector[] {
     return this.entries
       .filter(

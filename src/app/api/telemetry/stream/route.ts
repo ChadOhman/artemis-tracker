@@ -91,9 +91,11 @@ export async function GET(): Promise<Response> {
       setTimeout(broadcastVisitors, 100);
       const latest = cache.getLatest();
       if (latest) {
+        const prev = cache.getSecondLatest();
         const payload: SsePayload = {
           telemetry: latest.telemetry,
           stateVector: latest.stateVector,
+          prevStateVector: prev?.stateVector ?? undefined,
           moonPosition: latest.moonPosition,
           dsn: latestDsn,
         };
