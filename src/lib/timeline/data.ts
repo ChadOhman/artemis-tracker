@@ -150,7 +150,7 @@ const RAW_MILESTONES: Milestone[] = [
   },
   {
     name: "Recovery",
-    description: "Crew recovery by USS Portland",
+    description: "Crew recovery by USS John P. Murtha (LPD-26)",
     metMs: Math.round(218 * 3600 * 1000), // metHours=218 → ~9d 02h 00m
   },
 ];

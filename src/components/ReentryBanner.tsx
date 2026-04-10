@@ -58,7 +58,7 @@ export function ReentryBanner({ metMs }: ReentryBannerProps) {
             letterSpacing: "0.12em",
           }}
         >
-          ★ CREW SAFELY ON USS PORTLAND
+          ★ CREW SAFELY ON USS JOHN P. MURTHA
         </span>
       </div>
     );
