@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState, memo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, memo } from "react";
 import { TopBar } from "./TopBar";
 import { BottomBar } from "./BottomBar";
 import { OrbitMapPanel } from "./panels/OrbitMapPanel";
@@ -265,19 +265,26 @@ function DashboardInner() {
     splashdownTriggered,
   } = useTelemetryStream();
 
-  // Splashdown modal — dismiss persists to localStorage
+  // Splashdown modal — dismiss is scoped to the current trigger event.
+  // localStorage stores the trigger timestamp that was dismissed, so a new
+  // trigger (different timestamp) will always show again.
   const [showSplashdown, setShowSplashdown] = useState(false);
+  const lastTriggerRef = useRef<boolean>(false);
 
   useEffect(() => {
-    if (splashdownTriggered) {
+    if (splashdownTriggered && !lastTriggerRef.current) {
+      // Rising edge: new trigger event, clear any prior dismissal
+      localStorage.removeItem("splashdown-dismissed");
+      setShowSplashdown(true);
+    } else if (splashdownTriggered) {
+      // Still triggered (e.g. client reconnected) — respect prior dismissal
       const dismissed = localStorage.getItem("splashdown-dismissed");
-      if (!dismissed) {
-        setShowSplashdown(true);
-      }
+      if (!dismissed) setShowSplashdown(true);
     } else {
       // Admin retracted — close for everyone
       setShowSplashdown(false);
     }
+    lastTriggerRef.current = splashdownTriggered;
   }, [splashdownTriggered]);
 
   function handleDismissSplashdown() {
