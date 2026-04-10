@@ -213,11 +213,26 @@ function useLayoutPresets() {
 function DashboardInner() {
   useBuildCheck();
 
-  // Dashboard is a fixed grid — prevent body scroll (Brave, etc.)
+  // Dashboard is a fixed grid on desktop — prevent body scroll to avoid
+  // phantom scroll in some browsers (Brave, Firefox). On mobile (<=768px)
+  // the layout switches to a vertically stacked single-column flow that
+  // REQUIRES body scrolling, so skip the override there.
   useEffect(() => {
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(min-width: 769px)");
+    function apply(): void {
+      if (mql.matches) {
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+      } else {
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+      }
+    }
+    apply();
+    mql.addEventListener("change", apply);
     return () => {
+      mql.removeEventListener("change", apply);
       document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
     };
