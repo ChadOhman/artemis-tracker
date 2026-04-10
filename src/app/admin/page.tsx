@@ -116,7 +116,7 @@ export default function AdminPage() {
     "OTC-2": "cancelled",
     "OTC-3": "executed",
     "RTC-1": "executed",
-    "RTC-2": "planned",
+    "RTC-2": "executed",
     "CM Raise": "planned",
   }));
   const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(() => ({
@@ -127,7 +127,7 @@ export default function AdminPage() {
     "OTC-2": "0",
     "OTC-3": "3",
     "RTC-1": "0.4",
-    "RTC-2": "2",
+    "RTC-2": "1.6",
     "CM Raise": "5",
   }));
 

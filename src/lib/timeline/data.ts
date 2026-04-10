@@ -120,7 +120,7 @@ const RAW_MILESTONES: Milestone[] = [
   },
   {
     name: "RTC-2",
-    description: "Second return trajectory correction burn",
+    description: "Second return trajectory correction burn — 1.6 m/s",
     metMs: Math.round(196.30 * 3600 * 1000), // metHours=196.30 → ~8d 04h 18m
   },
   {
