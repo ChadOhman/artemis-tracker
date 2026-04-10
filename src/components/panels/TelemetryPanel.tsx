@@ -61,11 +61,13 @@ function fmtDeg(n: number | undefined, decimals = 1): string {
 
 /** Convert km/h to the selected speed unit and format */
 function fmtSpeed(kmh: number, unit: string): string {
+  const fmt = (v: number) =>
+    v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   switch (unit) {
-    case "mph": return Math.round(kmh * 0.621371).toLocaleString();
-    case "kn":  return Math.round(kmh * 0.539957).toLocaleString();
-    case "m/s": return (kmh / 3.6).toFixed(1);
-    default:    return Math.round(kmh).toLocaleString();
+    case "mph": return fmt(kmh * 0.621371);
+    case "kn":  return fmt(kmh * 0.539957);
+    case "m/s": return (kmh / 3.6).toFixed(2);
+    default:    return fmt(kmh);
   }
 }
 
