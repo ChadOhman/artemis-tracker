@@ -54,6 +54,8 @@ interface TopBarProps {
   visitorCount: number;
   /** Per-item visibility — passed through but not yet wired to rendering */
   barVisibility?: Record<string, boolean>;
+  /** Hide the "Next" chicklet (e.g. during EDL mode when the banner covers it) */
+  hideNextEvent?: boolean;
 }
 
 const pillStyle: React.CSSProperties = {
@@ -107,7 +109,7 @@ const infoButtonStyle: React.CSSProperties = {
   transition: "color 0.15s, border-color 0.15s",
 };
 
-export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility }: TopBarProps) {
+export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnecting, lastUpdate, visitorCount, barVisibility, hideNextEvent }: TopBarProps) {
   // Helper: check if a topbar item should be shown
   const vis = (id: string) => !barVisibility || barVisibility[id] !== false;
 
@@ -382,7 +384,7 @@ export function TopBar({ metMs, telemetry, dsn, timeline, connected, reconnectin
       </button>}
 
       {/* Next event countdown */}
-      {vis("nextEvent") && nextMilestone && countdownMs !== null && (
+      {vis("nextEvent") && !hideNextEvent && nextMilestone && countdownMs !== null && (
         <div className="topbar-pill" style={{ ...pillStyle, gap: 8, marginLeft: "auto", borderColor: "rgba(255,140,0,0.3)" }}>
           <span style={labelStyle}>Next</span>
           <span

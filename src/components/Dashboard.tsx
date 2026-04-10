@@ -342,6 +342,7 @@ function DashboardInner() {
           lastUpdate={lastUpdate}
           visitorCount={visitorCount}
           barVisibility={topBarVisibility}
+          hideNextEvent={isReentryMode}
         />
         {isReentryMode && <ReentryBanner metMs={metMs} />}
       </div>
