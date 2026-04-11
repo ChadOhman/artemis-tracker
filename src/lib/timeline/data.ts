@@ -135,7 +135,7 @@ const RAW_MILESTONES: Milestone[] = [
   },
   {
     name: "CM Raise",
-    description: "Crew module raise burn to establish proper entry attitude",
+    description: "Crew module raise burn to establish proper entry attitude — 3.0 m/s",
     metMs: Math.round(217.03 * 3600 * 1000), // metHours=217.03 → ~9d 01h 02m
   },
   {

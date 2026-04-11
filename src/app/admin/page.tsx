@@ -119,7 +119,7 @@ export default function AdminPage() {
     "RTC-1": "executed",
     "RTC-2": "executed",
     "RTC-3": "executed",
-    "CM Raise": "planned",
+    "CM Raise": "executed",
   }));
   const [burnDeltaVs, setBurnDeltaVs] = useState<Record<string, string>>(() => ({
     "PRM": "2.6",
@@ -131,7 +131,7 @@ export default function AdminPage() {
     "RTC-1": "0.4",
     "RTC-2": "1.6",
     "RTC-3": "1.3",
-    "CM Raise": "5",
+    "CM Raise": "3.0",
   }));
 
   const { confirm, showSuccess, showError, ConfirmDialog, FeedbackBanner } = useAdminAction();
