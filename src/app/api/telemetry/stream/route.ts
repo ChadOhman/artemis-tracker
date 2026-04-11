@@ -9,6 +9,7 @@ import { arowHub } from "@/lib/telemetry/arow-hub";
 import {
   JPL_POLL_INTERVAL_MS,
   DSN_POLL_INTERVAL_MS,
+  MISSION_ARCHIVED,
 } from "@/lib/constants";
 import type { SsePayload, DsnStatus, ArowTelemetry, SolarActivity, Telemetry } from "@/lib/types";
 import { archiveStateVector, archiveArow, archiveDsn, archiveSolar, incrementPageViews, getPageViews } from "@/lib/db";
@@ -96,6 +97,14 @@ export function ensurePollers(): void {
   if (tState.initialized) return;
   tState.initialized = true;
   cache.loadFromDisk();
+
+  // Archive mode: serve cached data only, no live pollers.
+  // Visitor broadcasts are still cheap and useful for the live count.
+  if (MISSION_ARCHIVED) {
+    tState.visitorTimer = setInterval(broadcastVisitors, 5000);
+    return;
+  }
+
   pollJpl();
   pollDsn();
   tState.jplTimer = setInterval(pollJpl, JPL_POLL_INTERVAL_MS);

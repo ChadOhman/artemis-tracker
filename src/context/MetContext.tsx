@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from "react";
-import { LAUNCH_TIME_MS, MISSION_DURATION_MS } from "@/lib/constants";
+import { LAUNCH_TIME_MS, MISSION_DURATION_MS, MISSION_ARCHIVED, MET_FREEZE_MS } from "@/lib/constants";
 
 export type MetMode = "LIVE" | "SIM";
 export type PlaybackSpeed = 0 | 1 | 10 | 100 | 1000;
@@ -42,9 +42,10 @@ export function MetProvider({ children }: { children: ReactNode }) {
   const [playbackSpeed, setPlaybackSpeed] = useState<PlaybackSpeed>(0);
   const [speedUnit, setSpeedUnit] = useState<SpeedUnit>("km/h");
   const [timeFormat, setTimeFormat] = useState<TimeFormat>("MET");
-  const [liveMetMs, setLiveMetMs] = useState<number>(
-    () => Date.now() - LAUNCH_TIME_MS
-  );
+  const [liveMetMs, setLiveMetMs] = useState<number>(() => {
+    const elapsed = Date.now() - LAUNCH_TIME_MS;
+    return MISSION_ARCHIVED ? Math.min(elapsed, MET_FREEZE_MS) : elapsed;
+  });
 
   const rafRef = useRef<number | null>(null);
   const lastFrameRef = useRef<number | null>(null);
@@ -68,7 +69,8 @@ export function MetProvider({ children }: { children: ReactNode }) {
       if (!running) return;
 
       if (mode === "LIVE") {
-        setLiveMetMs(Date.now() - LAUNCH_TIME_MS);
+        const elapsed = Date.now() - LAUNCH_TIME_MS;
+        setLiveMetMs(MISSION_ARCHIVED ? Math.min(elapsed, MET_FREEZE_MS) : elapsed);
       } else {
         // SIM mode: advance by playbackSpeed * realDelta
         if (lastFrameRef.current !== null && playbackSpeed > 0) {

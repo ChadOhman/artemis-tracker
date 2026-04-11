@@ -2,6 +2,17 @@
 /** Artemis II launch: April 1, 2026 at 18:35 ET = 22:35 UTC */
 export const LAUNCH_TIME_UTC = "2026-04-01T22:35:00Z";
 export const LAUNCH_TIME_MS = new Date(LAUNCH_TIME_UTC).getTime();
+
+/** Mission archive mode. When true:
+ *   - All server-side pollers (JPL, DSN, AROW, solar, AIS) are disabled.
+ *   - The LIVE MET clock stops advancing past MET_FREEZE_MS.
+ *   - Cached telemetry continues to be served from disk history.
+ *   - SIM mode still works for replay.
+ */
+export const MISSION_ARCHIVED = true;
+/** Freeze MET at 220h (~2h post-splashdown, post-recovery). */
+export const MET_FREEZE_MS = 220 * 3600 * 1000;
+
 export const JPL_SPACECRAFT_ID = "-1024";
 /** DSN feed uses "EM2" (Exploration Mission 2) for Artemis II */
 export const DSN_SPACECRAFT_ID = "EM2";
