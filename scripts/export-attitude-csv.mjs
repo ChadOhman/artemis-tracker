@@ -1,9 +1,11 @@
 // scripts/export-attitude-csv.mjs
 // Export archived Orion attitude + solar array wing (SAW) telemetry to CSV.
 //
-// Reads raw AROW parameters from arow_telemetry.raw_params_json rather than
-// the parsed quat_* columns: params 2012-2015 are unit-normalized, while
-// 2074-2077 (what the quat_* columns hold) are not.
+// Reads raw AROW parameters from arow_telemetry.raw_params_json. The feed
+// carries two attitude quaternion sets: params 2012-2015 are unit-normalized,
+// while 2074-2077 (what the parsed quat_* columns hold) are not. Both are
+// exported, each followed by its norm, so the recipient can judge for
+// themselves.
 //
 // Usage:
 //   node scripts/export-attitude-csv.mjs [dbPath] [outPath]
@@ -18,12 +20,14 @@ const outPath = process.argv[3] ?? path.join(process.cwd(), "data", "orion-attit
 
 const RAD2DEG = 180 / Math.PI;
 
+// Quaternion sets as [prefix, [w, x, y, z] AROW params]
+const QUATS = [
+  ["q2012", ["2012", "2013", "2014", "2015"]],
+  ["q2074", ["2074", "2075", "2076", "2077"]],
+];
+
 // [csv column, AROW param, scale]
 const COLUMNS = [
-  ["quat_w", "2012", 1],
-  ["quat_x", "2013", 1],
-  ["quat_y", "2014", 1],
-  ["quat_z", "2015", 1],
   ["saw1_deg", "5006", 1],
   ["saw2_deg", "5007", 1],
   ["saw3_deg", "5008", 1],
@@ -57,29 +61,35 @@ const rows = db.prepare(`
   ORDER BY timestamp
 `).all();
 
-const lines = [["timestamp_utc", ...COLUMNS.map(([name]) => name), "quat_norm"].join(",")];
+const fmt = (v) => (v == null ? "" : String(v));
+
+const header = ["timestamp_utc"];
+for (const [prefix] of QUATS) header.push(...["w", "x", "y", "z", "norm"].map((c) => `${prefix}_${c}`));
+header.push(...COLUMNS.map(([name]) => name));
+
+const lines = [header.join(",")];
 let skipped = 0;
 
 for (const { timestamp, raw_params_json } of rows) {
   let raw;
   try { raw = JSON.parse(raw_params_json); } catch { skipped++; continue; }
 
+  const quats = QUATS.map(([, keys]) => keys.map((k) => num(raw, k)));
   const values = COLUMNS.map(([, key, scale]) => {
     const n = num(raw, key);
     return n == null ? null : n * scale;
   });
 
   // Drop rows with no attitude and no SAW data at all (feed dropouts).
-  if (values.every((v) => v == null)) { skipped++; continue; }
+  if ([...quats.flat(), ...values].every((v) => v == null)) { skipped++; continue; }
 
-  const q = values.slice(0, 4);
-  const norm = q.every((v) => v != null) ? Math.hypot(...q) : null;
-
-  lines.push([
-    timestamp,
-    ...values.map((v) => (v == null ? "" : String(v))),
-    norm == null ? "" : norm.toFixed(6),
-  ].join(","));
+  const cells = [timestamp];
+  for (const q of quats) {
+    const norm = q.every((v) => v != null) ? Math.hypot(...q).toFixed(6) : null;
+    cells.push(...q.map(fmt), fmt(norm));
+  }
+  cells.push(...values.map(fmt));
+  lines.push(cells.join(","));
 }
 
 fs.writeFileSync(outPath, lines.join("\n") + "\n");
